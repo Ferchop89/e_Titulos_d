@@ -14,8 +14,8 @@ class CreateCancelacionesTable extends Migration
     public function up()
     {
         Schema::create('_cancelaciones', function (Blueprint $table) {
-            $table->increments('id');
-            $table->timestamps();
+            $table->char('ID_MOTIVO_CAN',2)->unique();
+            $table->string('DESCRIPCION_CANCELACION');
         });
     }
 

@@ -14,7 +14,7 @@ class CreateFirmasTable extends Migration
     public function up()
     {
         Schema::create('_firmas', function (Blueprint $table) {
-            $table->char('ID_CARGO',1);
+            $table->char('ID_CARGO',1)->unique();
             $table->string('CARGO_FIRMANTE');
         });
     }

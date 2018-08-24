@@ -14,8 +14,9 @@ class CreateModosTable extends Migration
     public function up()
     {
         Schema::create('_modos', function (Blueprint $table) {
-            $table->char('ID_MODALIDAD_TITULACIÓN',1);
-            $table->timestamps();
+            $table->char('ID_MODALIDAD_TITULACION',1)->unique();
+            $table->string('MODALIDAD_TITULACION');
+            $table->string('TIPO_DE_MODALIDAD');
         });
     }
 

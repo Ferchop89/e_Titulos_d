@@ -1,8 +1,16 @@
 <?php
 
 use Illuminate\Database\Seeder;
+use App\Models\Autoriza;
+use App\Models\Cancela;
+use App\Models\Carrera;
+use App\Models\Entidad;
+use App\Models\Estudio;
+use App\Models\Firma;
+use App\Models\Legal;
+use App\Models\Modo;
 
-class CatalogosSeeder extends Seeder
+class CatalogosSepSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -11,11 +19,82 @@ class CatalogosSeeder extends Seeder
      */
     public function run()
     {
-        $datos = array();
-        $datos = $this->entidades();
-        foreach ($datos as $key => $dato) {
-          
-        }
+      // Datos de catalods de la SEP (archivos con _ )
+      $datos = array();
+      // Archivo _autorizaciones
+      $datos = $this->autorizacion();
+      foreach ($datos as $key => $dato) {
+        $autoriza = new Autoriza();
+        $autoriza->ID_AUTORIZACION_RECONOCIMIENTO = $dato[0];
+        $autoriza->AUTORIZACION_RECONOCIMIENTO = $dato[1];
+        $autoriza->save();
+      }
+      // Archivo _cancelaciones
+      $datos = $this->Cancela();
+      foreach ($datos as $key => $dato) {
+        $cancela = new Cancela();
+        $cancela->ID_MOTIVO_CAN = $dato[0];
+        $cancela->DESCRIPCION_CANCELACION = $dato[1];
+        $cancela->save();
+      }
+      // Archivo _carreras
+      $datos = $this->instCarrera();
+       foreach ($datos as $key => $dato){
+         if ( !Carrera::where('CVE_INSTITUCION',$dato[0])->where('CVE_CARRERA',$dato[5])->first() )  {
+           $carrera = new Carrera();
+           $carrera->CVE_INSTITUCION = $dato[0];
+           $carrera->NOMBRE_INSTITUCION = $dato[1];
+           $carrera->TIPO_DE_SOSTENIMIENTO = $dato[2];
+           $carrera->TIPO_EDUCATIVO = $dato[3];
+           $carrera->NIVEL_DE_ESTUDIOS = $dato[4];
+           $carrera->CVE_CARRERA = $dato[5];
+           $carrera->CARRERA = $dato[6];
+           $carrera->save();
+         }
+       }
+       // Archivo _entidades
+       $datos = $this->entidades();
+       foreach ($datos as $key => $dato){
+         $entidad = new Entidad();
+         $entidad->ID_ENTIDAD_FEDERATIVA = $dato[0];
+         $entidad->C_NOM_ENT = $dato[1];
+         $entidad->C_ENTIDAD_ABR = $dato[2];
+         $entidad->save();
+       }
+       // Archivo _estudios
+       $datos = $this->estudios();
+       foreach ($datos as $key => $dato){
+         $estudio = new Estudio();
+         $estudio->ID_TIPO_ESTUDIO_ANTECEDENTE = $dato[0];
+         $estudio->TIPO_ESTUDIO_ANTECEDENTE = $dato[1];
+         $estudio->EDUCACION_SUPERIOR = $dato[2];
+         $estudio->save();
+       }
+       // Archivo _firmas
+       $datos = $this->firmantes();
+       foreach ($datos as $key => $dato){
+         $firma = new Firma();
+         $firma->ID_CARGO = $dato[0];
+         $firma->CARGO_FIRMANTE = $dato[1];
+         $firma->save();
+       }
+       // Archivo _legales
+       $datos = $this->legal();
+       foreach ($datos as $key => $dato){
+         $legal = new Legal();
+         $legal->ID_FUNDAMENTO_LEGAL = $dato[0];
+         $legal->FUNDAMENTO_LEGAL_SERVICIO_SOCIAL = $dato[1];
+         $legal->save();
+       }
+       // Archivo _modos
+       $datos = $this->modalidad();
+       foreach ($datos as $key => $dato){
+         $modo = new Modo();
+         $modo->ID_MODALIDAD_TITULACION = $dato[0];
+         $modo->MODALIDAD_TITULACION = $dato[1];
+         $modo->TIPO_DE_MODALIDAD = $dato[2];
+         $modo->save();
+       }
     }
 
     public function entidades()
@@ -80,7 +159,7 @@ class CatalogosSeeder extends Seeder
       $datos[6] = ['6','SECUNDARIA','EDUCACIÓN BÁSICA'];
       return $datos;
     }
-    public function flegal()
+    public function legal()
     {
       $datos = array();
       $datos[1] = ['1','ART. 52 LRART. 5 CONST'];

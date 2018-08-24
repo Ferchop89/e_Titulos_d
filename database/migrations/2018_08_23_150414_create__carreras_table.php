@@ -15,13 +15,15 @@ class CreateCarrerasTable extends Migration
     {
         Schema::create('_carreras', function (Blueprint $table) {
             $table->char('CVE_INSTITUCION');
-            $table->string('NOMBRE_INSTITUCIÓN');
-            $table->string('TIPO_DE_SOSTENIMIENTO');
+            $table->string('NOMBRE_INSTITUCION');
             $table->string('TIPO_DE_SOSTENIMIENTO');
             $table->string('TIPO_EDUCATIVO');
             $table->string('NIVEL_DE_ESTUDIOS');
             $table->string('CVE_CARRERA');
             $table->string('CARRERA');
+
+            // Llave Primaria Compuesta.
+            $table->primary(['CVE_INSTITUCION','CVE_CARRERA']);
         });
     }
 

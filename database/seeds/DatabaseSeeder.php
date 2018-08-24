@@ -17,16 +17,21 @@ class DatabaseSeeder extends Seeder
           'roles',
           'role_user',
           'menus',
-          'solicitudes',
-          'cortes'
+          '_autorizaciones',
+          '_cancelaciones',
+          '_entidades',
+          '_carreras',
+          '_estudios',
+          '_firmas',
+          '_legales',
+          '_modos'
       ]);
       // En este orden porque los roles deben existir antes que los usuarios
+        $this->call(CatalogosSepSeeder::class);
         $this->call(RoleSeeder::class);
         $this->call(ProcedenciaSeeder::class);
         $this->call(UserSeeder::class);
         $this->call(MenuSeeder::class);
-        $this->call(SolicitudSeeder::class);
-        $this->call(CorteSeeder::class);
     }
 
     public function truncateTables(array $tables){

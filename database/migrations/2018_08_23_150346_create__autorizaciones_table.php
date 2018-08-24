@@ -14,8 +14,8 @@ class CreateAutorizacionesTable extends Migration
     public function up()
     {
         Schema::create('_autorizaciones', function (Blueprint $table) {
-            $table->increments('id');
-            $table->timestamps();
+            $table->char('ID_AUTORIZACION_RECONOCIMIENTO',1)->unique();
+            $table->string('AUTORIZACION_RECONOCIMIENTO');
         });
     }
 

@@ -14,7 +14,7 @@ class CreateLegalesTable extends Migration
     public function up()
     {
         Schema::create('_legales', function (Blueprint $table) {
-            $table->char('ID_FUNDAMENTO_LEGAL',1);
+            $table->char('ID_FUNDAMENTO_LEGAL',1)->unique();
             $table->string('FUNDAMENTO_LEGAL_SERVICIO_SOCIAL');
         });
     }
