@@ -1,0 +1,39 @@
+html,body{
+  height: auto;
+}
+
+#is {
+  width: 50%;
+  padding-top: 5%;
+  padding-bottom: 5%;
+  text-align: center;
+}
+
+#btn {
+  color: white;
+}
+/* Login*/
+.conteiner-login {
+    width: 67%;
+    margin: auto;
+}
+.col-md-8.btns {
+    width: 100%;
+}
+#inicio .panel-heading {
+    background-color: #c5911f;
+    font-weight: bold;
+}
+/* */
+
+#error {
+  width: 70%; 
+  position:relative; 
+  left: 15%;
+}
+
+#general{
+  width: 30%; 
+  position:relative; 
+  left: 10%;
+}
