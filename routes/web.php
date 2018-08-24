@@ -1,8 +1,5 @@
 <?php
 
-use App\Models\Corte;
-use App\Models\Solicitud;
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -13,11 +10,6 @@ use App\Models\Solicitud;
 | contains the "web" middleware group. Now create something great!
 |
 */
-
-/* Ejemplo de ruta
-Route::get('/', function () {
-    return view('welcome');
-});*/
 
 Route::get('/',function(){
   return view("auth.login");
@@ -60,10 +52,6 @@ Route::get('/home', [
   'uses' => 'HomeController@index',
   'as'   => 'home'
 ]);
-
-Route::get('/FacEsc/consulta_re', 'FacEscController@index')->name('consulta_re');
-
-Route::post('/FacEsc/consulta_re', 'FacEscController@store');
 
 Route::get('/m1',[
   'uses'=> 'RutasController@Menu1',
@@ -120,74 +108,6 @@ Route::get('/m9',[
   'roles' => ['Jud','Ofisi']
   ]);
 
-  // Informes
-  Route::get('/rev',[
-    'uses'=> 'InformesController@Revisiones',
-    'as'=> 'Rev',
-    'middleware' => 'roles',
-    'roles' => ['Admin']
-    ]);
-
- Route::get('dropdowns',function(){
-    return view('components/dropdowns');
-  });
-
-Route::get('/cortes',[
-  'uses'=> 'InformesController@cortes',
-  'as'=> 'cortes',
-  'middleware' => 'roles',
-  'roles' => ['Admin']
-]);
-
-Route::put('/creaListas',[
-  'uses'=> 'InformesController@creaListas',
-  'as'=> 'creaListas',
-  'middleware' => 'roles',
-  'roles' => ['Admin']
-]);
-
-Route::get('/listas',[
-  'uses'=> 'ListadosController@listas',
-  'as'=> 'listas',
-  'middleware' => 'roles',
-  'roles' => ['Admin']
-]);
-
-Route::get('solicitudes', function(){
-  $data = DB::table('solicitudes')
-           ->select(db::raw('DATE_FORMAT(created_at, "%d.%m.%Y") as listado_corte'),
-             DB::raw('count(*) as total'))
-           ->where('pasoACorte',false)
-           ->where('cancelada',false)
-           ->orderBy('created_at','asc')
-           ->groupBy('listado_corte')
-           ->pluck('total','listado_corte')->all();
-  return $data;
-});
-
-Route::get('grupoListas', function(){
-  $data = DB::table('cortes')
-           ->select('listado_corte as corte',
-                    DB::raw('count(*) as cuenta'),
-                    DB::raw('count(DISTINCT listado_id) as listas'))
-           ->groupBy('corte')
-           ->get();
-  return $data;
-});
-
-Route::get('fechaCorte',function(){
-   $fCorte = Corte::all()->last()->listado_corte;
-   return $fCorte;
-});
-
-Route::get('listax', function(){
-  $data = DB::table('cortes')
-           ->select('listado_corte', DB::raw('count(*) as total'))
-           ->groupBy('listado_corte')
-           ->pluck('total','listado_corte')->all();
-  return $data;
-});
-
 Route::get('pdf', 'PdfController@invoice');
 
 Route::get('imprimePDF',[
@@ -196,3 +116,14 @@ Route::get('imprimePDF',[
   'middleware' => 'roles',
   'roles' => ['Admin']
 ]);
+
+
+Route::get('/buscar', 'EtitulosController@searchAlum')
+      ->name('eSearch');
+
+Route::post('/buscar', 'EtitulosController@postSearchAlum');
+
+// Route::post('/facesc/solicitud_RE', 'SolicitudController@postSolicitudRE');
+Route::get('/buscar/{num_cta}', 'EtitulosController@showInfo')
+      ->where('num_cta','[0-9]+')
+      ->name('eSearchInfo');
