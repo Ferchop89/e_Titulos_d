@@ -23,6 +23,9 @@ body {
                 sans-serif;
   font-size   : 16px;
 }
+/* div.container{
+    min-height: 35%;
+} */
 
 input.iconcampo {
   font-family : 'FontAwesome',
@@ -67,9 +70,19 @@ h6 {
                 sans-serif;
   font-weight : 700;
 }
+h2#titulo {
+    /* float: left; */
+    display: inline-block;
+    width: 83%;
+    margin: 0.3cm 0cm 0.6cm 0cm;
+}
 
 p {
   font-size : 16px;
+}
+p.button{
+    display: inline-block;
+    width: 15%;
 }
 
 .pmenor {
@@ -82,6 +95,7 @@ p {
 
 a:link {
   color : #1c3d6c;
+  text-decoration: none;
 }
 
 a.link-barra,
@@ -241,7 +255,7 @@ h2.eventos {
 }
 
 .logo_der {
-  margin-top : 5px;
+  margin-top : 20px;
 }
 
 a.info {
@@ -373,7 +387,7 @@ button.desabilitado:hover {
 
 footer {
   width            : 100%;
-  height           : 100%;
+  /* height           : 100%; */
   clear            : both;
   padding          : 0 10px;
   padding-top      : 20px;
@@ -722,7 +736,7 @@ textarea.materialize-textarea+label:after {
 
 .btn {
   display        : inline-block;
-  padding        : 6px 12px;
+  padding        : 4px 12px;
   text-transform : none;
 }
 
@@ -951,6 +965,7 @@ select {
   border-bottom : 1px rgba(0, 0, 0, .26) solid;
   font-size     : 16px;
   font-weight   : bold;
+  width: 100%;
 }
 
 select:required:invalid {
@@ -1023,10 +1038,23 @@ input[type=date] {
   zoom : 1;
 }
 
-.btn {
+/* .btn {
   margin : 15px;
+} */
+.capsule .btn {
+    padding: 10px;
+    margin-bottom: 20px;
 }
-
+.agunam.capsule .btn {
+    margin-bottom: 0px;
+}
+.agunam #corte {
+    padding: 0.6cm 2cm;
+}
+.agunam #mes{
+    text-align: center;
+    width: 10%;
+}
 .btn-link {
   background-color : #ccc !important;
 }
@@ -1543,4 +1571,122 @@ textarea:invalid {
 .hints {
   color: #4285f4;
   font-weight: bold;
+}
+.paginador {
+    width: 100%;
+    margin: auto;
+    text-align: center;
+}
+<<<<<<< HEAD
+=======
+/**/
+main .container{
+    min-height: 330px;
+}
+#navegacion {
+    padding-left: 2%;
+    font-size: 100%;
+    border: 1px solid #DCDCDC;
+    background: #F5F5F5;
+    padding-bottom: 0;
+    margin: 0;
+}
+#titulo{
+    color: black;
+}
+.capsule {
+    padding-top: 14px;
+    padding-bottom: 30px;
+    min-height: 300px;
+}
+#gestionL{
+    margin: 0;
+    margin-left: 18px;
+}
+.big-logo img{
+    height: 70px;
+}
+button {
+    color: white;
+    background-color: white;
+    border: none;
+}
+.agunam-e .origen {
+    width: 60%;
+    display: block;
+    margin: auto;
+}
+.agunam-e .origen .form-group {
+    display: inline-block;
+    width: auto;
+}
+.agunam-e input {
+    text-align: center;
+}
+.agunam-e .fechas {
+    width: 60%;
+    display: block;
+    margin: auto;
+    border: solid 1px black;
+    padding: 1cm 1.5cm;
+    margin-bottom: 20px;
+}
+.agunam-e .fechas .form-group {
+    display: inline-block;
+    width: 49%;
+    text-align: center;
+}
+.agunam-e .form-group.btns {
+    margin: auto;
+    width: 60%;
+    text-align: center;
+}
+.agunam-e input[type="date"] {
+    margin: auto;
+}
+.agunam-e button.btn-primary {
+    margin-right: 50px;
+}
+
+.agunam-e a.btn-primary {
+    margin-left: 50px;
+}
+.agunam .table > tbody > tr > td, .no-agunam .table > tbody > tr > td{
+  padding: 0px;
+  vertical-align: middle;
+}
+.no-agunam .button .btn {
+    margin: 0;
+}
+.no-agunam #corte {
+    margin-bottom: 25px;
+    margin: 10px 0px 20px 0px;
+}
+.no-agunam #cuenta {
+    text-align: center;
+}
+.ver-no-agunam .marco {
+    width: 100%;
+    margin: auto;
+    /* border: solid 1px black; */
+    padding: 2% 0% 1% 0%;
+    margin-bottom: 1%;
+}
+.info-personal-header {
+    display: inline-block;
+    vertical-align: bottom;
+    padding: 0cm 2cm;
+}
+.info-trayectorias {
+    margin: 2% 0 2% 0;
+}
+.info-trayectorias td{
+    text-align: center;
+}
+.info-trayectorias .btn.btn-default{
+    margin: auto;
+}
+.capsule.solicitud_re .contenido {
+    width: 90%;
+    margin: auto;
 }

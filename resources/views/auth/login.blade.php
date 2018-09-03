@@ -2,9 +2,9 @@
 @section('title', 'CONDOC | Acceso')
 
 @section('content')
-<div id="is" class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
+<div id="is">
+    {{-- <div class="row"> --}}
+        {{-- <div class="col-md-8 col-md-offset-2"> --}}
             <div class="panel panel-default">
                 <div class="panel-heading">Acceso</div>
 
@@ -58,9 +58,12 @@
                             </div>
                         </div>
                     </form>
+                    @if (Session::has('message'))
+                       <div class="alert alert-info">{{ Session::get('message') }}</div>
+                    @endif
                 </div>
             </div>
-        </div>
-    </div>
+        {{-- </div> --}}
+    {{-- </div> --}}
 </div>
 @endsection

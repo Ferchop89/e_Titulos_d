@@ -41,15 +41,17 @@ class CatalogosSepSeeder extends Seeder
       $datos = $this->instCarrera();
        foreach ($datos as $key => $dato){
          if ( !Carrera::where('CVE_INSTITUCION',$dato[0])->where('CVE_CARRERA',$dato[5])->first() )  {
-           $carrera = new Carrera();
-           $carrera->CVE_INSTITUCION = $dato[0];
-           $carrera->NOMBRE_INSTITUCION = $dato[1];
-           $carrera->TIPO_DE_SOSTENIMIENTO = $dato[2];
-           $carrera->TIPO_EDUCATIVO = $dato[3];
-           $carrera->NIVEL_DE_ESTUDIOS = $dato[4];
-           $carrera->CVE_CARRERA = $dato[5];
-           $carrera->CARRERA = $dato[6];
-           $carrera->save();
+            if($dato[0] == '090001'){
+               $carrera = new Carrera();
+               $carrera->CVE_INSTITUCION = $dato[0];
+               $carrera->NOMBRE_INSTITUCION = $dato[1];
+               $carrera->TIPO_DE_SOSTENIMIENTO = $dato[2];
+               $carrera->TIPO_EDUCATIVO = $dato[3];
+               $carrera->NIVEL_DE_ESTUDIOS = $dato[4];
+               $carrera->CVE_CARRERA = $dato[5];
+               $carrera->CARRERA = $dato[6];
+               $carrera->save();
+            }
          }
        }
        // Archivo _entidades

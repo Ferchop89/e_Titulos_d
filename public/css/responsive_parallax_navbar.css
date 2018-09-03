@@ -1,6 +1,7 @@
 .navbar
 {
-    top: 110px;
+    /* top: 110px; */
+    top: 94px;
 }
 
 @media (max-width: 990px)
@@ -14,6 +15,9 @@
         height: 64px;
 
         background-color: #1c3d6c;
+    }
+    .ubicacion {
+        padding-top: 27px;
     }
 }
 
@@ -40,9 +44,8 @@
 .small-logo-container
 {
     overflow: hidden;
-
-    height: 50px;
-    padding-top: 50px;
+    height: 10px;
+    padding-top: 35px;
 }
 
 .small-logo
@@ -82,7 +85,8 @@ a.small-logo:visited
 
 .big-logo
 {
-    height: 150px;
+    /* height: 150px; */
+    height: 130px;
 }
 
 .big-logo-row
@@ -92,7 +96,8 @@ a.small-logo:visited
 
 .big-logo-row .big-logo-container
 {
-    padding-top: 10px;
+    /* padding-top: 10px; */
+    padding-top: 0;
 }
 
 .big-logo-row h1

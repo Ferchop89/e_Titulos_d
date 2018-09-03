@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
 use App\Models\Menu;
+use Carbon\Carbon;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,9 +17,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-      Schema::defaultStringLength(191);
-      // Data de estructura del menu + items de rutas por role del usuarios autenticado
-      view()->composer('layouts.app', function($view) {
+        Carbon::setLocale('es');
+        setlocale(LC_TIME, 'spanish');
+        Schema::defaultStringLength(191);
+        // Data de estructura del menu + items de rutas por role del usuarios autenticado
+        view()->composer('layouts.app', function($view) {
+        $view ->with([
+          'menus' => Menu::menus() ,
+          'items_role' => Menu::items()
+        ]);
+        // $view->with('menus', Menu::menus());
+      });
+      view()->composer('home', function($view) {
         $view ->with([
           'menus' => Menu::menus() ,
           'items_role' => Menu::items()

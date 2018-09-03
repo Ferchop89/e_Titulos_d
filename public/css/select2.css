@@ -482,3 +482,50 @@
 
 .select2-container--classic.select2-container--open .select2-dropdown {
   border-color: #5897fb; }
+
+    .filtro {
+        width: 70% !important;
+    }
+    .fil{
+        width: 33%;
+        display: inline-block;
+    }
+    .inline {
+        display: inline-block;
+    }
+    .graficos {
+        margin-top: 26px;
+        width: 100%;
+    }
+    .graf-right{
+        display: inline-block;
+        /* width: 49.5%; */
+        width: 39%;
+        border: solid 1px black;
+        padding: 20px;
+    }
+    .graf-left{
+        /* width: 49.5%; */
+        /* height: 446px; */
+        width: 60%;
+        display: inline-block;
+        border: solid 1px black;
+        padding: 20px;
+    }
+    .resumen {
+        border: solid 1px black;
+        width: 99.3%;
+        margin: 0;
+    }
+    .table{
+        margin-bottom: 0;
+    }
+    .row_table {
+        border-right: solid 1px black;
+        width: 8%;
+        font-weight: bold;
+    }
+    .tab_num, . {
+        /* width: 3%; */
+        text-align: right;
+    }

@@ -11,40 +11,12 @@
 |
 */
 
+
+
+
 Route::get('/',function(){
   return view("auth.login");
 });
-
-Route::get('/usuarios','UserController@usuarios')
-      ->name('users')
-      ->middleware('auth');
-
-Route::get('/usuarios/{user}','UserController@ver_usuario')
-      ->where('user','[0-9]+')
-      ->name('users.ver_usuario');
-
-Route::get('/usuarios/{user}/editar',[
-    'uses'=> 'UserController@editar_usuario',
-    'as'=> 'users.editar_usuarios',
-    'middleware' => 'roles',
-    'roles' => ['Admin']
-    ]);
-
-Route::delete('/usuarios/{user}',[
-      'uses' => 'UserController@destroy',
-      'as'   => 'users.destroy'
-    ]);
-
-Route::get('/usuarios/nuevo',[
-  'uses'=> 'UserController@crear_usuario',
-  'as'=> 'users.crear_usuario',
-  'middleware' => 'roles',
-  'roles' => ['Admin']
-  ]);
-
-Route::put('/usuarios/{user}','UserController@update');
-
-Route::post('/usuarios','UserController@store');
 
 Auth::routes();
 
@@ -123,7 +95,11 @@ Route::get('/buscar', 'EtitulosController@searchAlum')
 
 Route::post('/buscar', 'EtitulosController@postSearchAlum');
 
-// Route::post('/facesc/solicitud_RE', 'SolicitudController@postSolicitudRE');
 Route::get('/buscar/{num_cta}', 'EtitulosController@showInfo')
       ->where('num_cta','[0-9]+')
       ->name('eSearchInfo');
+
+Route::get('/solicitud-sep/{num_cta}/{carrera}/{nivel}', 'EtitulosController@existRequest')
+      ->where('num_cta','[0-9]+')
+      ->where('carrera','[0-9]+')
+      ->name('solicitar_SEP');

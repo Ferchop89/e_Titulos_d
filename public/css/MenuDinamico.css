@@ -68,3 +68,15 @@
     ul.menu>.dropdown>a{
       color:white;
     }
+    li.dropdown-header {
+        background-color: cadetblue;
+        color: white;
+        font-weight: bold;
+    }
+.dropdown-menu .divider:first-child
+{
+    margin: 0;
+}
+.dropdown-menu{
+    padding-top: 0;
+}

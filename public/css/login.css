@@ -3,10 +3,12 @@ html,body{
 }
 
 #is {
-  width: 50%;
-  padding-top: 5%;
-  padding-bottom: 5%;
-  text-align: center;
+    min-width: 250px;
+    width: 40%;
+    padding-top: 5%;
+    padding-bottom: 5%;
+    text-align: center;
+    margin: auto;
 }
 
 #btn {
@@ -26,14 +28,41 @@ html,body{
 }
 /* */
 
+/*
 #error {
-  width: 70%; 
-  position:relative; 
+  width: 70%;
+  position:relative;
   left: 15%;
 }
+*/
 
-#general{
-  width: 30%; 
-  position:relative; 
-  left: 10%;
+#error {
+  width: 100%;
+  position: relative;
+  margin-top: 20px;
+}
+
+.form-group.solicitud {
+    width: 75%;
+    margin: auto;
+    padding: 15px 0px 15px 0px;
+}
+.btn-derecha {
+    margin-left: 35%;
+}
+
+input#num_cta {
+    width: 28%;
+    padding: 2px 12px;
+    min-width: 116px;
+    text-align: center;
+    /* display: none; */
+}
+/* .ubicacion {
+    border: solid 1px;
+} */
+
+#no_enc {
+  text-align: center;
+  margin: auto;
 }
