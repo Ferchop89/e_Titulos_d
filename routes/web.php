@@ -10,7 +10,7 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
-
+use GuzzleHttp\Client;
 
 
 
@@ -103,3 +103,41 @@ Route::get('/solicitud-sep/{num_cta}/{carrera}/{nivel}', 'EtitulosController@exi
       ->where('num_cta','[0-9]+')
       ->where('carrera','[0-9]+')
       ->name('solicitar_SEP');
+// Route::get('/resgitroTitulos/request/firma', function(Request $request){
+//    dd($request);
+// });
+Route::get('prueba', function(){
+   $data = '{
+	"name": "Aragorn",
+	"race": "Human"
+}';
+
+$character = json_decode($data);
+dd($character);
+echo $character->name;
+});
+Route::get('/registroTitulos/response/firma', function(){
+      $client = new Client([
+         'base_uri' => 'https://enigma.unam.mx/componentefirma/initSigningProcess',
+         'timeout' => 10.0
+      ]);
+      $datos = "||1.0|3|MUOC810214HCHRCR00|Director de Articulación de Procesos|SECRETARÍA DE EDUCACIÓN|Departamento de Control Escolar|23DPR0749T|005|23|SOSE810201HDFRND05|EDGAR|SORIANO|SANCHEZ|2|7.8|2017-01-01T12:05:00||";
+      $response = $client->request('POST', '/', ['datos' => $datos]);
+      // dd(json_encode($response->getBody()->getContents()));
+      // return json_decode($response->getBody()->getContents());
+});
+Route::get('test', function(){
+   $client   =  new  Client ();
+   $datos = "||1.0|3|MUOC810214HCHRCR00|Director de Articulación de Procesos|SECRETARÍA DE EDUCACIÓN|Departamento de Control Escolar|23DPR0749T|005|23|SOSE810201HDFRND05|EDGAR|SORIANO|SANCHEZ|2|7.8|2017-01-01T12:05:00||";
+   $request  =  $client->createRequest('POST', 'https://enigma.unam.mx/componentefirma/initSigningProcess', ['datos' => $datos ]);
+      try
+      {
+      //    $ respuesta = $cliente->enviar($solicitud);
+      // echo "hola";
+} catch (\GuzzleHttp\Exception\ClientException  $e ) {
+   echo ' Caught response: ' . $e->getResponse()->getStatusCode ();
+   }
+});
+Route::get('test2', 'SelloController@sendingInfo');
+
+   // $datos = "||1.0|3|MUOC810214HCHRCR00|Director de Articulación de Procesos|SECRETARÍA DE EDUCACIÓN|Departamento de Control Escolar|23DPR0749T|005|23|SOSE810201HDFRND05|EDGAR|SORIANO|SANCHEZ|2|7.8|2017-01-01T12:05:00||";

@@ -67,18 +67,11 @@ class EtitulosController extends Controller
       $query .= "WHERE Titulos.tit_ncta = '".$cuenta."' ";
       $query .= "AND Titulos.tit_dig_ver = '".$verif."' ";
       $datos = DB::connection('sybase')->select($query);
-      dd($datos);
+      // dd($datos);
       $info = array();
-      foreach ($datos as $key => $value) {
-         // if($this->consultaSolicitudSep2($cuenta.$verif, $value->tit_plancarr) == false)
-         // {
-            // push()
-            // array_push($info, $value, 'false');
-         // }
-      }
-      dd($info);
+      // dd($info);
 
-      return $info;
+      return $datos;
    }
    public function consultaSolicitudSep2($cuenta, $cveCarrera){
       // $info = DB::connection('condoc_eti')->table('solicitudes_sep')->get();
