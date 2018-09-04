@@ -20,13 +20,15 @@
             <div class="panel panel-default">
                 {{-- <div class="panel-heading">@yield('esp')</div> --}}
                 <div class="panel-body">
-                   <pre>
-                      {{print_r($datos)}}
-                   </pre>
+                   {{-- <pre> --}}
+                     <label for="">Cadena Enviada:</label>
+                      {{$datos}}
+                   {{-- </pre> --}}
+                   <label for="">CURP:</label>
                    {{$curp}}
                    <form name="firma" id="firma" target="frameFEA" action="https://enigma.unam.mx/componentefirma/initSigningProcess" method="POST">
                       <input type="hidden" name="Firmar"   value="si">
-
+                      <input type="hidden" name="URL"      value="<?php echo $URL ?>">
                      <input type="hidden" name="datos" value="{{ $datos }}">
                      <input type="hidden" name="curp" value="{{ $curp }}">
                      <input type="hidden" name="idSesion" value="PHPSESSID=<?php echo $idSesion ?>">
