@@ -138,6 +138,6 @@ Route::get('test', function(){
    echo ' Caught response: ' . $e->getResponse()->getStatusCode ();
    }
 });
-Route::get('test2', 'SelloController@sendingInfo');
+Route::get('/registroTitulos/response/firma', 'SelloController@sendingInfo');
 
    // $datos = "||1.0|3|MUOC810214HCHRCR00|Director de Articulación de Procesos|SECRETARÍA DE EDUCACIÓN|Departamento de Control Escolar|23DPR0749T|005|23|SOSE810201HDFRND05|EDGAR|SORIANO|SANCHEZ|2|7.8|2017-01-01T12:05:00||";
