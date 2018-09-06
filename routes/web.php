@@ -126,18 +126,6 @@ Route::get('/registroTitulos/response/firma', function(){
       // dd(json_encode($response->getBody()->getContents()));
       // return json_decode($response->getBody()->getContents());
 });
-Route::get('test', function(){
-   $client   =  new  Client ();
-   $datos = "||1.0|3|MUOC810214HCHRCR00|Director de Articulación de Procesos|SECRETARÍA DE EDUCACIÓN|Departamento de Control Escolar|23DPR0749T|005|23|SOSE810201HDFRND05|EDGAR|SORIANO|SANCHEZ|2|7.8|2017-01-01T12:05:00||";
-   $request  =  $client->createRequest('POST', 'https://enigma.unam.mx/componentefirma/initSigningProcess', ['datos' => $datos ]);
-      try
-      {
-      //    $ respuesta = $cliente->enviar($solicitud);
-      // echo "hola";
-} catch (\GuzzleHttp\Exception\ClientException  $e ) {
-   echo ' Caught response: ' . $e->getResponse()->getStatusCode ();
-   }
-});
 Route::get('/registroTitulos/response/firma', 'SelloController@sendingInfo');
 
-   // $datos = "||1.0|3|MUOC810214HCHRCR00|Director de Articulación de Procesos|SECRETARÍA DE EDUCACIÓN|Departamento de Control Escolar|23DPR0749T|005|23|SOSE810201HDFRND05|EDGAR|SORIANO|SANCHEZ|2|7.8|2017-01-01T12:05:00||";
+Route::get('test', 'CurpController@validacionCurp');

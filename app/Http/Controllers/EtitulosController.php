@@ -67,7 +67,7 @@ class EtitulosController extends Controller
       $query .= "INNER JOIN Carrprog ON Datos.dat_car_actual = Carrprog.carrp_cve ";
       $query .= "WHERE Titulos.tit_ncta = '".$cuenta."' ";
       $query .= "AND Titulos.tit_dig_ver = '".$verif."' ";
-      $datos = DB::connection('sybase')->select($query);
+      $datos = (array)DB::connection('sybase')->select($query);
       // dd($datos);
       $info = array();
       // dd($info);
