@@ -30,7 +30,8 @@ class EtitulosController extends Controller
    {
       $cuenta = substr($num_cta, 0, 8);
       $verif = substr($num_cta, 8, 1);
-      $foto = $this->consultaFotos($cuenta);
+      // $foto = $this->consultaFotos($cuenta);
+      $foto = null;
       $identidad = $this->consultaDatos($cuenta, $verif);
       if($identidad == null)
       {

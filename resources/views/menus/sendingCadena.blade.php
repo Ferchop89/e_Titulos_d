@@ -15,33 +15,31 @@
     @yield('sub-estilos')
 @endsection
 @section('content')
-    {{-- <h2 id="titulo">{{$title}}</h2> --}}
-    <div id="is" class="container">
-            <div class="panel panel-default">
-                {{-- <div class="panel-heading">@yield('esp')</div> --}}
-                <div class="panel-body">
-                   {{-- <pre> --}}
-                     <label for="">Cadena Enviada:</label>
-                      {{$datos}}
-                   {{-- </pre> --}}
-                   <label for="">CURP:</label>
-                   {{$curp}}
-                   <form name="firma" id="firma" target="frameFEA" action="https://enigma.unam.mx/componentefirma/initSigningProcess" method="POST">
-                      <input type="hidden" name="Firmar"   value="si">
-                      <input type="hidden" name="URL"      value="<?php echo $URL ?>">
-                     <input type="hidden" name="datos" value="{{ $datos }}">
-                     <input type="hidden" name="curp" value="{{ $curp }}">
-                     <input type="hidden" name="idSesion" value="PHPSESSID=<?php echo $idSesion ?>">
-                     <button type="submit" id="btnFirma" class="btn btn-primary">Firmar</button>
-                  </form>
-                </div>
-            </div>
-</div>
-    @yield('errores')
-<div class="capsule informacion-alumno">
-    @yield('identidadAlumno')
-</div>
-<div class="solicitudes">
-    @yield('info-alumno')
-</div>
+   {{-- <h2 id="titulo">{{$title}}</h2> --}}
+   <div id="is" class="container">
+      <div class="panel panel-default">
+          {{-- <div class="panel-heading">@yield('esp')</div> --}}
+         <div class="panel-body">
+            {{-- <pre> --}}
+               <label for="">Cadena Enviada:</label>
+               {{$datos}}
+            {{-- </pre> --}}
+            <label for="">CURP:</label>
+            {{$curp}}
+            <form name="firma" id="firma" target="frameFEA" action="https://enigma.unam.mx/componentefirma/initSigningProcess" method="POST">
+               <input type="hidden" name="datos" value="{{ $datos }}">
+               <input type="hidden" name="URL"      value="{{ $URL }}">
+               <input type="hidden" name="curp" value="{{ $curp }}">
+               <button type="submit" id="btnFirma" class="btn btn-primary">Firmar</button>
+            </form>
+          </div>
+      </div>
+   </div>
+   @yield('errores')
+   <div class="capsule informacion-alumno">
+      @yield('identidadAlumno')
+   </div>
+   <div class="solicitudes">
+      @yield('info-alumno')
+   </div>
 @endsection
