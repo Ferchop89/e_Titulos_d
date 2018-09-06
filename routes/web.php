@@ -127,7 +127,7 @@ Route::get('/registroTitulos/response/firma', function(){
       // return json_decode($response->getBody()->getContents());
 });
 Route::get('/registroTitulos/response/firma', 'SelloController@sendingInfo');
-Route::any('/registroTitulos/request/firma', function(){
+Route::post('/registroTitulos/request/firma?feu=true', function(){
 });
 
 Route::get('test', 'CurpController@validacionCurp');
