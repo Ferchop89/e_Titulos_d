@@ -132,3 +132,5 @@ Route::get('/registroTitulos/request/firma', function(Request $request){
 });
 
 Route::get('test', 'CurpController@validacionCurp');
+
+// Route::all();
