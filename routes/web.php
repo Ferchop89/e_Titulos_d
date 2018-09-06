@@ -127,7 +127,7 @@ Route::get('/registroTitulos/response/firma', function(){
       // return json_decode($response->getBody()->getContents());
 });
 Route::get('/registroTitulos/response/firma', 'SelloController@sendingInfo');
-Route::get('/registroTitulos/request/firma', function(Request $request){
+Route::any('/registroTitulos/request/firma', function(Request $request){
    dd($request);
 });
 
