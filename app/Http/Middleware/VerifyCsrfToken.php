@@ -12,6 +12,11 @@ class VerifyCsrfToken extends Middleware
      * @var array
      */
     protected $except = [
-        //
+      '/registroTitulos/request/firma',
     ];
+    /**
+ * The URIs that should be excluded from CSRF verification.
+ *
+ * @var array
+ */
 }

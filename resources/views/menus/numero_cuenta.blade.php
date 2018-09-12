@@ -56,3 +56,6 @@
     @yield('info-alumno')
 </div>
 @endsection
+@section('animaciones')
+    @yield('sub-animaciones')
+@endsection

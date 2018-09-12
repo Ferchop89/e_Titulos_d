@@ -72,12 +72,5 @@
 
     <link href="{{asset('css/select2.css')}}" rel="stylesheet" />
     <script src="{{asset('js/select2.js')}}"></script>
-
-    <script type="text/JavaScript">
-      $document.ready(function(){
-          $('select').select2();
-      });
-    </script>
-
   </body>
 </html>

@@ -28,29 +28,35 @@
       <div class="info-trayectorias">
             <table class="table table-bordered">
                <thead class="thead-dark bg-primary">
-                  <th scope="col">Nº</th>
-                  <th scope="col">Cve Plantel</th>
-                  <th scope="col">Nombre del Plantel</th>
-                  <th scope="col">Nivel</th>
-                  <th scope="col">Cve Carrera</th>
-                  <th scope="col">Cve Registro SEP</th>
-                  <th scope="col">Nombre Carrera</th>
-                  <th scope="col">Acción</th>
+                  <th class="center" scope="col">Nº</th>
+                  <th class="center" scope="col">Cve Plantel</th>
+                  <th class="center" scope="col">Nombre del Plantel</th>
+                  <th class="center" scope="col">Nivel</th>
+                  <th class="center" scope="col">Cve Carrera</th>
+                  <th class="center" scope="col">Cve Registro SEP</th>
+                  <th class="center" scope="col">Nombre Carrera</th>
+                  <th class="center" scope="col">Acción</th>
                </thead>
                <tbody>
+                  @for($i=0; $i < count($trayectorias); $i++)
+
+                  @endfor
                   @foreach ($trayectorias as $key => $value)
+                     {{-- {{dd($trayectorias, $key)}} --}}
+                     {{-- {{dd($value['tit_plancarr'])}} --}}
                      <tr>
-                           <th>{{$key+1}}</th>
-                           <td>{!! $value->carrp_unidad !!}</td>
-                           <td></td>
-                           <td>{!! $value->tit_nivel !!}</td>
-                           <td>{!! $value->tit_plancarr !!}</td>
-                           <td></td>
-                           <td></td>
-                           <td>
-                              <a href = "{{ route('solicitar_SEP',[ 'numCta'=>$numCta, 'carrera'=>$value->tit_plancarr, 'nivel'=>$value->tit_nivel]) }}"class="btn btn-info">Solicitar</a>
-                           </td>
-                       </tr>
+                        <th class="center">{{$key+1}}</th>
+                        <td>{!! $value['carrp_unidad'] !!}</td>
+                        <td>{!! strtoupper($value['plan_nombre']) !!}</td>
+                        <td>{!! $value['tit_nivel'] !!}</td>
+                        <td>{!! $value['tit_plancarr'] !!}</td>
+                        <td id="solicitud_{{$key}}">{!! $value['solicitud']!!}</td>
+                        <td>{!! $value['solicitud']!!}</td>
+                        {{-- <td>{!! $value->carrera !!}</td> --}}
+                        <td>
+                           <a href = "{{ route('solicitar_SEP',[ 'numCta'=>$numCta, 'nombre'=> $identidad->dat_nombre, 'carrera'=>$value['tit_plancarr'], 'nivel'=>$value['tit_nivel']]) }}"class="btn btn-info">Solicitar</a>
+                        </td>
+                     </tr>
                   @endforeach
                </tbody>
            </table>
@@ -61,4 +67,7 @@
 
 @endif
 
+@endsection
+@section('sub-animaciones')
+   <script src="{{asset('js/solicitud_eTitulos.js')}}"></script>
 @endsection

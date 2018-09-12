@@ -11,7 +11,7 @@
 |
 */
 use GuzzleHttp\Client;
-
+use Illuminate\Http\Request;
 
 
 Route::get('/',function(){
@@ -90,46 +90,47 @@ Route::get('imprimePDF',[
 ]);
 
 
-Route::get('/buscar', 'EtitulosController@searchAlum')
+Route::get('/buscar', 'SolicitudTituloeController@searchAlum')
       ->name('eSearch');
-
-Route::post('/buscar', 'EtitulosController@postSearchAlum');
-
-Route::get('/buscar/{num_cta}', 'EtitulosController@showInfo')
+Route::post('/buscar', 'SolicitudTituloeController@postSearchAlum');
+Route::get('/buscar/{num_cta}', 'SolicitudTituloeController@showInfo')
       ->where('num_cta','[0-9]+')
       ->name('eSearchInfo');
 
-Route::get('/solicitud-sep/{num_cta}/{carrera}/{nivel}', 'EtitulosController@existRequest')
+Route::get('/solicitud-sep/{num_cta}/{nombre}/{carrera}/{nivel}', 'SolicitudTituloeController@existRequest')
       ->where('num_cta','[0-9]+')
       ->where('carrera','[0-9]+')
       ->name('solicitar_SEP');
-// Route::get('/resgitroTitulos/request/firma', function(Request $request){
-//    dd($request);
-// });
-Route::get('prueba', function(){
-   $data = '{
-	"name": "Aragorn",
-	"race": "Human"
-}';
 
-$character = json_decode($data);
-dd($character);
-echo $character->name;
-});
-Route::get('/registroTitulos/response/firma', function(){
-      $client = new Client([
-         'base_uri' => 'https://enigma.unam.mx/componentefirma/initSigningProcess',
-         'timeout' => 10.0
-      ]);
-      $datos = "||1.0|3|MUOC810214HCHRCR00|Director de Articulación de Procesos|SECRETARÍA DE EDUCACIÓN|Departamento de Control Escolar|23DPR0749T|005|23|SOSE810201HDFRND05|EDGAR|SORIANO|SANCHEZ|2|7.8|2017-01-01T12:05:00||";
-      $response = $client->request('POST', '/', ['datos' => $datos]);
-      // dd(json_encode($response->getBody()->getContents()));
-      // return json_decode($response->getBody()->getContents());
-});
 Route::get('/registroTitulos/response/firma', 'SelloController@sendingInfo');
-Route::post('/registroTitulos/request/firma?feu=true', function(){
+Route::post('/registroTitulos/request/firma', function(Request $request){
+   define("PKCS7_HEADER", "-----BEGIN PKCS7-----");
+   $result = "";
+   if(isset($_POST['firmas']))
+   {
+      $result = $_POST['firmas'];
+   }
+   else {
+      echo "Error: No se recibió el resultado de la firma";
+   }
+   // dd($result, strlen(PKCS7_HEADER), substr($result, 0, strlen(PKCS7_HEADER)), PKCS7_HEADER, strpos($result, PKCS7_HEADER), substr($result, strpos($result, PKCS7_HEADER), strlen(PKCS7_HEADER)));
+   if(substr($result, strpos($result, PKCS7_HEADER), strlen(PKCS7_HEADER)) == PKCS7_HEADER) {
+      echo "Firma exitosa";
+   }
+   else {
+      if($result == 102 || $result == 103){
+         $errMsg = "error";
+      }
+      elseif($result >= 104 && $result <= 107){
+         $errMsg = "error";
+      }
+   }
+   dd($request, json_decode($request->firmas)->signatureResults[0], base64_encode(json_decode($request->firmas)->signatureResults[0]));
 });
+
+Route::get('/registroTitulos/verify/firma', 'SelloController@verifySignature');
 
 Route::get('test', 'CurpController@validacionCurp');
 
-// Route::all();
+   Route::get('lista-solicitudes/pendientes', 'SolicitudTituloeController@showPendientes')
+   ->name('solicitudesPendientes');

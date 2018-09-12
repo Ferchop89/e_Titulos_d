@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateEntidadesTable extends Migration
+class CreateCodigosErrorFeuTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,10 @@ class CreateEntidadesTable extends Migration
      */
     public function up()
     {
-        Schema::create('_entidades', function (Blueprint $table) {
-            $table->char('ID_ENTIDAD_FEDERATIVA',2)->unique();
-            $table->string('C_NOM_ENT');
-            $table->string('C_ENTIDAD_ABR');
+        Schema::create('_codigos_error_feu', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('msj_error');
+            $table->string('recomendacion');
         });
     }
 
@@ -27,6 +27,6 @@ class CreateEntidadesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('_entidades');
+        Schema::dropIfExists('_codigos_error_feu');
     }
 }

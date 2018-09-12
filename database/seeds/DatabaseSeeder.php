@@ -25,7 +25,8 @@ class DatabaseSeeder extends Seeder
           '_firmas',
           '_legales',
           '_modos',
-          'solicitudes_sep'
+          'solicitudes_sep',
+          '_codigos_error_feu'
       ]);
       // En este orden porque los roles deben existir antes que los usuarios
         $this->call(CatalogosSepSeeder::class);
@@ -35,6 +36,7 @@ class DatabaseSeeder extends Seeder
         $this->call(MenuSeeder::class);
 
         $this->call(SolicitudesSepSeeder::class);
+        $this->call(CodigosErrorFEUSeeder::class);
     }
 
     public function truncateTables(array $tables){
