@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Entidad extends Model
 {
     protected $table = '_entidades';
-    protected $primaryKey = 'ID_ENTIDAD'; // or null
+    protected $primaryKey = 'pais_cve'; // or null
     public $incrementing = false;
     public $timestamps = false;
 

@@ -1,0 +1,370 @@
+html,body{
+  height: auto;
+}
+
+/*#navegacion {
+  padding-left: 8%;
+  font-size: 100%;
+  border: 1px solid #DCDCDC;
+  background: #F5F5F5;
+}*/
+
+/* consulta RE */
+#general{
+  width: 30%;
+  position:relative;
+  left: 10%;
+}
+
+#error {
+  width: 70%;
+  position:relative;
+  left: 15%;
+  text-align: center;
+}
+/* */
+
+/* Oficinista */
+
+#instrucciones{
+  padding-left: 10%;
+  padding-bottom: 2%;
+  padding-top: 2%;
+  font-size: 17px;
+}
+
+#titulo1{
+  padding-top: 2%;
+  text-align: center;
+}
+
+#instrucciones1{
+  text-align: center;
+  font-size: 17px;
+  padding-bottom: 3%;
+}
+
+.item1 {
+    grid-area: foto;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.item2 { grid-area: datos; }
+
+.item3 { grid-area: historial;}
+
+.item4 { grid-area: academico; }
+
+.grid-container{
+  display: grid;
+  grid-template-areas:
+    'foto foto datos datos historial historial'
+    'foto foto datos datos historial historial'
+    'academico academico academico academico historial historial'
+    'academico academico academico academico historial historial';
+  margin-left: 8%;
+  margin-right: 8%;
+  margin-bottom: 1%;
+}
+
+.grid-container > div {
+  text-align: center;
+  padding: 10px 0;
+  border: 1px solid grey;
+  text-align: left;
+  padding-left: 10%;
+}
+
+.item1 .item2 .item3 .item4 > p {
+  font-size: 45px;
+}
+
+.espe {
+  margin-top: 4%;
+}
+
+.form1 { grid-area: texto; }
+
+.form2 { grid-area: campo; }
+
+.grid-form {
+  display: grid;
+  grid-template-areas:
+    'texto texto texto campo campo campo'
+    'texto texto texto campo campo campo'
+    'texto texto texto campo campo campo';
+}
+
+#texto {
+  padding-left: 5%;
+  text-align: left;
+  font-size: 17px;
+  margin-bottom: 1%;
+  margin-top: 1%;
+}
+
+#campo {
+  width: 50%;
+  padding-right: 5%;
+}
+
+#pocos {
+  min-width: 250px;
+  width: 70%;
+  padding-top: 1%;
+  padding-bottom: 3%;
+  text-align: center;
+  margin: auto;
+}
+
+#texto1 {
+  padding-left: 30%;
+  text-align: left;
+  font-size: 17px;
+  margin-bottom: 1%;
+  margin-top: 1%;
+}
+
+#campo1 {
+  width: 50%;
+  padding-right: 30%;
+  text-align: left;
+}
+
+#irregularidad {
+  padding-right: 5%;
+  text-align: right;
+  color: black;
+}
+
+#genero { padding-left: 8%; }
+
+#firmar {
+  position: relative;
+  width: 42%;
+  padding-left: 25%;
+}
+
+#volver {
+  position: absolute;
+  right: 1px;
+}
+
+.col-sm-8 {
+  font-size: 17px;
+}
+
+.item3 .fa-check-square-o {
+  color:  green;
+  margin-top: 20%;
+  margin-left: 30%;
+}
+
+.item3 input {
+  margin-top: 15%;
+}
+
+.center {
+    width: 45%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: auto;
+    margin-bottom: auto;
+    height: 164px;
+}
+
+/*.center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: auto;
+    margin-bottom: auto;
+    width: 45%;
+}*/
+
+/*.grid-container .item1, .grid-container .item2, .grid-container .item3,
+.grid-info .personal, .grid-info .nacional, .grid-info .academica {
+  padding-top: 6%;
+}*/
+
+.personal { grid-area: alumno; }
+
+.nacional { grid-area: nacimiento; }
+
+.academica { grid-area: trayectoria; }
+
+.grid-info {
+  display: grid;
+  grid-template-areas:
+    'alumno alumno alumno trayectoria trayectoria trayectoria'
+    'alumno alumno alumno trayectoria trayectoria trayectoria'
+    'nacimiento nacimiento nacimiento trayectoria trayectoria trayectoria'
+    'nacimiento nacimiento nacimiento trayectoria trayectoria trayectoria';
+  padding-left: 1px;
+  padding-bottom: 2%;
+}
+
+.grid-info > div {
+  position: static;
+  text-align: center;
+  padding: 10px 0;
+  border: 1px solid grey;
+  text-align: left;
+  padding-left: 8%;
+}
+
+#re_historial {
+  display: block;
+  width: 95%;
+  margin-left: 1px;
+}
+
+#c_datos {
+  width: 84%;
+  margin: auto;
+}
+
+#esc_proc {
+  margin-left: 14%;
+}
+
+.atras {
+  margin-top: 4%;
+  margin-left: 30%;
+}
+
+.botones {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+#detalles {
+  text-align: center;
+  font-size: 12px;
+}
+
+a.disabled {
+    pointer-events: none;
+}
+/* */
+
+/* Documento RE */
+.doc {
+  font-size: 18px;
+  margin: 40px 40px 40px 40px;
+}
+
+
+#top {
+  font-size: 16px;
+  /*margin-left: 30%;*/
+  margin-top: 2%;
+  margin-bottom: 3%;
+}
+
+#cuerpo { text-align: justify; }
+
+#atte { text-align: center; }
+
+#cons { font-weight: bold; }
+
+#firmas_at {
+  display: inline-block;
+  margin: 2%;
+  text-align:center;
+}
+
+.img_firmas {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.documento_are{font-family: Arial, sans-serif;}
+.documento_are p, div, td { font-size:17px; }
+.documento_are b{ font-size:15px; }
+.t_dos { text-align: center; }
+
+.tit_pdf { padding-left: 10%; }
+
+.test {
+    width: 28.3cm;
+    transform: rotate(-60deg);
+    position: absolute;
+    color: silver;
+    font-size: 6.2em;
+    opacity: 0.6;
+    top: 380px;
+    left: -14%;
+}
+
+.info-dictamen {
+  /*background: #B0C4DE;*/
+  background: #1c3d6c;
+  margin: auto;
+  width: 100%;
+  text-align: left;
+  /*color: #c5911f;*/
+  color: #DCDCDC;
+  padding: 1%;
+}
+
+.info-dictamen b {
+  color: white;
+}
+
+.info-error{
+  background: #1c3d6c;
+  margin: auto;
+  width: 40%;
+  color: white;
+  text-align: center;
+  padding: 1%;
+}
+
+.tramite-dictamen{
+  background: #DCDCDC;
+  margin: auto;
+  width: 100%;
+  text-align: center;
+  color: black;
+  padding: 1%;
+}
+
+.der{ text-align: right; }
+.f_izquierda{ width: 10%; margin-left: 88%; }
+.f_derecha{ width: 10%; margin-left: 2%; }
+
+.bAut{
+  display: block;
+  margin-top: 1.5%;
+  margin-left: 90%;
+}
+
+.bAutO{
+  display: block;
+  margin-top: 1.5%;
+  margin-left: 85%;
+}
+/* */
+
+/* AUTORIZACIÓN DE TRANSFERENCIA DE INFORMACIÓN */
+.cont_aut{ margin-bottom: 3%; margin-top: 2%;}
+.ati_vista div, p{font-family: Arial, sans-serif; font-size: 18.5px;}
+.d_m{margin-left: 19%; margin-right: 19%; margin-top: 2%; margin-bottom: 2%;}
+.width_n{width: 83%;}
+.width_c{width: 93%;}
+.width_t{width: 30%;}
+.width_ce{width: 99%;}
+.div_cont{margin-left: 21%; margin-right: 21%;}
+.line{width: 230px; height: 36px; border-bottom: 1px solid black; position: relative;}
+
+/* Documento PDF de la ATI */
+.ati_pdf div, .ati_pdf p, .ati_pdf h1{
+  font-family: Arial, sans-serif; font-size: 11px; margin: 0;
+}
+.ati_pdf br { line-height: 9px;}
+/* */

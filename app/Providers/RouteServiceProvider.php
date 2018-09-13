@@ -41,6 +41,8 @@ class RouteServiceProvider extends ServiceProvider
 
         $this->mapAdminRoutes();
         $this->mapMenuRoutes();
+        $this->mapTitulosRoutes();
+        $this->mapContactosRoutes();
         //
     }
 
@@ -97,6 +99,21 @@ class RouteServiceProvider extends ServiceProvider
     {
         Route::middleware(['web', 'auth'])
              ->namespace($this->namespace)
+             ->prefix('registroTitulos')
              ->group(base_path('routes/menu.php'));
+    }
+    protected function mapTitulosRoutes()
+    {
+        Route::middleware(['web', 'auth'])
+             ->namespace($this->namespace)
+             ->prefix('registroTitulos')
+             ->group(base_path('routes/titulos.php'));
+    }
+    protected function mapContactosRoutes()
+    {
+        Route::middleware(['web', 'auth'])
+             ->namespace($this->namespace)
+             ->prefix('registroTitulos/contactos')
+             ->group(base_path('routes/contactos.php'));
     }
 }

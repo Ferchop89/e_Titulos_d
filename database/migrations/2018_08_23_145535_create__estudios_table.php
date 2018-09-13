@@ -14,7 +14,9 @@ class CreateEstudiosTable extends Migration
     public function up()
     {
         Schema::create('_estudios', function (Blueprint $table) {
-            $table->char('ID_TIPO_ESTUDIO_ANTECEDENTE')->unique();
+            $table->char('cat_subcve', 2)->unique();
+            $table->string('cat_nombre');
+            $table->char('ID_TIPO_ESTUDIO_ANTECEDENTE');
             $table->string('TIPO_ESTUDIO_ANTECEDENTE');
             $table->string('EDUCACION_SUPERIOR');
         });

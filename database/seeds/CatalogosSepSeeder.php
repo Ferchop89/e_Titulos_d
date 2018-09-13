@@ -40,37 +40,24 @@ class CatalogosSepSeeder extends Seeder
       // Archivo _carreras
       $datos = $this->instCarrera();
        foreach ($datos as $key => $dato){
-         if ( !Carrera::where('CVE_INSTITUCION',$dato[0])->where('CVE_CARRERA',$dato[5])->first() )  {
-            if($dato[0] == '090001'){
-               $carrera = new Carrera();
-               $carrera->CVE_INSTITUCION = $dato[0];
-               $carrera->NOMBRE_INSTITUCION = $dato[1];
-               $carrera->TIPO_DE_SOSTENIMIENTO = $dato[2];
-               $carrera->TIPO_EDUCATIVO = $dato[3];
-               $carrera->NIVEL_DE_ESTUDIOS = $dato[4];
-               $carrera->CVE_CARRERA = $dato[5];
-               $carrera->CARRERA = $dato[6];
-               $carrera->save();
+          // Solo elegimos las carreras de la UNAM
+         if($dato[0]=='090001')
+         {
+
+            if ( Carrera::where(['CVE_INSTITUCION'=>'090001', 'CVE_SEP'=>$dato[5] ])->first() != [] ) {
+               break;
             }
+           $carrera = new Carrera();
+           $carrera->CVE_OFICIAL='';
+           $carrera->CVE_INSTITUCION = $dato[0];
+           $carrera->NOMBRE_INSTITUCION = $dato[1];
+           $carrera->TIPO_DE_SOSTENIMIENTO = $dato[2];
+           $carrera->TIPO_EDUCATIVO = $dato[3];
+           $carrera->NIVEL_DE_ESTUDIOS = $dato[4];
+           $carrera->CVE_SEP = $dato[5];
+           $carrera->CARRERA = $dato[6];
+           $carrera->save();
          }
-       }
-       // Archivo _entidades
-       $datos = $this->entidades();
-       foreach ($datos as $key => $dato){
-         $entidad = new Entidad();
-         $entidad->ID_ENTIDAD_FEDERATIVA = $dato[0];
-         $entidad->C_NOM_ENT = $dato[1];
-         $entidad->C_ENTIDAD_ABR = $dato[2];
-         $entidad->save();
-       }
-       // Archivo _estudios
-       $datos = $this->estudios();
-       foreach ($datos as $key => $dato){
-         $estudio = new Estudio();
-         $estudio->ID_TIPO_ESTUDIO_ANTECEDENTE = $dato[0];
-         $estudio->TIPO_ESTUDIO_ANTECEDENTE = $dato[1];
-         $estudio->EDUCACION_SUPERIOR = $dato[2];
-         $estudio->save();
        }
        // Archivo _firmas
        $datos = $this->firmantes();
@@ -89,53 +76,120 @@ class CatalogosSepSeeder extends Seeder
          $legal->save();
        }
        // Archivo _modos
-       $datos = $this->modalidad();
-       foreach ($datos as $key => $dato){
+       $sep = $this->modalidadSep(); // modalidad de titulacion SEP
+       $unam = $this->modalidadUnam(); // modalidad de titulacion UNAM
+       foreach ($unam as $key => $dato){
          $modo = new Modo();
-         $modo->ID_MODALIDAD_TITULACION = $dato[0];
-         $modo->MODALIDAD_TITULACION = $dato[1];
-         $modo->TIPO_DE_MODALIDAD = $dato[2];
+         $modo->cat_subcve = $dato[0];
+         $modo->cat_nombre = $dato[1];
+         $modo->ID_MODALIDAD_TITULACION = $sep[$dato[2]][0];
+         $modo->MODALIDAD_TITULACION = $sep[$dato[2]][1];
+         $modo->TIPO_DE_MODALIDAD = $sep[$dato[2]][2];
          $modo->save();
+       }
+       // Archivo _estudios
+       $sep = $this->estudiosSep();
+       $unam = $this->estudiosUnam();
+       foreach ($unam as $key => $dato){
+         $estudio = new Estudio();
+         $estudio->cat_subcve = $dato[0];
+         $estudio->cat_nombre = $dato[1];
+         $estudio->ID_TIPO_ESTUDIO_ANTECEDENTE = $sep[$dato[2]][0];
+         $estudio->TIPO_ESTUDIO_ANTECEDENTE = $sep[$dato[2]][1];
+         $estudio->EDUCACION_SUPERIOR = $sep[$dato[2]][2];
+         $estudio->save();
+       }
+       // Archivo _entidades
+       $sep = $this->entidadesSep();
+       $unam = $this->entidadesUnam();
+       foreach ($unam as $key => $dato){
+        $entidad = new Entidad();
+        $entidad->pais_cve = $dato[0];
+        $entidad->pais_nombre = $dato[1];
+        $entidad->ID_ENTIDAD_FEDERATIVA = $sep[$dato[2]][0];
+        $entidad->C_NOM_ENT = $sep[$dato[2]][1];
+        $entidad->C_ENTIDAD_ABR = $sep[$dato[2]][2];
+        $entidad->save();
        }
     }
 
-    public function entidades()
+    public function entidadesSep()
     {
       $datos = array();
-      $datos[1] = ['01','AGUASCALIENTES','AGS'];
-      $datos[2] = ['02','BAJA CALIFORNIA','BC'];
-      $datos[3] = ['03','BAJA CALIFORNIA SUR','BCS'];
-      $datos[4] = ['04','CAMPECHE','CAMP'];
-      $datos[5] = ['05','COAHUILA DE ZARAGOZA','COAH'];
-      $datos[6] = ['06','COLIMA','COL'];
-      $datos[7] = ['07','CHIAPAS','CHIS'];
-      $datos[8] = ['08','CHIHUAHUA','CHIH'];
-      $datos[9] = ['09','CIUDAD DE MÉXICO','CDMX'];
-      $datos[10] = ['10','DURANGO','DGO'];
-      $datos[11] = ['11','GUANAJUATO','GTO'];
-      $datos[12] = ['12','GUERRERO','GRO'];
-      $datos[13] = ['13','HIDALGO','HGO'];
-      $datos[14] = ['14','JALISCO','JAL'];
-      $datos[15] = ['15','MÉXICO','MEX'];
-      $datos[16] = ['16','MICHOACÁN DE OCAMPO','MICH'];
-      $datos[17] = ['17','MORELOS','MOR'];
-      $datos[18] = ['18','NAYARIT','NAY'];
-      $datos[19] = ['19','NUEVO LEÓN','NL'];
-      $datos[20] = ['20','OAXACA','OAX'];
-      $datos[21] = ['21','PUEBLA','PUE'];
-      $datos[22] = ['22','QUERÉTARO','QRO'];
-      $datos[23] = ['23','QUINTANA ROO','QROO'];
-      $datos[24] = ['24','SAN LUIS POTOSÍ','SLP'];
-      $datos[25] = ['25','SINALOA','SIN'];
-      $datos[26] = ['26','SONORA','SON'];
-      $datos[27] = ['27','TABASCO','TAB'];
-      $datos[28] = ['28','TAMAULIPAS','TAMPS'];
-      $datos[29] = ['29','TLAXCALA','TLAX'];
-      $datos[30] = ['30','VERACRUZ DE IGNACIO DE LA LLAVE','VER'];
-      $datos[31] = ['31','YUCATÁN','YUC'];
-      $datos[32] = ['32','ZACATECAS','ZAC'];
+      $datos['01'] = ['01','AGUASCALIENTES','AGS'];
+      $datos['02'] = ['02','BAJA CALIFORNIA','BC'];
+      $datos['03'] = ['03','BAJA CALIFORNIA SUR','BCS'];
+      $datos['04'] = ['04','CAMPECHE','CAMP'];
+      $datos['05'] = ['05','COAHUILA DE ZARAGOZA','COAH'];
+      $datos['06'] = ['06','COLIMA','COL'];
+      $datos['07'] = ['07','CHIAPAS','CHIS'];
+      $datos['08'] = ['08','CHIHUAHUA','CHIH'];
+      $datos['09'] = ['09','CIUDAD DE MÉXICO','CDMX'];
+      $datos['10'] = ['10','DURANGO','DGO'];
+      $datos['11'] = ['11','GUANAJUATO','GTO'];
+      $datos['12'] = ['12','GUERRERO','GRO'];
+      $datos['13'] = ['13','HIDALGO','HGO'];
+      $datos['14'] = ['14','JALISCO','JAL'];
+      $datos['15'] = ['15','MÉXICO','MEX'];
+      $datos['16'] = ['16','MICHOACÁN DE OCAMPO','MICH'];
+      $datos['17'] = ['17','MORELOS','MOR'];
+      $datos['18'] = ['18','NAYARIT','NAY'];
+      $datos['19'] = ['19','NUEVO LEÓN','NL'];
+      $datos['20'] = ['20','OAXACA','OAX'];
+      $datos['21'] = ['21','PUEBLA','PUE'];
+      $datos['22'] = ['22','QUERÉTARO','QRO'];
+      $datos['23'] = ['23','QUINTANA ROO','QROO'];
+      $datos['24'] = ['24','SAN LUIS POTOSÍ','SLP'];
+      $datos['25'] = ['25','SINALOA','SIN'];
+      $datos['26'] = ['26','SONORA','SON'];
+      $datos['27'] = ['27','TABASCO','TAB'];
+      $datos['28'] = ['28','TAMAULIPAS','TAMPS'];
+      $datos['29'] = ['29','TLAXCALA','TLAX'];
+      $datos['30'] = ['30','VERACRUZ DE IGNACIO DE LA LLAVE','VER'];
+      $datos['31'] = ['31','YUCATÁN','YUC'];
+      $datos['32'] = ['32','ZACATECAS','ZAC'];
+      $datos['33'] = ['33','EXTRANJERO','OTRO'];
       return $datos;
     }
+    public function entidadesUnam()
+    {
+      $datos = array();
+      $datos[0] = ['00001','AGUASCALIENTES','01'];
+      $datos[1] = ['00002','BAJA CALIFORNIA NORTE','02'];
+      $datos[2] = ['00003','BAJA CALIFORNIA SUR','03'];
+      $datos[3] = ['00004','CAMPECHE','04'];
+      $datos[4] = ['00005','CHIAPAS','07'];
+      $datos[5] = ['00006','CHIHUAHUA','08'];
+      $datos[6] = ['00007','COAHUILA','05'];
+      $datos[7] = ['00008','COLIMA','06'];
+      $datos[8] = ['00009','DISTRITO FEDERAL','09'];
+      $datos[9] = ['00010','DURANGO','10'];
+      $datos[10] = ['00011','GUANAJUATO','11'];
+      $datos[11] = ['00012','GUERRERO','12'];
+      $datos[12] = ['00013','HIDALGO','13'];
+      $datos[13] = ['00014','JALISCO','14'];
+      $datos[14] = ['00015','MEXICO','15'];
+      $datos[15] = ['00016','MICHOACAN','16'];
+      $datos[16] = ['00017','MORELOS','17'];
+      $datos[17] = ['00018','NAYARIT','18'];
+      $datos[18] = ['00019','NUEVO LEON','19'];
+      $datos[19] = ['00020','OAXACA','20'];
+      $datos[20] = ['00021','PUEBLA','21'];
+      $datos[21] = ['00022','QUERETARO','22'];
+      $datos[22] = ['00023','QUINTANA ROO','23'];
+      $datos[23] = ['00024','SAN LUIS POTOSI','24'];
+      $datos[24] = ['00025','SINALOA','25'];
+      $datos[25] = ['00026','SONORA','26'];
+      $datos[26] = ['00027','TABASCO','27'];
+      $datos[27] = ['00028','TAMAULIPAS','28'];
+      $datos[28] = ['00029','TLAXCALA','29'];
+      $datos[29] = ['00030','VERACRUZ','30'];
+      $datos[30] = ['00031','YUCATAN','31'];
+      $datos[31] = ['00032','ZACATECAS','32'];
+      $datos[32] = ['00033','EXTRANJERO','33'];
+      return $datos;
+    }
+
     public function firmantes()
     {
       $datos = array();
@@ -150,7 +204,7 @@ class CatalogosSepSeeder extends Seeder
       $datos[9] = ['9','DIRECTOR GENERAL'];
       return $datos;
     }
-    public function estudios()
+    public function estudiosSep()
     {
       $datos = array();
       $datos[1] = ['1','MAESTRÍA','EDUCACIÓN SUPERIOR'];
@@ -161,7 +215,19 @@ class CatalogosSepSeeder extends Seeder
       $datos[6] = ['6','SECUNDARIA','EDUCACIÓN BÁSICA'];
       return $datos;
     }
-    public function legal()
+    public function estudiosUnam()
+    {
+      $datos = array();
+      $datos[1] = ['01','INICIACION UNIVERSITARIA','6'];
+      $datos[2] = ['02','BACHILLERATO','4'];
+      $datos[3] = ['03','TECNICO','3'];
+      $datos[4] = ['04','TECNICO PROFESIONAL','3'];
+      $datos[5] = ['05','LICENCIATURA','2'];
+      $datos[6] = ['06','LICENCIATURA (SUA)','2'];
+      $datos[7] = ['07','ESPECIALIDAD','1'];
+      $datos[8] = ['08','MAESTRIA','1'];
+      return $datos;
+    }    public function legal()
     {
       $datos = array();
       $datos[1] = ['1','ART. 52 LRART. 5 CONST'];
@@ -171,7 +237,7 @@ class CatalogosSepSeeder extends Seeder
       $datos[5] = ['5','NO APLICA'];
       return $datos;
     }
-    public function modalidad()
+    public function modalidadSep()
     {
       $datos = array();
       $datos[1] = ['1','POR TESIS','ACTA DE EXAMEN'];
@@ -182,6 +248,23 @@ class CatalogosSepSeeder extends Seeder
       $datos[6] = ['6','OTRO','CONSTANCIA DE EXENCIÓN'];
       return $datos;
     }
+    public function modalidadUnam()
+    {
+      $datos = array();
+      $datos[0]  = ['01','TESIS O TESINA Y EXAMEN PROF','1'];
+      $datos[1]  = ['02','ACTIVIDAD DE INVESTIGACION','6'];
+      $datos[2]  = ['03','SEMINARIO DE TESIS O TESINA','1'];
+      $datos[3]  = ['04','EXAMEN GENERAL DE CONOCIMIENTOS','6'];
+      $datos[4]  = ['05','CREDITOS Y ALTO NIVEL ACADEMICO','2'];
+      $datos[5]  = ['06','ACTIVIDAD DE APOYO A LA DOCENCIA','6'];
+      $datos[6]  = ['07','TRABAJO PROFESIONAL','4'];
+      $datos[7]  = ['08','ESTUDIOS EN POSGRADO','3'];
+      $datos[8]  = ['09','AMPLIACION Y PROF DE CONOCIMIENTOS','6'];
+      $datos[9]  = ['10','SERVICIO SOCIAL','6'];
+      $datos[10] = ['11','otros','6'];
+      return $datos;
+    }
+
     public function autorizacion()
     {
       $datos = array();

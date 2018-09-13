@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Estudio extends Model
 {
     protected $table = '_estudios';
-    protected $primaryKey = 'ID_TIPO_ESTUDIO_ANTECEDENTE'; // or null    
+    protected $primaryKey = 'cat_subcve'; // or null    
     public $incrementing = false;
     public $timestamps = false;
 }

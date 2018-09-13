@@ -22,7 +22,7 @@ class WSController extends Controller
                 'exceptions' => true
              );
             $client = new SOAPClient($wsdl, $opts);
-            dd($client);
+            // dd($client);
             // dd($client->__getFunctions());
             // dd($client->__getTypes());
             $response = $client->consultarPorCurp(['cveCurp' => $curp]);
