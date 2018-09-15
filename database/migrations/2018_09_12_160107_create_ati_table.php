@@ -16,14 +16,16 @@ class CreateAtiTable extends Migration
         Schema::create('ati', function (Blueprint $table) {
             $table->charset = 'utf8';
             $table->collation = 'utf8_spanish_ci';
-            $table->increments('id');
-            $table->string('nombre_completo');
-            $table->string('curp');
-            $table->string('tel_fijo');
-            $table->string('tel_celular');
-            $table->string('correo');
-            $table->boolean('autoriza')->default(false);
             $table->string('num_cta', 9);
+            $table->string('password');
+            $table->string('nombre_completo');
+            $table->string('curp')->nullable();
+            $table->string('tel_fijo')->nullable();
+            $table->string('tel_celular')->nullable();
+            $table->string('correo')->nullable();
+            $table->boolean('autoriza')->default(false);
+            $table->boolean('activo')->default(true);
+            $table->date('fecha_nac');
             $table->timestamps();
         });
     }

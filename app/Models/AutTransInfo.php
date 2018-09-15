@@ -2,19 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class AutTransInfo extends Model
+class AutTransInfo extends Authenticatable
 {
+   protected $guard = 'students';
+
    protected $connection = 'condoc_eti';
+   protected $primaryKey = 'num_cta';
    protected $table = 'ati';
-   protected $fillable = [
-      'id',
-      'nombre_completo',
-      'curp',
-      'tel_fijo',
-      'tel_celular',
-      'correo',
-      'autoriza'
-   ];
+   //    'nombre_completo',
+   //    'curp',
+   //    'tel_fijo',
+   //    'tel_celular',
+   //    'correo',
+   //    'autoriza'
+   // ];
 }

@@ -13,7 +13,7 @@
 @section('content')
 <div class="container">
     <div class="d-flex justify-content-between align-items-end mb-3">
-        <h2 id="titulo">{{$title.": ".$lists->count()}}</h2>
+        <h2 id="titulo">{{$title.": ".$total}}</h2>
         {{-- <p class="button">
             <a href="{{ route('admin/usuarios/nuevo') }}" class="btn btn-primary">Nuevo Usuario</a>
         </p> --}}
@@ -35,8 +35,8 @@
             @foreach($lists as $list)
                 <tr>
                     <th scope="row">{!! $list->id !!}</th>
-                    <td>{!! $list->cuenta !!}</td>
-                    <td>{!! $list->nombre_compl !!}</td>
+                    <td>{!! $list->num_cta !!}</td>
+                    <td>{!! $list->nombre_completo !!}</td>
                     <td>{!! $list->nivel !!}</td>
                     <td>{!! $list->cve_carrera !!}</td>
                     <td>

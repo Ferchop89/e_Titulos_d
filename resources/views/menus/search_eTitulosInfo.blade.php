@@ -46,7 +46,7 @@
                      {{-- {{dd($value['tit_plancarr'])}} --}}
                      <tr>
                         <th class="center">{{$key+1}}</th>
-                        <td>{!! $value['carrp_unidad'] !!}</td>
+                        <td>{!! $value['carrp_plan'] !!}</td>
                         <td>{!! strtoupper($value['plan_nombre']) !!}</td>
                         <td>{!! $value['tit_nivel'] !!}</td>
                         <td>{!! $value['tit_plancarr'] !!}</td>

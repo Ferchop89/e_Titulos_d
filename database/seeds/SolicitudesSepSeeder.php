@@ -13,7 +13,7 @@ class SolicitudesSepSeeder extends Seeder
    public function run()
    {
       $solicitud = new SolicitudSep();
-      $solicitud->cuenta = '307255482';
+      $solicitud->num_cta = '307255482';
       $solicitud->nivel = '05';
       $solicitud->cve_carrera = '00531';
       $solicitud->cve_registro_sep = '000000';

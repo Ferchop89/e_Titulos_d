@@ -45,5 +45,20 @@ Route::get('/buscar', [
       'middleware' => 'roles',
       'roles' => ['Admin']
    ]);
-
-   
+Route::get('/buscar/fecha', [
+      'uses' => 'SolicitudTituloeController@searchAlumDate',
+      'as' => 'eSearchDate',
+      'middleware' => 'roles',
+      'roles' => ['Admin']
+]);
+Route::post('/buscar/fecha', [
+   'uses' => 'SolicitudTituloeController@postSearchAlumDate',
+   'middleware' => 'roles',
+   'roles' => ['Admin']
+]);
+Route::get('/buscar/fecha/{fecha}', [
+   'uses' => 'SolicitudTituloeController@showInfoDate',
+   'as' => 'eSearchInfoDate',
+   'middleware' => 'roles',
+   'roles' => ['Admin']
+]);

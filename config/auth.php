@@ -45,6 +45,16 @@ return [
             'driver' => 'passport',
             'provider' => 'users',
         ],
+
+        'student' => [
+            'driver' => 'session',
+            'provider' => 'students',
+        ],
+
+        'student-api' => [
+            'driver' => 'passport',
+            'provider' => 'students',
+        ],
     ],
 
     /*
@@ -70,10 +80,10 @@ return [
             'model' => App\Models\User::class,
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'students' => [
+            'driver' => 'eloquent',
+            'table' => App\Models\AutTransInfo::class,
+        ],
     ],
 
     /*

@@ -22,7 +22,7 @@
         <link href="{{ asset('css/estilo_dgae.css') }}" rel="stylesheet">
         <link href="{{ asset('css/login.css') }}" rel="stylesheet">
         <link href="{{ asset('css/MenuDinamico.css') }}" rel="stylesheet">
-        <link href="{{ asset('css/rev_estudios.css') }}" rel="stylesheet">
+        {{-- <link href="{{ asset('css/rev_estudios.css') }}" rel="stylesheet"> --}}
         <!-- Sección: estilos -->
         @yield('estilos')
         <script>

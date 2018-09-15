@@ -25,9 +25,13 @@ Route::get('/home', [
 ]);
 Route::get('/test', function(){
    $ws=new WSController();
-   $ws->ws_RENAPO('PAEF890101HDFCSRL07');
+   // $ws->ws_RENAPO('MIVL840216HMSRZR09');
+   $ws->ws_RENAPO('PAEF890101HDFCSR07');
 
-
+});
+Route::get('/test2', function(){
+   $ws=new WSController();
+   $ws->ws_DGIRE('305016614');
 });
 // Route::get('/m1',[
 //   'uses'=> 'RutasController@Menu1',
@@ -130,4 +134,4 @@ Route::post('/registroTitulos/request/firma', function(Request $request){
 
 Route::get('/registroTitulos/verify/firma', 'SelloController@verifySignature');
 
-Route::get('test', 'CurpController@validacionCurp');
+// Route::get('test', 'CurpController@validacionCurp');
