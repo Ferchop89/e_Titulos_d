@@ -1,6 +1,5 @@
 @extends('layouts.app')
 @section('title', 'CONDOC | Acceso')
-
 @section('content')
 <div id="is">
     {{-- <div class="row"> --}}
@@ -11,7 +10,6 @@
                 <div class="panel-body">
                     <form class="form-horizontal" method="POST" action="{{ route('login') }}">
                         {{ csrf_field() }}
-
                         <div class="form-group{{ $errors->has('username') ? ' has-error' : '' }}">
                             <label for="username" class="col-md-4 control-label">Alias</label>
 

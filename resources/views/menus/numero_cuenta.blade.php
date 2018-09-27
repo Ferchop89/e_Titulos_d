@@ -7,7 +7,7 @@
         <p id="navegacion">
             <a href="{{ route('home') }}"><i class="fa fa-home" style="font-size:28px"></i></a>
             <a href="#"><span> >> </span>
-            <span> </span> Licenciatura </a> >>
+            <span> </span> </a> >>
             <a href="#"> {{$title}} </a> </p>
     </div>
 @endsection

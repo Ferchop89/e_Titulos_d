@@ -1,0 +1,75 @@
+.right {
+   width: 40%;
+   text-align: right;
+}
+select[multiple], select[size] {
+   height: 66px;
+   border: solid 1px;
+}
+
+
+.table.table-striped.table-dark {
+
+    font-weight: bold;
+
+}
+.Table
+{
+   display: table;
+}
+.Title
+{
+   display: table-caption;
+   text-align: center;
+   font-weight: bold;
+   font-size: larger;
+}
+.Heading
+{
+   display: table-row;
+   font-weight: bold;
+   text-align: center;
+}
+.Row
+{
+   display: table-row;
+}
+.Cell
+{
+   display: table-cell;
+   border: solid;
+   border-width: thin;
+   padding-left: 5px;
+   padding-right: 5px;
+}
+.Cell.id {
+   width: 92px;
+}
+.Cell.cta {
+   width: 102px;
+}
+.Cell.name {
+   width: 374px;
+}
+.Cell.date {
+   width: 104px;
+}
+.Cell.book {
+   width: 140px;
+}
+.Cell.level {
+   width: 60px;
+}
+.Cell.cve {
+   width: 100px;
+}
+.Cell.nError {
+   width: 77px;
+}
+.Cell.btns {
+    width: 91px;
+    display: inline-block;
+}
+.panel-collapse {
+    border: solid 1px black;
+}

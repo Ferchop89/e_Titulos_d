@@ -15,7 +15,7 @@ use App\Http\Traits\Consultas\XmlCadenaErrores;
 
 class EtitulosController extends Controller
 {
-   use SharePost,XmlCadenaErrores;
+   use XmlCadenaErrores;
 
    public function searchAlum()
    {
@@ -52,7 +52,6 @@ class EtitulosController extends Controller
       // Obención de los Errores.
       $errores = (isset($datos[1])==null)? 'Sin errores': $datos[1] ;
       // verificación de invasion de fechas.
-
       dd($cadenaOriginal,$toXml->xml(),$errores);
     }
     // Generacion de la Cadena Original

@@ -15,6 +15,7 @@
     @yield('sub-estilos')
 @endsection
 @section('content')
+   {{-- {{dd($user)}} --}}
    {{-- <h2 id="titulo">{{$title}}</h2> --}}
    <div id="is" class="container">
       <div class="panel panel-default">

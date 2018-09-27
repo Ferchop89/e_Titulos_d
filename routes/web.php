@@ -13,16 +13,27 @@ use App\Http\Controllers\Admin\WSController;
 */
 use Illuminate\Http\Request;
 
-Route::get('/',function(){
-  return view("auth.login");
+// Route::get('/',function(){
+//   return view("auth.login");
+// });
+//
+Route::get('/', function () {
+    return redirect('/login');
 });
+// Route::get('/login', function () {
+//     return redirect('/registroTitulos/contactos/login');
+// });
 
 Auth::routes();
 
-Route::get('/home', [
-  'uses' => 'HomeController@index',
-  'as'   => 'home'
-]);
+
+//Alumnos Login
+Route::get('alumnos/login', 'Alumno\LoginController@showLoginForm')->name('alumno.login');
+Route::post('alumnos/login', 'Alumno\LoginController@login');
+Route::post('alumnos/logout', 'Alumno\LoginController@logout')->name('alumno.logout');
+
+
+
 Route::get('/test', function(){
    $ws=new WSController();
    // $ws->ws_RENAPO('MIVL840216HMSRZR09');
@@ -108,7 +119,7 @@ Route::get('/buscar/{num_cta}', 'EtitulosController@showInfo')
       ->name('eSearchInfo');
 
 Route::get('/registroTitulos/response/firma', 'SelloController@sendingInfo');
-Route::post('/registroTitulos/request/firma', function(Request $request){
+Route::post('/registroTitulos/response/firma', function(Request $request){
    define("PKCS7_HEADER", "-----BEGIN PKCS7-----");
    $result = "";
    if(isset($_POST['firmas']))
@@ -135,3 +146,37 @@ Route::post('/registroTitulos/request/firma', function(Request $request){
 Route::get('/registroTitulos/verify/firma', 'SelloController@verifySignature');
 
 // Route::get('test', 'CurpController@validacionCurp');
+
+// Route::get('/contactos/ati', 'AutorizacionController@showATI');
+// Route::post('/contactos/ati', 'AutorizacionController@postATI');
+// Route::get('/contactos/imprimePDF_ATI',[
+//     'uses'=> 'AutorizacionController@PdfAutTransInfo',
+//     'as'=> 'imprimePDF_ATI',
+//     // 'middleware' => 'roles',
+//     // 'roles' => ['Invit', 'Admin']
+//   ]);
+
+// Route::get('/registroTitulos/contactos/login', 'AutTransInfo\LoginController@showLoginForm')->name('login');
+
+Route::get('filtraCedula',[
+  'uses'=> 'SolicitudTituloeController@showPendientes',
+  'as'=> 'filtraCedula',
+  'middleware' => 'roles',
+  'roles' => ['Admin']
+]);
+Route::get('infoCedula/{cuenta}/{carrera}',[
+   'uses'=> 'SolicitudTituloeController@infoCedula',
+   'as'=> 'infoCedula',
+   'middleware' => 'roles',
+   'roles' => ['Admin']
+]);
+Route::get('infoCedula/{ids}',[
+   'uses'=> 'SolicitudTituloeController@infoCedulaId',
+   'middleware' => 'roles',
+   'roles' => ['Admin']
+]);
+Route::post('registroTitulos/firma', [
+   'uses'=> 'SolicitudTituloeController@nameButton',
+   'middleware' => 'roles',
+   'roles' => ['Admin']
+]);

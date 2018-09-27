@@ -21,10 +21,17 @@ class CreateSolicitudesSepTable extends Migration
             $table->string('nombre_completo', 200);
             $table->string('nivel', 2);
             $table->string('cve_carrera', 10);
-            $table->string('cve_registro_sep', 10);
+            $table->DateTime('fec_emision_tit');
+            $table->string('libro', 4);
+            $table->string('foja', 4);
+            $table->string('folio', 15);
+            $table->text('datos')->nullable();
+            $table->text('errores')->nullable();
+            $table->char('status',2)->nullable();
+            $table->DateTime('fecha_lote')->nullable();
             $table->unsignedInteger('user_id');
             $table->timestamps();
-            //Llaver foraneas
+            //Llaves foraneas
             $table->foreign('user_id')->references('id')->on('users');
         });
     }

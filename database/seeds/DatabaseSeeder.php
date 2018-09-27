@@ -39,6 +39,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call(SolicitudesSepSeeder::class);
         $this->call(CodigosErrorFEUSeeder::class);
+        $this->call(StatusCedulaSeeder::class);
     }
 
     public function truncateTables(array $tables){

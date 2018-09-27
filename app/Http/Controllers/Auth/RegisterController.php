@@ -77,7 +77,7 @@ class RegisterController extends Controller
     // funciones para inhabilitar el registro de nuevos usuarios
     public function showRegistrationForm()
     {
-        return redirect('login');
+        // return redirect('login');
     }
     public function register(Request $request)
     {

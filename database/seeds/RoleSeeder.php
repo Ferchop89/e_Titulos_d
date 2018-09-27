@@ -21,5 +21,8 @@ class RoleSeeder extends Seeder
          $JArea =    new Role();$JArea->nombre = 'JArea';$JArea->descripcion = 'DCerConDoc';$JArea->save();
          $Ofnista =  new Role();$Ofnista->nombre = 'Ofisi';$Ofnista->descripcion = 'DCerConDoc';$Ofnista->save();
          $Invitado = new Role();$Invitado->nombre = 'Invit';$Invitado->descripcion = 'Invitado';$Invitado->save();
+         $Director = new Role();$Director->nombre = 'Director';$Director->descripcion = 'Director DGAE';$Director->save();
+         $SecGral =  new Role();$SecGral->nombre = 'SecGral';$SecGral->descripcion = 'Secretario General';$SecGral->save();
+         $Rector =   new Role();$Rector->nombre = 'Rector';$Rector->descripcion = 'Rector UNAM';$Rector->save();
        }
 }

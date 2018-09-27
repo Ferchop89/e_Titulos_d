@@ -25,27 +25,37 @@ class UserSeeder extends Seeder
           $role=Role::where('nombre','Admin')->first();
           $user->roles()->attach($role);
 
-          // Agregamos 49 usuarios fake
-          factory(User::class,49)->create();
-          // Le damos mas peso al role de FacEsc
-          $roles_w = [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,4,5,6,7,8,9];
-          // Les agregamos hasta cinco roles de forma aleatoria
-          for ($i=0; $i < 5 ; $i++) {
-            $users = User::all();
-            foreach ($users as $user) {
-              $RandRole = $roles_w[rand(0,count($roles_w)-1)];
-              if ($user->roles()->where('role_id',$RandRole)->count()===0 && rand(0,1) ){
-                $user->roles()->attach($RandRole);
-              }
-            }
-          }
-          //Actualizamos procedencia_id usuarios que no tengan FacEsc
-          $users = User::all();
-          foreach ($users as $user) {
-            if (!$user->hasRole('FacEsc')) {
-              $user->procedencia_id = '1'; // UNAM
-              $user->save();
-            }
-          }
+          $user = new User();
+          $user->name = '';
+          $user->username = 'Directora';
+          $user->email = NULL;
+          $user->procedencia_id = '1';
+          $user->password = bcrypt('d1rDGAE');
+          $user->is_active = true;
+          $user->save();
+          $role=Role::where('nombre','Director')->first();
+          $user->roles()->attach($role);
+
+          $user = new User();
+          $user->name = '';
+          $user->username = 'Secretario';
+          $user->email = NULL;
+          $user->procedencia_id = '1';
+          $user->password = bcrypt('SecgRaL');
+          $user->is_active = true;
+          $user->save();
+          $role=Role::where('nombre','SecGral')->first();
+          $user->roles()->attach($role);
+
+          $user = new User();
+          $user->name = '';
+          $user->username = 'Rector';
+          $user->email = NULL;
+          $user->procedencia_id = '1';
+          $user->password = bcrypt('R3CT0R');
+          $user->is_active = true;
+          $user->save();
+          $role=Role::where('nombre','Rector')->first();
+          $user->roles()->attach($role);
     }
 }

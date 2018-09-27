@@ -350,21 +350,3 @@ a.disabled {
   margin-left: 85%;
 }
 /* */
-
-/* AUTORIZACIÓN DE TRANSFERENCIA DE INFORMACIÓN */
-.cont_aut{ margin-bottom: 3%; margin-top: 2%;}
-.ati_vista div, p{font-family: Arial, sans-serif; font-size: 18.5px;}
-.d_m{margin-left: 19%; margin-right: 19%; margin-top: 2%; margin-bottom: 2%;}
-.width_n{width: 83%;}
-.width_c{width: 93%;}
-.width_t{width: 30%;}
-.width_ce{width: 99%;}
-.div_cont{margin-left: 21%; margin-right: 21%;}
-.line{width: 230px; height: 36px; border-bottom: 1px solid black; position: relative;}
-
-/* Documento PDF de la ATI */
-.ati_pdf div, .ati_pdf p, .ati_pdf h1{
-  font-family: Arial, sans-serif; font-size: 11px; margin: 0;
-}
-.ati_pdf br { line-height: 9px;}
-/* */

@@ -134,9 +134,27 @@
                         <!-- Right Side Of Navbar -->
                         <ul class="nav navbar-nav navbar-right">
                             <!-- Authentication Links -->
-                            @guest
-                                <li><a id="btn" href="{{ route('login') }}">Iniciar sesión</a></li>
-                            @else
+                            @if(Auth::guard('alumno')->user())
+                                <li class="dropdown">
+                                    <a id="btn" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true">
+                                        {{ Auth::guard('alumno')->user()->nombres }} <span class="caret"></span>
+                                    </a>
+
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a href="{{ route('logout') }}"
+                                                onclick="event.preventDefault();
+                                                         document.getElementById('logout-form').submit();">
+                                                Cerrar sesión
+                                            </a>
+
+                                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: block; color: black;">
+                                                {{ csrf_field() }}
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </li>
+                            @elseif(Auth::guard('web')->user())
                                 <li class="dropdown">
                                     <a id="btn" href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true">
                                         {{ Auth::user()->name }} <span class="caret"></span>
@@ -156,7 +174,11 @@
                                         </li>
                                     </ul>
                                 </li>
-                            @endguest
+                            @else
+                              <li><a id="btn" href="{{ route('alumno.login') }}">Iniciar sesión</a></li>
+                            @endif
+
+
                         </ul>
                     </div>
                     <!-- /Sección: Navegación -->

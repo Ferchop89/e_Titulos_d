@@ -33,7 +33,6 @@
                   <th class="center" scope="col">Nombre del Plantel</th>
                   <th class="center" scope="col">Nivel</th>
                   <th class="center" scope="col">Cve Carrera</th>
-                  <th class="center" scope="col">Cve Registro SEP</th>
                   <th class="center" scope="col">Nombre Carrera</th>
                   <th class="center" scope="col">Acción</th>
                </thead>
@@ -50,7 +49,7 @@
                         <td>{!! strtoupper($value['plan_nombre']) !!}</td>
                         <td>{!! $value['tit_nivel'] !!}</td>
                         <td>{!! $value['tit_plancarr'] !!}</td>
-                        <td id="solicitud_{{$key}}">{!! $value['solicitud']!!}</td>
+                        {{-- <td id="solicitud_{{$key}}">{!! $value['solicitud']!!}</td> --}}
                         <td>{!! $value['solicitud']!!}</td>
                         {{-- <td>{!! $value->carrera !!}</td> --}}
                         <td>

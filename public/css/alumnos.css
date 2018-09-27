@@ -1,0 +1,125 @@
+/*alumnos/login*/
+input#num_cta{
+   width: 100%;
+   text-align: left;
+}
+.login-form .icon-uno{
+  width: 34px;
+  height: 32px;
+  background-image: url("../images/login.png");
+  background-repeat: no-repeat;
+  background-color: #cccccc;
+}
+.login-form .icon-dos{
+  width: 34px;
+  height: 32px;
+  background-image: url("../images/pass.png");
+  background-repeat: no-repeat;
+  background-color: #cccccc;
+}
+
+.input-group-addon.input-group-addon-custom {
+    padding: 0px 12px;
+    background-color: white;
+}
+/* AUTORIZACIÓN DE TRANSFERENCIA DE INFORMACIÓN */
+/*alumnos/ati*/
+.cont_aut{
+   margin-bottom: 3%;
+   margin-top: 2%;
+}
+.ati_vista div, p{
+   font-family: Arial, sans-serif;
+   font-size: 18.5px;
+}
+.d_m{
+   margin-left: 19%;
+   margin-right: 19%;
+   margin-top: 2%;
+   margin-bottom: 2%;
+}
+.width_n{
+   width: 83%;
+}
+.width_c{
+   width: 93%;
+}
+.width_t{
+   width: 30%;
+}
+.width_ce{
+   width: 99%;
+}
+.div_cont{
+   width: 80%;
+   margin: auto;
+   margin-top: 50px;
+}
+.bloque{
+   height: 1px;
+   background-color: black;
+}
+.line{
+   width: 300px;
+   height: 1px;
+   background-color: black;
+   position: relative;
+   left: 27%;
+}
+.mayus{
+   text-transform: uppercase;
+}
+
+/* Documento PDF de la ATI */
+.ati_pdf h1{ font-size: 14px; }
+
+.ati_pdf div, .ati_pdf p, .tabla_i td
+{
+   font-family: Arial, sans-serif;
+   font-size: 12.5px;
+   margin: 0;
+}
+.ati_pdf br, .ati_pdf hr {
+   line-height: 14px;
+}
+.cont_aut .date{
+   text-align: right;
+}
+.cont_aut .form{
+   width: 80%;
+   margin: auto;
+}
+.cont_aut .nota, .cont_aut .correo {
+    color: #00a5ff;
+}
+.cont_aut #plantel {
+    width: 50%;
+    display: inline-table;
+    background-color: lightblue;
+}
+.help-block{ color: #B22222; font-size: 15px;}
+
+.table-header td{
+  font-family: 'arial';
+  font-size: 2px;
+}
+
+.dup p{ font-size: 15px; }
+.tabla, .tabla_i { width: 100%; }
+.pdf_c p { font-size: 12.5px; }
+
+.uni_na {
+  position: absolute;
+  right: 0;
+}
+.sub{
+   font-size:5px;
+}
+
+.info_alumno br{ line-height: 6px; }
+
+.super{
+  vertical-align:super;
+  font-size: 10px;
+  font-weight: bold;
+}

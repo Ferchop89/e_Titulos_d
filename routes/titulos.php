@@ -45,6 +45,12 @@ Route::get('/buscar', [
       'middleware' => 'roles',
       'roles' => ['Admin']
    ]);
+   Route::get('prueba', [
+      'uses' => 'PruebasController@showPendientes',
+      'as' => 'Pruebas',
+      'middleware' => 'roles',
+      'roles' => ['Admin']
+   ]);
 Route::get('/buscar/fecha', [
       'uses' => 'SolicitudTituloeController@searchAlumDate',
       'as' => 'eSearchDate',
@@ -61,4 +67,15 @@ Route::get('/buscar/fecha/{fecha}', [
    'as' => 'eSearchInfoDate',
    'middleware' => 'roles',
    'roles' => ['Admin']
+]);
+Route::get('firmas',[
+  'uses' => 'FirmasCedulaController@showFirmasP',
+  'as' => 'firmas',
+  'middleware' => 'roles',
+  'roles' => ['Admin'] //DIRECTORA, SECRETARIO Y RECTOR
+]);
+
+Route::get('/home', [
+  'uses' => 'HomeController@index',
+  'as'   => 'home'
 ]);

@@ -23,7 +23,11 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+         Route::macro('catch', function ($action) {
+             $this->any('{anything}', $action)
+                ->where('anything', '.*')
+                ->fallback();
+         });
 
         parent::boot();
     }
@@ -35,14 +39,15 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function map()
     {
-        $this->mapApiRoutes();
+        // $this->mapApiRoutes();
+        $this->mapAdminRoutes();
 
         $this->mapWebRoutes();
 
-        $this->mapAdminRoutes();
-        $this->mapMenuRoutes();
         $this->mapTitulosRoutes();
-        $this->mapContactosRoutes();
+
+        $this->mapMenuRoutes();
+
         //
     }
 
@@ -67,13 +72,13 @@ class RouteServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    protected function mapApiRoutes()
-    {
-        Route::prefix('api')
-             ->middleware('api')
-             ->namespace($this->namespace)
-             ->group(base_path('routes/api.php'));
-    }
+    // protected function mapApiRoutes()
+    // {
+    //     Route::prefix('api')
+    //          ->middleware('api')
+    //          ->namespace($this->namespace)
+    //          ->group(base_path('routes/api.php'));
+    // }
     /**
      * Define the "admin" routes for the application.
      *
@@ -97,23 +102,16 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapMenuRoutes()
     {
-        Route::middleware(['web', 'auth'])
+        Route::middleware('web')
              ->namespace($this->namespace)
-             ->prefix('registroTitulos')
+             ->prefix('/alumnos')
              ->group(base_path('routes/menu.php'));
     }
     protected function mapTitulosRoutes()
     {
         Route::middleware(['web', 'auth'])
              ->namespace($this->namespace)
-             ->prefix('registroTitulos')
+             ->prefix('/registroTitulos')
              ->group(base_path('routes/titulos.php'));
-    }
-    protected function mapContactosRoutes()
-    {
-        Route::middleware(['web', 'auth'])
-             ->namespace($this->namespace)
-             ->prefix('registroTitulos/contactos')
-             ->group(base_path('routes/contactos.php'));
     }
 }

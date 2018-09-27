@@ -27,14 +27,20 @@ class WSController extends Controller
                 'exceptions' => true
              );
              // $curp = "PAEF890101HDFCSR07@|305016614@|PACHECO@|ESTRADA@|FERNANDO@|H@|01/01/1989@|DF@|@|@|@|@|@|@|@|@|@|@|@|@|@|@|@|";
-             $curp = '';
             $client = new SOAPClient($wsdl, $opts);
             // dd($client);
+            $datos=[
+               'datos' => [
+                     'cveCurp' => $curp,
+                     ]
+            ];
+            // dd($datos);
             // dd($client->__getFunctions());
             // dd($client->__getTypes());
-            $response = $client->consultarPorCurp('A');
+            $response = $client->consultarPorCurp($datos);
             // $response = $client->consultarCurpDetalle(['cveAlfaEntFedNac' => 'DF', 'fechaNacimiento' => '01/01/1989', 'nombre' => 'FERNANDO', 'primerApellido' => 'PACHECO', 'segundoApellido' => 'ESTRADA', 'sexo' => 'H']);
-            dd($response, $curp);
+            // dd($response, $curp);
+            return $response;
 
         }
         catch (SoapFault $exception) {
