@@ -1,5 +1,6 @@
 <?php
-
+use App\Models\{Web_Service, Alumno};
+use App\Http\Controllers\Admin\WSController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -12,21 +13,21 @@
 */
 Route::get('/buscar', [
    'uses' => 'SolicitudTituloeController@searchAlum',
-   'as' => 'buscar',
+   'as' => 'registroTitulos/buscar',
    'middleware' => 'roles',
-   'roles' => ['Admin']
+   'roles' => ['Admin', 'Jtit']
 ]);
       // ->name('eSearch');
    Route::post('/buscar', [
       'uses' => 'SolicitudTituloeController@postSearchAlum',
       'middleware' => 'roles',
-      'roles' => ['Admin']
+      'roles' => ['Admin', 'Jtit']
    ]);
    Route::get('/buscar/{num_cta}', [
       'uses' => 'SolicitudTituloeController@showInfo',
       'as' => 'eSearchInfo',
       'middleware' => 'roles',
-      'roles' => ['Admin']
+      'roles' => ['Admin', 'Jtit']
    ])
       ->where('num_cta','[0-9]+');
 
@@ -34,48 +35,345 @@ Route::get('/buscar', [
       'uses' => 'SolicitudTituloeController@existRequest',
       'as' => 'solicitar_SEP',
       'middleware' => 'roles',
-      'roles' => ['Admin']
+      'roles' => ['Admin', 'Jtit']
    ])
       ->where('num_cta','[0-9]+')
       ->where('carrera','[0-9]+');
 
    Route::get('lista-solicitudes/pendientes', [
       'uses' => 'SolicitudTituloeController@showPendientes',
-      'as' => 'solicitudesPendientes',
+      'as' => 'registroTitulos/lista-solicitudes/pendientes',
       'middleware' => 'roles',
-      'roles' => ['Admin']
+      'roles' => ['Admin', 'Jtit']
    ]);
-   Route::get('prueba', [
-      'uses' => 'PruebasController@showPendientes',
-      'as' => 'Pruebas',
-      'middleware' => 'roles',
-      'roles' => ['Admin']
-   ]);
+   // Route::get('prueba', [
+   //    'uses' => 'PruebasController@showPendientes',
+   //    'as' => 'Pruebas',
+   //    'middleware' => 'roles',
+   //    'roles' => ['Admin']
+   // ]);
 Route::get('/buscar/fecha', [
       'uses' => 'SolicitudTituloeController@searchAlumDate',
-      'as' => 'eSearchDate',
+      'as' => 'registroTitulos/buscar/fecha',
       'middleware' => 'roles',
-      'roles' => ['Admin']
+      'roles' => ['Admin', 'Jtit']
 ]);
 Route::post('/buscar/fecha', [
    'uses' => 'SolicitudTituloeController@postSearchAlumDate',
    'middleware' => 'roles',
-   'roles' => ['Admin']
+   'roles' => ['Admin', 'Jtit']
 ]);
-Route::get('/buscar/fecha/{fecha}', [
-   'uses' => 'SolicitudTituloeController@showInfoDate',
-   'as' => 'eSearchInfoDate',
+
+Route::post('/firma', [
+   'uses'=> 'SolicitudTituloeController@nameButton',
    'middleware' => 'roles',
-   'roles' => ['Admin']
+   'roles' => ['Admin', 'Jtit']
 ]);
-Route::get('firmas',[
-  'uses' => 'FirmasCedulaController@showFirmasP',
-  'as' => 'firmas',
+
+Route::get('response/firma',[
+  'uses' => 'PruebasController@showFirmasP',
+  'as' => 'registroTitulos/response/firma',
   'middleware' => 'roles',
-  'roles' => ['Admin'] //DIRECTORA, SECRETARIO Y RECTOR
+  'roles' => ['Director', 'SecGral', 'Rector', 'Jtit'] //DIRECTORA, SECRETARIO, RECTOR Y JEFE TITULOS
 ]);
+Route::post('/response/firma', [
+   'uses' => 'SelloController@recibeFirma',
+   'as' => 'Postfirmas',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Director', 'SecGral', 'Rector', 'Jtit'] //DIRECTORA, SECRETARIO Y RECTOR
+]);
+Route::get('/firmas_busqueda/seleccion', [
+   'uses' => 'FirmasCedulaController@showFirmasBusqueda',
+   'as' => 'registroTitulos/firmas_busqueda/seleccion',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit']
+]);
+Route::post('firmas_busqueda/seleccion', [
+   'uses' => 'FirmasCedulaController@postFirmasBusqueda',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit']
+]);
+Route::get('/firmas_progreso', [
+   'uses' => 'FirmasCedulaController@showProgreso',
+   'as' => 'registroTitulos/firmas_progreso',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit']
+]);
+Route::post('/firmas_progreso', [
+   'uses' => 'FirmasCedulaController@postProgreso',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit']
+]);
+Route::get('/firmadas', [
+  'uses' => 'FirmasCedulaController@showFirmadas',
+  'as' => 'registroTitulos/firmadas',
+  'middleware' => 'roles',
+  'roles' => ['Admin', 'Rector', 'Director', 'SecGral']
+]);
+Route::post('/firmadas', [
+   'uses' => 'FirmasCedulaController@postFirmadas',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Rector', 'Director', 'SecGral']
+]);
+Route::get('/proceso', [
+   'uses' => 'AlumnosLotesController@showprocesoAlumno',
+   'as' => 'procesoAlumno',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit']
+])->where('num_cta','[0-9]+')
+  ->where('carrera','[0-9]+');
+Route::post('/proceso/cancela', [
+     'uses' => 'AlumnosLotesController@cancelaProcesoAlumno',
+     'as' => 'cancelaProcesoAlumno',
+     'middleware' => 'roles',
+     'roles' => ['Admin', 'Jtit']
+  ])->where('num_cta','[0-9]+')
+    ->where('carrera','[0-9]+');
+Route::post('create/session',[
+  'uses' => 'FirmasCedulaController@lote_Session',
+  'as' => 'ALGO',
+  'middleware' => 'roles',
+  'roles' => ['Admin', 'Director', 'SecGral', 'Rector'] //DIRECTORA, SECRETARIO Y RECTOR
+]);
+Route::get('algo', function(){
+   dd($_POST);
+})->name('antesFirmar');
 
 Route::get('/home', [
   'uses' => 'HomeController@index',
   'as'   => 'home'
 ]);
+
+Route::get('envioSep',[
+   'uses'=> 'EnvioSep@envio3Firmas',
+   'as' => 'envioSep',
+   'middleware' => 'roles',
+   'roles' => ['admin','Jtit']
+]);
+
+Route::get('/lista-solicitudes/feLote',function(){
+   $data = DB::table('solicitudes_sep')
+          ->select('fec_emision_tit as emision',DB::raw('count(*) as total'))
+          ->where('status', 1)
+          ->orwhereNull('status')
+          ->orderBy('emision','desc')
+          ->groupBy('emision')
+          ->pluck('emision','total')->all();
+    if (count($data)>0) {
+      foreach ($data as $key => $value) {
+          $fecha = $value;
+      }
+    } else {
+     $fecha = Carbon::now()->format('Y/m/d');
+    }
+  return $fecha;
+});
+Route::get('/lista-solicitudes/cedulasPen', function(){
+   // Fechas de emision con registros pendientes de validar (sin errores), status no nulo ni vacio
+    $data = DB::table('solicitudes_sep')
+            ->select(DB::raw("DATE_FORMAT(fec_emision_tit,'%d-%m-%Y') as emision, count(*) as total "))
+            // ->select('fec_emision_tit as emision',DB::raw('count(*) as total'))
+             ->where('status', 1)
+             ->orderBy('total','asc')
+             ->groupBy('emision')
+             ->pluck('total','emision')->all();
+    return $data;
+  });
+  Route::get('/lista-solicitudes/cedulasPen2', function(){
+     // Fechas de emision con registros pendientes de validar (sin errores), status no nulo ni vacio
+
+      $query = "SELECT DATE_FORMAT(fec_emision_tit,'%d-%m-%Y') AS emision, ";
+      $query .= "SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS pendientes, ";
+      $query .= "SUM(CASE WHEN status <> 1 THEN 1 ELSE 0 END) AS enviadas ";
+      $query .= "FROM solicitudes_sep ";
+      $query .= "GROUP BY emision ";
+      $query .= "ORDER BY fec_emision_tit";
+      $data = DB::select($query);
+      $datos = array();
+      foreach ($data as $key => $value) {
+         $datos[$value->emision]=[$value->enviadas, $value->pendientes];
+      }
+      return $datos;
+    });
+    Route::get('/lotes', function(){
+       // Fechas de emision con registros pendientes de validar (sin errores), status no nulo ni vacio
+        $query = "SELECT DATE_FORMAT(fecha_lote,'%d-%m-%Y') AS lote ";
+        // $query .= "SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS pendientes, ";
+        // $query .= "SUM(CASE WHEN status <> 1 THEN 1 ELSE 0 END) AS enviadas ";
+        $query .= "FROM lotes_unam ";
+        $query .= "GROUP BY lote";
+        $data = DB::select($query);
+        $datos = array();
+        foreach ($data as $key => $value) {
+           $datos[$key] = $value->lote;
+        }
+        return $datos;
+      });
+    Route::get('/lista-solicitudes/cedulasPen3', function(){
+       // Fechas de emision con registros pendientes de validar (sin errores), status no nulo ni vacio
+       $query = " DATE_FORMAT(fec_emision_tit,'%d-%m-%Y') AS emision, ";
+       $query .= "SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS pendientes, ";
+       $query .= "SUM(CASE WHEN status <> 1 THEN 1 ELSE 0 END) AS enviadas ";
+       // $query .= "FROM solicitudes_sep ";
+       // $query .= "GROUP BY emision";
+         $datos = DB::table('solicitudes_sep')
+            ->select(DB::raw($query))->groupBy('emision')->get();
+        return $datos;
+      });
+
+      Route::get('/reporteDG', function(){
+         // Contenido de los lotes.
+         $query  = "SELECT DATE_FORMAT(fecha_lote,'%Y%m%d%H%i%s') as lote,num_cta, nombre_completo, cve_carrera, datos ";
+         $query .= " from solicitudes_sep ";
+         $query .= " WHERE (";
+         $query .= "fec_emision_tit='2018-11-08 00:00:00' OR ";
+         $query .= "fec_emision_tit='2018-10-25 00:00:00' OR ";
+         $query .= "fec_emision_tit='2018-10-18 00:00:00' OR ";
+         $query .= "fec_emision_tit='2018-10-11 00:00:00' OR ";
+         $query .= "fec_emision_tit='2018-10-04 00:00:00' ";
+         $query .= ") AND errores like '%sin errores%' AND status=7 ";
+         $query .= "ORDER BY lote asc";
+         $datos = DB::select($query);
+         $cuenta = 0;
+         foreach ($datos as $alumno) {
+            $datos = unserialize($alumno->datos);
+            $cadena = ++$cuenta.','.$alumno->lote.','.$alumno->num_cta.','.$alumno->nombre_completo.','.$datos['_09_cveCarrera'].','.$datos['_10_nombreCarrera'];
+            echo "<pre>";
+            echo $cadena;
+            echo "</pre>";
+         }
+        });
+
+   Route::get('/SIAE', function(){
+      // Fechas de emision con registros pendientes de validar (sin errores), status no nulo ni vacio
+      $query = " select * from solicitudes_sep where ";
+      $query .= "fec_emision_tit='2018-10-18 00:00:00' OR ";
+      $query .= "fec_emision_tit='2018-10-11 00:00:00' OR ";
+      $query .= "fec_emision_tit='2018-10-04 00:00:00' ";
+      // $query .= "FROM solicitudes_sep ";
+      // $query .= "GROUP BY emision";
+      // ws
+      $ws_SIAE = Web_Service::find(2);
+
+      $datos = DB::select($query);$cadena = '';
+      foreach ($datos as $value) {
+         $errores = unserialize($value->errores); $cadenaErrores='';
+         asort($errores);
+         foreach ($errores as $error) {
+            $cadenaErrores .= $error.'/';
+         }
+         $identidad = new WSController();
+         // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '517490039', $ws_SIAE->key);
+         $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '084365576', $ws_SIAE->key);
+         // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '503006594', $ws_SIAE->key);
+         // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '503459419', $ws_SIAE->key);
+         // $var = serialize(utf8_encode($identidad->apellido2));
+         // $var2 = unserialize($var);
+         // dd($var,$var2);
+         dd($identidad);
+         $curp = $correo = $curpCorreo = '';
+         if (!empty($identidad)) {
+            if (isset($identidad->curp)) {
+               $curp = ($identidad->curp!='')? 'curp' : '';
+            }
+            if (isset($identidad->correo1)) {
+               $correo = ($identidad->correo1!='')? 'correo': '';
+            }
+            $curpCorreo = $curp.$correo;
+         }
+         $cadena = $value->num_cta.','.$value->nivel.','.$value->fec_emision_tit.','.$cadenaErrores.','.$curpCorreo;
+         echo "<pre>";
+         echo $cadena;
+         echo "</pre>";
+      }
+       // return $datos;
+     });
+   Route::get('/DGIRE', function(){
+      $ws = new WSController();
+      // $respuesta = $ws->ws_DGIRE('503459419');
+      $respuesta = $ws->ws_DGIRE('413532848');
+      dd($respuesta->respuesta);
+   });
+
+   Route::get('/analisis', function(){
+     // Fechas de emision con registros pendientes de validar (sin errores), status no nulo ni vacio
+     $query = " select * from solicitudes_sep where ";
+     $query .= "(fec_emision_tit='2018-11-08 00:00:00' OR ";
+     $query .= "fec_emision_tit='2018-10-25 00:00:00' OR ";
+     $query .= "fec_emision_tit='2018-10-18 00:00:00' OR ";
+     $query .= "fec_emision_tit='2018-10-11 00:00:00' OR ";
+     $query .= "fec_emision_tit='2018-10-04 00:00:00' ) AND ";
+     $query .= " NOT errores LIKE '%sin errores%'";
+
+     $datos = DB::select($query);
+     $cadena = '';
+     foreach ($datos as $value) {
+        $errores = unserialize($value->errores); $cadenaErrores='';
+        asort($errores);
+        foreach ($errores as $error) {
+           $cadenaErrores .= $error.'/';
+        }
+        $cadena = $value->num_cta.','.$value->nivel.','.$value->fec_emision_tit.','.$cadenaErrores;
+        echo "<pre>";
+        echo $cadena;
+        echo "</pre>";
+     }
+      // return $datos;
+    });
+
+  Route::get('/lista-solicitudes/filtraCedula',[
+    'uses'=> 'SolicitudTituloeController@showPendientes',
+    'as'=> 'filtraCedula',
+    'middleware' => 'roles',
+    'roles' => ['Admin', 'Jtit']
+  ]);
+
+Route::get('/cedulas_DGP',[
+    'uses'=> 'FirmasCedulaController@showCedulasDGP',
+    'as'=> 'registroTitulos/cedulas_DGP',
+    'middleware' => 'roles',
+    'roles' => ['Admin', 'Jtit']
+]);
+Route::post('/cedulas_DGP',[
+    'uses'=> 'FirmasCedulaController@postCedulasDGP',
+    'middleware' => 'roles',
+    'roles' => ['Admin', 'Jtit']
+]);
+
+// Route::get('/enviados_DGP', [
+//   'uses'=> 'AlumnosLotesController@showEnviadosDGP',
+//   'as'=> 'registroTitulos/enviados_DGP',
+//   'middleware' => 'roles',
+//   'roles' => ['Admin', 'Jtit']
+// ]);
+   Route::get('/emisionTitulos/fechasCargadas', function(){
+      $query = "SELECT DATE_FORMAT(fec_emision_tit,'%d-%m-%Y') AS emision, ";
+      $query .= "SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS pendientes, ";
+      $query .= "SUM(CASE WHEN status <> 1 THEN 1 ELSE 0 END) AS enviadas ";
+      $query .= "FROM solicitudes_sep ";
+      $query .= "GROUP BY emision";
+      $data = DB::select($query);
+      $datos = array();
+      foreach ($data as $key => $value) {
+         $datos[$value->emision]=[$value->enviadas, $value->pendientes];
+      }
+      return $datos;
+   });
+  // Route::get('/emisionTitulos/CONDOC', function(){
+  //     $anio = 2018;
+  //     $mes = 10;
+  //     $where = " CAST (datepart(year, tit_fec_emision_tit) AS numeric) >= ".$anio;
+  //     // $where .= " CAST (datepart(month, tit_fec_emision_tit) AS numeric) >= ".$mes;
+  //     $query = " tit_fec_emision_tit AS emision, ";
+  //     $query .= " COUNT(*) AS total ";
+  //     $datos = DB::connection('sybase')
+  //        ->table('Titulos')
+  //        ->select(DB::raw($query))
+  //        ->whereRaw($where)
+  //        ->orderBy('tit_fec_emision_tit','DESC')
+  //        ->groupBy('tit_fec_emision_tit')
+  //        ->get();
+  //     return $datos;
+  //   });
+Route::get('/emisionTitulos/CONDOC', 'SolicitudTituloeController@verTitulos');
+Route::get('/informacionDetallada/lote','AlumnosLotesController@showDetalleLote')->name('detalleLote');

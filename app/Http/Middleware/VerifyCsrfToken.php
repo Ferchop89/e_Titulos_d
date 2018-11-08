@@ -13,6 +13,7 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
       '/registroTitulos/response/firma',
+      '/registroTitulos/algo',
     ];
     /**
  * The URIs that should be excluded from CSRF verification.

@@ -50,13 +50,26 @@ html,body{
 .btn-derecha {
     margin-left: 35%;
 }
+.viewNumCta .btn-derecha, .viewFecha .btn-derecha{
+   margin: 0;
+   display: inline-block;
+   vertical-align: top;
+}
+.viewFecha .form-group.solicitud {
+    width: 90%;
+}
 
-input#num_cta {
-    width: 28%;
-    padding: 2px 12px;
+input#num_cta{
+    width: 30%;
+    padding: 2px 4px;
     min-width: 116px;
     text-align: center;
-    /* display: none; */
+}
+input#fecha{
+    width: 35%;
+    padding: 5px 4px;
+    min-width: 116px;
+    text-align: center;
 }
 /* .ubicacion {
     border: solid 1px;

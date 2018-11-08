@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 
-
 class Menu extends Model
 {
 
@@ -37,7 +36,6 @@ class Menu extends Model
 
     $data = new Menu();
     $xitems = $data->items();  // rutas y roles autorizadas
-
     $data_return = $this->where('enabled', 1)
         ->where('is_structure',1)
         ->orwhereIn('ruta',$xitems)
@@ -64,7 +62,6 @@ class Menu extends Model
           $item = [ array_merge($line, ['submenu' => $menus->getChildren($data, $line) ]) ];
           $menuAll = array_merge($menuAll, $item);
       }
-
       $menus->menuAll = $menuAll;
       // filtramos los conjuntos que esten vacios y que sean una estructura.
       return $menus->menuAll;
@@ -111,7 +108,6 @@ class Menu extends Model
       if (!Auth::check()) {
         return [];
       }
-
       $datos = new Menu();
       // $datos->loguser();
       $rutas = $datos->ryr();
@@ -133,5 +129,4 @@ class Menu extends Model
       }
       return $itemsarr;
   }
-
 }

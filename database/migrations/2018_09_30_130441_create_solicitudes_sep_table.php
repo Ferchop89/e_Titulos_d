@@ -27,12 +27,19 @@ class CreateSolicitudesSepTable extends Migration
             $table->string('folio', 15);
             $table->text('datos')->nullable();
             $table->text('errores')->nullable();
-            $table->char('status',2)->nullable();
+            $table->text('paridad')->nullable(); // paridad de catalogos UNAM-SEP
+            $table->unsignedInteger('status')->default(1);
             $table->DateTime('fecha_lote')->nullable();
+            $table->text('firma0')->default('');
+            $table->text('firma1')->default('');
+            $table->text('firma2')->default('');
+            $table->text('firma3')->default('');
+            $table->char('sistema')->nullable();
             $table->unsignedInteger('user_id');
             $table->timestamps();
             //Llaves foraneas
             $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('status')->references('id')->on('_status_cedula');
         });
     }
 

@@ -3,20 +3,21 @@
     CONDOC | @yield('esp')
 @endsection
 @section('location')
-    <div>
+    {{-- <div>
         <p id="navegacion">
             <a href="{{ route('home') }}"><i class="fa fa-home" style="font-size:28px"></i></a>
             <a href="#"><span> >> </span>
             <span> </span> </a> >>
             <a href="#"> {{$title}} </a> </p>
-    </div>
+    </div> --}}
 @endsection
 @section('estilos')
     @yield('sub-estilos')
 @endsection
 @section('content')
+<br>
     <h2 id="titulo">{{$title}}</h2>
-    <div id="is" class="container">
+    <div id="is" class="container viewNumCta">
             <div class="panel panel-default">
                 {{-- <div class="panel-heading">@yield('esp')</div> --}}
                 <div class="panel-body">

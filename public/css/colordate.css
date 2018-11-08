@@ -1,0 +1,72 @@
+.event1 a {
+    background-color: #1a3e11 !important;
+    background-image :none !important;
+    color: #ffffff !important;
+}
+.event2 a {
+    background-color: #235316 !important;
+    background-image :none !important;
+    color: #ffffff !important;
+}
+.event3 a {
+    background-color: #2c681c !important;
+    background-image :none !important;
+    color: #ffffff !important;
+}
+.event4 a {
+    background-color: #347c22 !important;
+    background-image :none !important;
+    color: #ffffff !important;
+}
+.event5 a {
+    background-color: #3d9127 !important;
+    background-image :none !important;
+    color: #000000 !important;
+}
+.event6 a {
+    background-color: #46a62d !important;
+    background-image :none !important;
+    color: #000000 !important;
+}
+.event7 a {
+    background-color: #4fbb33 !important;
+    background-image :none !important;
+    color: #000000 !important; // color: #000000 a partir de aqui y hasta el final.
+}
+.event8 a {
+    background-color: #58d039 !important;
+    background-image :none !important;
+    color: #000000 !important;
+}
+.event9 a {
+    background-color: #68d44c !important;
+    background-image :none !important;
+    color: #000000 !important;
+}
+.event10 a {
+    background-color: #79d960 !important;
+    background-image :none !important;
+    color: #000000 !important;
+}
+.event a {
+    background-color: #000000 !important;
+    background-image :none !important;
+    color: #ffffff !important;
+}
+.highlight
+{
+  background: yellow;
+  font-weight: bold;
+}
+.firmas.progreso input#datepicker{
+   width: 82%;
+}
+.firmas.progreso .input-group-addon {
+    padding: 9px 20px 9px 9px;
+}
+input#datepicker {
+    width: 74%;
+}
+.solicitudes input#datepicker{
+    width: 100%;
+}

@@ -24,5 +24,6 @@ class RoleSeeder extends Seeder
          $Director = new Role();$Director->nombre = 'Director';$Director->descripcion = 'Director DGAE';$Director->save();
          $SecGral =  new Role();$SecGral->nombre = 'SecGral';$SecGral->descripcion = 'Secretario General';$SecGral->save();
          $Rector =   new Role();$Rector->nombre = 'Rector';$Rector->descripcion = 'Rector UNAM';$Rector->save();
+         $Jtit =     new Role();$Jtit->nombre = 'Jtit';$Jtit->descripcion = 'DCerConDoc';$Jtit->save();
        }
 }

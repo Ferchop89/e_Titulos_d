@@ -26,33 +26,44 @@ class UserSeeder extends Seeder
           $user->roles()->attach($role);
 
           $user = new User();
-          $user->name = '';
-          $user->username = 'Directora';
-          $user->email = NULL;
+          $user->name = 'Lic. Diana González';
+          $user->username = 'dianaG';
+          // $user->email = NULL;
           $user->procedencia_id = '1';
-          $user->password = bcrypt('d1rDGAE');
+          $user->password = bcrypt('123456');
+          $user->is_active = true;
+          $user->save();
+          $role=Role::where('nombre','Jtit')->first();
+          $user->roles()->attach($role);
+
+          $user = new User();
+          $user->name = 'M. en C. Ivonne Ramírez';
+          $user->username = 'Directora';
+          $user->email = 'iramirez@mercurio.dgae.unam.mx';
+          $user->procedencia_id = '1';
+          $user->password = bcrypt('123456');
           $user->is_active = true;
           $user->save();
           $role=Role::where('nombre','Director')->first();
           $user->roles()->attach($role);
 
           $user = new User();
-          $user->name = '';
+          $user->name = 'Dr. Leonardo Lomelí';
           $user->username = 'Secretario';
-          $user->email = NULL;
+          // $user->email = NULL;
           $user->procedencia_id = '1';
-          $user->password = bcrypt('SecgRaL');
+          $user->password = bcrypt('123456');
           $user->is_active = true;
           $user->save();
           $role=Role::where('nombre','SecGral')->first();
           $user->roles()->attach($role);
 
           $user = new User();
-          $user->name = '';
+          $user->name = 'Dr. Enrique Graue';
           $user->username = 'Rector';
-          $user->email = NULL;
+          // $user->email = NULL;
           $user->procedencia_id = '1';
-          $user->password = bcrypt('R3CT0R');
+          $user->password = bcrypt('123456');
           $user->is_active = true;
           $user->save();
           $role=Role::where('nombre','Rector')->first();

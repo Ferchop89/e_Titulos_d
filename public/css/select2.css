@@ -507,7 +507,7 @@
     .graf-left{
         /* width: 49.5%; */
         /* height: 446px; */
-        width: 60%;
+        width: 100%;
         display: inline-block;
         border: solid 1px black;
         padding: 20px;

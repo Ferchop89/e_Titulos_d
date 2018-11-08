@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\{SolicitudSep, Web_Service, AutTransInfo};
 use App\Http\Controllers\Admin\WSController;
+use App\Models\LotesUnam;
 // Traits.
 use App\Http\Traits\Consultas\XmlCadenaErrores;
 use App\Http\Traits\Consultas\TitulosFechas;
@@ -16,6 +17,330 @@ use App\Http\Traits\Consultas\TitulosFechas;
 class PruebasController extends Controller
 {
    use TitulosFechas, XmlCadenaErrores;
+
+   public function carreras(){
+//       $carreras = ['01057', '50922', '01053', '01054', '01055', '40437', '01056', '01336', '00642', '01061',
+//                   '00445', '00637', '00638', '01912', '0123470', '1003171', '0093103', '1003165', '0163100', '0123429', '0063200',
+//                   '0113157', '3003020', '0083077', '0073143', '0083224', '0093105', '0013180', '0143002', '0093109', '0123447',
+// '0093112',
+// '0093110',
+// '2000344',
+// '0113072',
+// '0093107',
+// '0113156',
+// '0123443',
+// '0113158',
+// '3003021',
+// '0083220',
+// '0083164',
+// '0043191',
+// '0143070',
+// '0083218',
+// '0113159',
+// '0093113',
+// '2000346',
+// '0063196',
+// '2000341',
+// '0063085',
+// '0083222',
+// '0803116',
+// '0043192',
+// '0043193',
+// '0143167',
+// '0083226',
+// '0113161',
+// '0143166',
+// '0093190',
+// '0113155',
+// '0093189',
+// '0010346',
+// '0093108',
+// '0123467',
+// '0093003',
+// '0123406',
+// '0113154',
+// '0123448',
+// '0013179',
+// '0093104',
+// '0010347',
+// '0073133',
+// '0104161',
+// '0724087',
+// '2004146',
+// '0044115',
+// '0064073',
+// '0964087',
+// '0124096',
+// '3004085',
+// '0064189',
+// '1004169',
+// '0044113',
+// '0744087',
+// '0674194',
+// '3004178',
+// '0664109',
+// '0754102',
+// '2004042',
+// '0794100',
+// '4004025',
+// '0594153',
+// '0064193',
+// '0754101',
+// '0124085',
+// '0074146',
+// '4004146',
+// '0164169',
+// '4004149',
+// '0924078',
+// '0694172',
+// '0194173',
+// '0744085',
+// '0054154',
+// '6204102',
+// '0024137',
+// '0164170',
+// '0974085',
+// '2004117',
+// '0104081',
+// '0104149',
+// '0064190',
+// '0754103',
+// '0044116',
+// '0134130',
+// '0024125',
+// '0104089',
+// '0104110',
+// '0514087',
+// '0044114',
+// '0104145',
+// '0904104',
+// '6214171',
+// '0034085',
+// '2004149',
+// '0104195',
+// '0104144',
+// '0054109',
+// '0134135',
+// '0905104',
+// '0805090',
+// '0075146',
+// '0015092',
+// '0785143',
+// '3005088',
+// '0105145',
+// '0645142',
+// '0105110',
+// '0125093',
+// '0755103',
+// '0055112',
+// '0725087',
+// '0695143',
+// '0045117',
+// '0675121',
+// '0125143',
+// '0165071',
+// '0715143',
+// '0085123',
+// '5005088',
+// '0745087',
+// '0975085',
+// '0055109',
+// '0145095',
+// '0105148',
+// '0755102',
+// ];
+$carreras = [
+   '70321',
+'70322',
+'71024',
+'20412',
+'0093105',
+'0093003',
+'0104120',
+'0144095',
+'6204102',
+'0754102',
+'0064192',
+'0134133',
+'0014198',
+'0905104',
+'0695160',
+'0145095',
+'0015111',
+'0795123',
+'0105089',
+'0645142',
+'0595143',
+'0025139',
+'1005071',
+'0105091',
+'0755102',
+'0655085',
+'0035085',
+'0125085',
+'0785143',
+'0695085',
+'3005085',
+];
+   foreach ($carreras as $key => $value) {
+         $nombreCarrera = $this->nombreCarrera($value);
+         echo "<pre>";
+         print_r($nombreCarrera[0]->nombreCarrera);
+         echo "</pre>";
+      }
+
+      // dd($nombreCarrera[0]->nombreCarrera);
+   }
+   public function showFirmasP(){
+     $title = "Lotes de Cédulas por Firmar";
+
+     $rol = Auth::user()->roles()->get();
+     $rol = $rol[0]->nombre;
+     switch ($rol) {
+        case 'Jtit':
+           $lists = $this->consultaTitulos();
+           break;
+        case 'Director':
+           $lists = $this->consultaDirector();
+           break;
+        case 'SecGral':
+           $lists = $this->consultaSecretario();
+           break;
+        case 'Rector':
+           $lists = $this->consultaRector();
+           break;
+        default:
+           // code...
+           // dd("Permisos");
+           break;
+     }
+     $total = count($lists);
+     $acordeon = $this->generaListasxLote($lists);
+     return view('menus/lista_firmarSolicitudes', compact('title', 'lists', 'total', 'acordeon'));
+   }
+   public function consultaTitulos(){
+      $lists = LotesUnam::where('firma0',false)
+            ->paginate(10);
+      return $lists;
+   }
+   public function consultaDirector(){
+      $lists = LotesUnam::where('firma1',false)
+            ->where('firma0', true)
+            ->paginate(10);
+      return $lists;
+   }
+   public function consultaSecretario(){
+      $lists = LotesUnam::where('firma2', false)
+            ->where('firma1', true)
+            ->paginate(10);
+      return $lists;
+   }
+   public function consultaRector(){
+      $lists = LotesUnam::where('firma3', false)
+            ->where('firma2', true)
+            ->paginate(10);
+      return $lists;
+   }
+   public function generaListasxLote($data){
+      // Elaboracion del acordion con listas.
+      $curp = $this->authCurp();
+      $composite = "<div class='firmas'>";
+      for ($i=0; $i < count($data) ; $i++) {
+      $x_list = $i + 1;
+      $alumnos = $this->detalleLote($data[$i]->fecha_lote);
+      // dd($alumnos[0]->num_cta);
+      $cuentas = "";
+      foreach ($alumnos as $key => $alumno) {
+         $cuentas .= $alumno->num_cta."*";
+      }
+      $composite .= "<div class='accordion-a'>";
+      $composite .=  "<a class = 'a-row' data-toggle='collapse' data-parent='#accordion' href='#collapse".$x_list."'>";
+      $composite .=     "<div class='Row'>";
+      $composite .=        "<div class='Cell id '>";
+      $composite .=           "<p> Lote: ".$data[$i]->id."</p>";
+      $composite .=        "</div>";
+      $composite .=        "<div class='Cell fechaLote'>";
+      $composite .=           "<p> Fecha de Lote: ".$data[$i]->fecha_lote."</p>";
+      $composite .=        "</div>";
+      $composite .=        "<div class='Cell numCedulaxLote'>";
+      $composite .=           "<p> Contiene: ".count($alumnos)." cédulas</p>";
+      $composite .=        "</div>";
+      $composite .=     "</div>";
+      $composite .=  "</a>";
+      $composite .= "</div>";
+      $composite .= "<div class='Cell btns'>";
+      $url = "https://condoc.dgae.unam.mx/registroTitulos/response/firma?lote=".$data[$i]->fecha_lote."&cuentas=".$cuentas;
+      $composite .=  "<form action='https://enigma.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
+      $composite .=     "<input type='hidden' name='_token' value='".csrf_token()."'>";
+      $composite .=     "<input type='hidden' name='datos' value='".$this->loteCadena($data[$i]->fecha_lote, Auth::user()->roles()->first()->nombre)."'>";
+      $composite .=     "<input type='hidden' name='URL' value='".$url."'>";
+      $composite .=     "<input type='hidden' name='curp' value='".$curp."'>";
+      $composite .=     "<input type='submit' value='Firmar' id='btnFirma' class='btn'/>";
+      $composite .=  "</form>";
+      $composite .= "</div>";
+      $composite .=       "<div id='collapse".$x_list."' class='panel-collapse collapse'>";
+      $composite .=       "<div class='panel-body'>";
+      $composite .=        "<div class='table-responsive'>";
+      $composite .=         "<table class='table table-striped table-dark'>";
+      $composite .=           "<thead>";
+      $composite .=             "<tr>";
+      $composite .=               "<th scope='col'># solicitud</th>";
+      $composite .=               "<th scope='col'><strong>No. cuenta</strong></th>";
+      $composite .=               "<th scope='col'><strong>Nombre completo</strong></th>";
+      $composite .=               "<th scope='col'><strong>Clave carrera</strong></th>";
+      $composite .=               "<th scope='col'><strong>Nombre carrera</strong></th>";
+      $composite .=               "<th scope='col'><strong>Nivel</strong></th>";
+      $composite .=               "<th scope='col'><strong>Sistema</strong></th>";
+      $composite .=             "</tr>";
+      $composite .=           "</thead>";
+      $composite .=           "<tbody>";
+      $regis = 1;
+      foreach ( $alumnos as $key => $alumno) {
+        $composite .=           "<tr>";
+        $composite .=             "<th scope='row'>".$alumno->id."</th>";
+        $composite .=               "<td>".$alumno->num_cta."</td>";
+        $composite .=               "<td>".$alumno->nombre_completo."</td>";
+        $composite .=               "<td>".$alumno->cve_carrera."</td>";
+        $composite .=               "<td>".$this->carreraNombre($alumno->cve_carrera)."</td>";
+        $composite .=               "<td>".$alumno->nivel."</td>";
+        $composite .=               "<td>".$alumno->sistema."</td>";
+        $composite .=           "</tr>";
+      }
+      $composite .=            "</tbody>";
+      $composite .=         "</table>";
+      $composite .=        "</div>"; // cierra el table responsive
+      $composite .=       "</div>"; // cierra el panel-body
+      $composite .=      "</div>"; // cierra el collapse
+  }
+    return $composite;
+   }
+   public function authCurp(){
+      $curp = '';
+      $rol = Auth::user()->roles()->first()->nombre;
+      // $nombre = Auth::user()->username;
+      switch ($rol) {
+         case 'Jtit':
+            $curp = "UIES180831S04";
+            break;
+         case 'Director':
+            $curp = "UIES180831S03";
+            // $curp = "UIES180831S02";
+            break;
+         case 'SecGral':
+         $curp = "UIES180831S02";
+         // $curp = "UIES180831S03";
+            break;
+         case 'Rector':
+            $curp = "UIES180831S01";
+            break;
+      }
+      return $curp;
+   }
+
+   public function detalleLote($lote){
+      $datos = SolicitudSep::where('fecha_lote',$lote)->get();
+      return $datos;
+  }
 
    public function searchAlum()
    {
@@ -105,10 +430,6 @@ class PruebasController extends Controller
          // En esta seccion se consultan los sellos del registro de usuario.
          $sello1 = 'Sello 1'; $sello2 = 'Sello2'; $sello3 = 'Sello3';
          $nodos = $this->IntegraNodos($datos[0],$sello1,$sello2,$sello3);
-         // Obtención de XML
-         // $toXml = $this->tituloXml($nodos);
-         // Obtención de la cadena original
-         // $cadenaOriginal = $this->cadenaOriginal($nodos);
          // Obtención de los Errores.
          if (isset($datos[1])==null) {
             $errores = 'sin errores';
@@ -132,17 +453,9 @@ class PruebasController extends Controller
          $alumno->save();
          // dd($cadenaOriginal,$toXml->xml(),$errores);
       }
-      // sort($listaErrores);
-      // dd($listaErrores);
-      // // dd($lists);
-      // $title = 'Solicitudes para Envio de Firma';
-      // return view('menus/lista_solicitudes', compact('title','lists', 'total'));
    }
    public function showPendientes()
    {
-      // $total = SolicitudSep::count();
-      // $lists = SolicitudSep::paginate(10);
-      // $this->actualiza()
       if (isset(request()->listaErrores)) {
          // parametros de filtrado
          $query = "SELECT * FROM solicitudes_sep  where ";
@@ -161,333 +474,7 @@ class PruebasController extends Controller
       $title = 'Solicitudes para Envio de Firma';
       // Lista de Errores
       $listaErrores = $this->listaErr();
-      // dd($listaErrores);
-
-      // return View::make('form')->with('targets',$targets)->with('target',$target);
-      // return view('menus/lista_solicitudes')->with('targets',$targets)->with('target',$target);
       return view('menus/lista_solicitudesCopia', compact('title','lists', 'total','listaErrores','acordeon'));
-   }
-   public function acordionTitulosTable($data)
-   {
-      // dd($data[0]->num_cta);
-     // Elaboracion del acordion con listas.
-     $composite = "<div class='panel-group' id='accordion'>";
-
-     $composite .= "<table class='table table-hover'>";
-     $composite .= "         <thead class='thead-dark'>";
-     $composite .= "             <tr>";
-     $composite .= "                 <th class='center' scope='col'># Solicitud</th>";
-     $composite .= "                 <th class='center' scope='col'>No. Cuenta</th>";
-     $composite .= "                 <th class='center' scope='col'>Nombre</th>";
-     $composite .= "                 <th class='center' scope='col'>Nivel</th>";
-     $composite .= "                 <th class='center' scope='col'>Cve Carrera</th>";
-     $composite .= "                 <th class='center' scope='col'>errores</th>";
-     $composite .= "                 <th class='center' scope='col'>Acciones</th>";
-     $composite .= "             </tr>";
-     $composite .= "         </thead>";
-     $composite .= "         <tbody>";
-
-     for ($i=0; $i < count($data) ; $i++) {
-      $x_list = $i + 1;
-
-      $composite .=    "<div class='panel panel-default'>";
-      $composite .=         "<div class='panel-heading'>";
-      $composite .=            "<h4 class='panel-title'>";
-      $composite .=              "<a data-toggle='collapse' data-parent='#accordion' href='#collapse".$x_list."'>";
-
-      $composite .=        "<tr>";
-      $composite .=        "  <th scope='row'>".$data[$i]->id."</th>";
-      $composite .=        "            <td>noCta</td>";
-      $composite .=        "            <td>Nombre</td>";
-      $composite .=        "            <td>Nivel</td>";
-      $composite .=        "            <td>cveCarrera</td>";
-      $composite .=        "            <td>lista de errores</td>";
-      $composite .=        "            <td>acciones</td>";
-      $composite .=        "</tr>";
-
-
-      // $composite .=              "Cuenta ".$data[$i]->num_cta."; Nombre ".$data[$i]->nombre_completo."; errores ".count(unserialize($data[$i]->errores));
-      $composite .=              "</a>";
-      $composite .=            "</h4>";
-      $composite .=         "</div>";
-      // solo el primer listado se despliega, los demas se colapsan.
-      $collapse   =       (count($data)==1)? 'in': '';
-      $composite .=       "<div id='collapse".$x_list."' class='panel-collapse collapse ".$collapse."'>";
-      $composite .=       "<div class='panel-body'>";
-      $composite .=        "<div class='table-responsive'>";
-      $composite .=         "<table class='table table-striped'>";
-      $composite .=           "<thead>";
-      $composite .=             "<tr>";
-      $composite .=               "<th scope='col'>#</th>";
-      $composite .=               "<th scope='col'><strong>Llave XML</strong></th>";
-      $composite .=               "<th scope='col'><strong>Contendido</strong></th>";
-      $composite .=               "<th scope='col'><strong>Observacion</strong></th>";
-      $composite .=             "</tr>";
-      $composite .=           "</thead>";
-      $composite .=           "<tbody>";
-      $regis = 0;
-      foreach (unserialize($data[$i]->datos) as $key => $value) {
-         $composite .=           "<tr>";
-         $composite .=             "<th scope='row'>".($regis++)."</th>";
-         $composite .=               "<td>".$key."</td>";
-         $composite .=               "<td>".$value."</td>";
-         $composite .=               "<td>"."Observacion"."</td>";
-         $composite .=           "</tr>";
-      }
-      $composite .=            "</tbody>";
-      $composite .=         "</table>";
-      $composite .=        "</div>"; // cierra el table responsive
-      $composite .=       "</div>"; // cierra el panel-body
-      $composite .=      "</div>"; // cierra el collapse
-      $composite .=     "</div>"; // cierra el panel-default
-     }
-
-     $composite .= "<div>"; // cierra el acordeon
-
-     return $composite;
-   }
-   public function acordionTitulos3($data)
-   {
-      // dd($data[0]);
-      $composite = "<div class='Heading'>";
-      $composite .=  "<div class='Cell id'>";
-      $composite .=     "<p># Solicitud</p>";
-      $composite .=  "</div>";
-      $composite .=  "<div class='Cell cta'>";
-      $composite .=     "<p>No. Cuenta</p>";
-      $composite .=  "</div>";
-      $composite .=  "<div class='Cell name'>";
-      $composite .=     "<p>Nombre</p>";
-      $composite .=  "</div>";
-      $composite .=  "<div class='Cell date'>";
-      $composite .=     "<p>Fecha</p>";
-      $composite .=  "</div>";
-      $composite .=  "<div class='Cell book'>";
-      $composite .=     "<p>Libro-Foja-Folio</p>";
-      $composite .=  "</div>";
-      $composite .=  "<div class='Cell level'>";
-      $composite .=     "<p>Nivel</p>";
-      $composite .=  "</div>";
-      $composite .=  "<div class='Cell cve'>";
-      $composite .=     "<p>Cve Carrera</p>";
-      $composite .=  "</div>";
-      $composite .=  "<div class='Cell nError'>";
-      $composite .=     "<p>Errores</p>";
-      $composite .=  "</div>";
-      $composite .=  "<div class='Cell'>";
-      $composite .=     "<p>Acciones</p>";
-      $composite .=  "</div>";
-      $composite .="</div>";
-      for ($i=0; $i < count($data) ; $i++) {
-         $x_list = $i + 1;
-         $composite .=  "<a data-toggle='collapse' data-parent='#accordion' href='#collapse".$x_list."'>";
-         $composite .="<div class='Row'>";
-
-         $composite .=    "<div class='Cell id right'>";
-         $composite .=       "<p>".$data[$i]->id."</p>";
-         $composite .=    "</div>";
-         $composite .=    "<div class='Cell cta'>";
-         $composite .=       "<p>".$data[$i]->num_cta."</p>";
-         $composite .=    "</div>";
-         $composite .=    "<div class='Cell name'>";
-         $composite .=       "<p>".$data[$i]->nombre_completo."</p>";
-         $composite .=    "</div>";
-         $composite .=    "<div class='Cell date'>";
-         $composite .=       "<p>".Carbon::parse($data[$i]->fec_emision_tit)->format('d/m/Y')."</p>";
-         $composite .=    "</div>";
-         $composite .=    "<div class='Cell book'>";
-         $composite .=       "<p>".$data[$i]->libro."-".$data[$i]->foja."-".$data[$i]->folio."</p>";
-         $composite .=    "</div>";
-         $composite .=    "<div class='Cell level'>";
-         $composite .=       "<p>".$data[$i]->nivel."</p>";
-         $composite .=    "</div>";
-         $composite .=    "<div class='Cell cve'>";
-         $composite .=       "<p>".$data[$i]->cve_carrera."</p>";
-         $composite .=    "</div>";
-
-         // desSerializamos la lista de errores para convertirla en array
-         $listaErrores = unserialize($data[$i]->errores);
-         $composite .=    "<div class='Cell nError'>";
-         $composite .=       "<p>".count($listaErrores)."</p>";
-         $composite .=    "</div>";
-
-         $composite .="</div>";
-         $composite .=  "</a>";
-         $composite .=    "<div class='Cell btns'>";
-         $composite .=       "<p>Boton</p>";
-         $composite .=    "</div>";
-         // solo el primer listado se despliega, los demas se colapsan.
-         $collapse   =       (count($data)==1)? 'in': '';
-         $composite .=       "<div id='collapse".$x_list."' class='panel-collapse collapse ".$collapse."'>";
-         $composite .=       "<div class='panel-body'>";
-         $composite .=        "<div class='table-responsive'>";
-         $composite .=         "<table class='table table-striped table-dark'>";
-         $composite .=           "<thead>";
-         $composite .=             "<tr>";
-         $composite .=               "<th scope='col'>#</th>";
-         $composite .=               "<th scope='col'><strong>Llave XML</strong></th>";
-         $composite .=               "<th scope='col'><strong>Contendido</strong></th>";
-         $composite .=               "<th scope='col'><strong>Observacion</strong></th>";
-         $composite .=             "</tr>";
-         $composite .=           "</thead>";
-         $composite .=           "<tbody>";
-         $regis = 0;
-         // Creamos un arreglo de datos a partir del contenido del campo datos.
-         $listaDatos = unserialize($data[$i]->datos);
-         foreach ( $listaDatos as $key => $value) {
-            $composite .=           "<tr>";
-            $composite .=             "<th scope='row'>".($regis++)."</th>";
-            $composite .=               "<td>".$key."</td>";
-            $composite .=               "<td>".$value."</td>";
-            // Determinamos si existe la llave en la lista de errores para desplegarlo como obsevacion
-            $observa    = array_key_exists($key,$listaErrores)? $listaErrores[$key]: '';
-            $composite .=               "<td>".$observa."</td>";
-            $composite .=           "</tr>";
-         }
-         $composite .=            "</tbody>";
-         $composite .=         "</table>";
-         $composite .=        "</div>"; // cierra el table responsive
-         $composite .=       "</div>"; // cierra el panel-body
-         $composite .=      "</div>"; // cierra el collapse
-         // $composite .=     "</div>"; // cierra el panel-default
-      }
-      return $composite;
-
-   }
-   public function acordionTitulos2($data)
-   {
-      $composite = "<div class='panel-group' id='accordion'>";
-      $composite .=   "<table class='table'>";
-      $composite .=      "<thead class='thead-dark'>";
-      $composite .=         "<tr>";
-      // $composite .=            "<th class='center' scope='col'># Solicitud</th>";
-      // $composite .=            "<th class='center' scope='col'>No. Cuenta</th>";
-      // $composite .=            "<th class='center' scope='col'>Nombre</th>";
-      // $composite .=            "<th class='center' scope='col'>Nivel</th>";
-      // $composite .=            "<th class='center' scope='col'>Cve Carrera</th>";
-      // $composite .=            "<th class='center' scope='col'>errores</th>";
-      $composite .=            "<th class='center' scope='col'>Acciones</th>";
-      $composite .=         "</tr>";
-      $composite .=      "</thead>";
-      $composite .=      "<tbody class='thead-dark'>";
-      for ($i=0; $i < count($data) ; $i++) {
-         $x_list = $i + 1;
-         $composite .=      "<tr>";
-         $composite .=        "<div class='algo'>";
-         $composite .=           "<div class='algo2'>";
-         $composite .=              "<h4 class='panel-title'>";
-         $composite .=                 "<a data-toggle='collapse' data-parent='#accordion' href='#collapse".$x_list."'>";
-         $composite .=                    "<th scope='row'>".$data[$i]->id."</th>";
-         $composite .=                    "<td>".$data[$i]->num_cta."</td>";
-         $composite .=                    "<td>".$data[$i]->nombre_completo."</td>";
-         $composite .=                    "<td>".Carbon::parse($data[$i]->fec_emision_tit)->format('d/m/Y')."</td>";
-         $composite .=                    "<td>".$data[$i]->libro."-".$data[$i]->foja."-".$data[$i]->folio."</td>";
-         $composite .=                    "<td>".$data[$i]->nivel."</td>";
-         $composite .=                    "<td>".$data[$i]->cve_carrera."</td>";
-
-         $composite .=                    "<td>".$data[$i]->nivel."</td>";
-         $composite .=                 "</a>";
-         $composite .=              "</h4>";
-         $composite .=           "</div>";
-         $composite .=        "</div>";
-         $composite .=      "</tr>";
-
-      }
-      $composite .=      "</tbody>";
-      $composite .=   "</table>";
-      $composite .= "</div>"; // cierra el acordeon
-      return $composite;
-   }
-   public function acordionTitulos($data)
-   {
-      // dd($data[0]->num_cta);
-     // Elaboracion del acordion con listas.
-     $composite = "<div class='panel-group' id='accordion'>";
-     $composite .=   "<table class='table'>";
-     $composite .=      "<thead class='thead-dark'>";
-     $composite .=         "<tr>";
-     $composite .=            "<th class='center' scope='col'># Solicitud</th>";
-     $composite .=            "<th class='center' scope='col'>No. Cuenta</th>";
-     $composite .=            "<th class='center' scope='col'>Nombre</th>";
-     $composite .=            "<th class='center' scope='col'>Nivel</th>";
-     $composite .=            "<th class='center' scope='col'>Cve Carrera</th>";
-     $composite .=            "<th class='center' scope='col'>errores</th>";
-     $composite .=            "<th class='center' scope='col'>Acciones</th>";
-     $composite .=         "</tr>";
-     $composite .=      "</thead>";
-     $composite .=      "<tbody class='thead-dark'>";
-
-     for ($i=0; $i < 2 ; $i++) {
-      $x_list = $i + 1;
-
-
-      // $composite .=    "<div class='panel panel-default'>";
-      $composite .=                    "<tr>";
-      // $composite .=         "<div class='panel-heading'>";
-      // $composite .=            "<h4 class='panel-title'>";
-      $composite .=              "<a data-toggle='collapse' data-parent='#accordion' href='#collapse".$x_list."'>";
-
-
-
-      $composite .=                    "<th class='left' scope='col'>".$data[$i]->id."</th>";
-      $composite .=                    "<th class='left' scope='col'>".$data[$i]->num_cta."</th>";
-      $composite .=                    "<th class='left' scope='col'>".$data[$i]->nombre_completo."</th>";
-      $composite .=                    "<th class='left' scope='col'>".$data[$i]->nivel."</th>";
-      $composite .=                    "<th class='left' scope='col'>".$data[$i]->cve_carrera."</th>";
-
-      // desSerializamos la lista de errores para convertirla en array
-      $listaErrores = unserialize($data[$i]->errores);
-      $composite .=                    "<th class='left' scope='col'>".count($listaErrores)."</th>";
-      $composite .=                    "<th class='left' scope='col'>Acciones</th>";
-      $composite .=                    "</tr>";
-      // $composite .=                    "</thead>";
-
-
-      // $composite .=              "Cuenta ".$data[$i]->num_cta."; Nombre ".$data[$i]->nombre_completo."; errores ".count(unserialize($data[$i]->errores));
-
-      $composite .=              "</a>";
-      // $composite .=            "</h4>";
-      $composite .=         "</div>";
-      // solo el primer listado se despliega, los demas se colapsan.
-      $collapse   =       (count($data)==1)? 'in': '';
-      $composite .=       "<div id='collapse".$x_list."' class='panel-collapse collapse ".$collapse."'>";
-      $composite .=       "<div class='panel-body'>";
-      $composite .=        "<div class='table-responsive'>";
-      $composite .=         "<table class='table table-striped table-dark'>";
-      $composite .=           "<thead>";
-      $composite .=             "<tr>";
-      $composite .=               "<th scope='col'>#</th>";
-      $composite .=               "<th scope='col'><strong>Llave XML</strong></th>";
-      $composite .=               "<th scope='col'><strong>Contendido</strong></th>";
-      $composite .=               "<th scope='col'><strong>Observacion</strong></th>";
-      $composite .=             "</tr>";
-      $composite .=           "</thead>";
-      $composite .=           "<tbody>";
-      $regis = 0;
-      // Creamos un arreglo de datos a partir del contenido del campo datos.
-      $listaDatos = unserialize($data[$i]->datos);
-      foreach ( $listaDatos as $key => $value) {
-         $composite .=           "<tr>";
-         $composite .=             "<th scope='row'>".($regis++)."</th>";
-         $composite .=               "<td>".$key."</td>";
-         $composite .=               "<td>".$value."</td>";
-         // Determinamos si existe la llave en la lista de errores para desplegarlo como obsevacion
-         $observa    = array_key_exists($key,$listaErrores)? $listaErrores[$key]: '';
-         $composite .=               "<td>".$observa."</td>";
-         $composite .=           "</tr>";
-      }
-      $composite .=            "</tbody>";
-      $composite .=         "</table>";
-      $composite .=        "</div>"; // cierra el table responsive
-      $composite .=       "</div>"; // cierra el panel-body
-      $composite .=      "</div>"; // cierra el collapse
-      // $composite .=     "</div>"; // cierra el panel-default
-     }
-     $composite .=                 "</tbody>";
-     $composite .=                 "</table>";
-     $composite .= "</div>"; // cierra el acordeon
-
-     return $composite;
    }
    public function searchAlumDate()
    {
@@ -510,6 +497,8 @@ class PruebasController extends Controller
       $datos = $this->consultaTitulosDate($fecha);
       // dd($datos);
       $registros=0;
+      $actualiza = 0;
+      $act = 0;
       // $fechaView  = Carbon::createFromDate($fecha);
       $fechaView = Carbon::createFromFormat('Y-m-d', $fecha);
       foreach ($datos as $key => $value) {
@@ -524,10 +513,11 @@ class PruebasController extends Controller
          $curp = $this->consultaCURP(substr($value->num_cta, 0, 8), substr($value->num_cta, 8, 1));
          // dd($fecha_nac, $pass);
 
-         $this->createSolicitudSep($value->num_cta, $value->dat_nombre, $value->tit_nivel, $value->tit_plancarr, Auth::id());
+         $act = $this->createSolicitudSep($value->num_cta, $value->dat_nombre, $value->tit_nivel, $value->tit_plancarr, Auth::id());
+         dd($act);
          $registros++;
       }
-      $msj = "Se solicitaron ".$registros." regitros con fecha ".$fechaView->format('d-m-Y');
+      $msj = "Se solicitaron ".$registros." registros con fecha ".$fechaView->format('d-m-Y');
       Session::flash('info', $msj);
       return view('/menus/search_eTitulosDate');
    }

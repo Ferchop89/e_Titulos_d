@@ -13,8 +13,9 @@ class CreateCancelacionesTable extends Migration
      */
     public function up()
     {
-        Schema::create('_cancelaciones', function (Blueprint $table) {
-            $table->char('ID_MOTIVO_CAN',2)->unique();
+        Schema::create('_cancelacionesSep', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('ID_MOTIVO_CAN');
             $table->string('DESCRIPCION_CANCELACION');
         });
     }
@@ -26,6 +27,6 @@ class CreateCancelacionesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('_cancelaciones');
+        Schema::dropIfExists('_cancelacionesSep');
     }
 }

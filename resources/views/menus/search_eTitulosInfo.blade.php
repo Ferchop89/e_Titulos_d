@@ -1,13 +1,23 @@
-@extends('menus.numero_cuenta', ['title' => "Títulos Electrónicos"])
-@section('esp', 'Títulos Electrónicos')
+@extends('menus.numero_cuenta', ['title' => "Solicitud de información de títulos por número de cuenta"])
+@section('esp', 'Solicitud de información de títulos por número de cuenta')
 @section('ruta')
     <form class="form-group solicitud" method="POST" action="{{ url( 'registroTitulos/buscar' ) }}">
-
+@endsection
+@section('estilos')
+   @section('estilos')
+   	<link href="{{ asset('css/loading.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/solicitudesPendientes.css') }}" rel="stylesheet">
+   @endsection
+    @yield('sub-estilos')
 @endsection
 @section('identidadAlumno')
-   @include('errors/flash-message')
-   <div class="info-personal">
-      <div class="info-personal-header">
+<div class="info-solicitud-alumno">
+   <table align="center">
+      <tr>
+         @include('errors/flash-message')
+         <td class="datos-personales">
+            <div class="info-personal">
+               <div class="info-personal-header">
       @if ($identidad != null)
             {!! $foto !!}
             <div class="fila">
@@ -22,11 +32,10 @@
       @endif
          </div>
    </div>
-@endsection
-@section('info-alumno')
+</td><td class="datos-escolares">
    @if ($trayectorias != null)
       <div class="info-trayectorias">
-            <table class="table table-bordered">
+            <table class="table table-bordered" style="width: 100%;">
                <thead class="thead-dark bg-primary">
                   <th class="center" scope="col">Nº</th>
                   <th class="center" scope="col">Cve Plantel</th>
@@ -37,35 +46,35 @@
                   <th class="center" scope="col">Acción</th>
                </thead>
                <tbody>
-                  @for($i=0; $i < count($trayectorias); $i++)
-
-                  @endfor
                   @foreach ($trayectorias as $key => $value)
-                     {{-- {{dd($trayectorias, $key)}} --}}
-                     {{-- {{dd($value['tit_plancarr'])}} --}}
                      <tr>
                         <th class="center">{{$key+1}}</th>
                         <td>{!! $value['carrp_plan'] !!}</td>
                         <td>{!! strtoupper($value['plan_nombre']) !!}</td>
                         <td>{!! $value['tit_nivel'] !!}</td>
                         <td>{!! $value['tit_plancarr'] !!}</td>
-                        {{-- <td id="solicitud_{{$key}}">{!! $value['solicitud']!!}</td> --}}
-                        <td>{!! $value['solicitud']!!}</td>
-                        {{-- <td>{!! $value->carrera !!}</td> --}}
+                        <td>{!! $value['carrp_nombre'] !!}</td>
                         <td>
-                           <a href = "{{ route('solicitar_SEP',[ 'numCta'=>$numCta, 'nombre'=> $identidad->dat_nombre, 'carrera'=>$value['tit_plancarr'], 'nivel'=>$value['tit_nivel']]) }}"class="btn btn-info">Solicitar</a>
+                          @if($value['solicitud'] == false)
+                          <a href = "{{ route('solicitar_SEP',[ 'numCta'=>$numCta, 'nombre'=> $identidad->dat_nombre, 'carrera'=>$value['tit_plancarr'], 'nivel'=>$value['tit_nivel']]) }}"class="btn btn-info">Solicitar</a>
+                          @else
+                          <a href = "{{ route('procesoAlumno',[ 'numCta'=>$numCta, 'nombre'=> $identidad->dat_nombre, 'carrera'=>$value['tit_plancarr'], 'nivel'=>$value['tit_nivel']]) }}" class="btn btn-info">En proceso</a>
+                          @endif
                         </td>
                      </tr>
                   @endforeach
                </tbody>
            </table>
    </div>
-   {{-- @if (Session::has('message'))
-      <div class="alert alert-info">{{ Session::get('message') }}</div>
-   @endif --}}
-
+@else
+<br><br>
+  <div class="alert alert-danger alert-block detalles_info">
+  	<button type="button" class="close" data-dismiss="alert"></button>
+  	<strong> No es posible realizar este proceso. <br> El usuario no se encuentra en la Tabla de Títulos.</strong>
+  </div>
 @endif
-
+</td></tr></table>
+</div><br>
 @endsection
 @section('sub-animaciones')
    <script src="{{asset('js/solicitud_eTitulos.js')}}"></script>

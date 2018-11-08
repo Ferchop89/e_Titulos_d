@@ -518,8 +518,10 @@ footer #fondo {
   background : #34495e;
 }
 
-.center {
-  text-align : center;
+.info-solicitud-alumno {
+   text-align : center;
+   position: relative;
+   margin-top: -100px;
 }
 
 /* termina eventos */
@@ -736,7 +738,7 @@ textarea.materialize-textarea+label:after {
 
 .btn {
   display        : inline-block;
-  padding        : 4px 12px;
+  padding        : 6px 12px;
   text-transform : none;
 }
 
@@ -965,9 +967,23 @@ select {
   border-bottom : 1px rgba(0, 0, 0, .26) solid;
   font-size     : 16px;
   font-weight   : bold;
-  width: 100%;
+  width: 60%;
 }
-
+label.datepicker{
+    display: inline-table;
+    vertical-align: top;
+}
+.input-group.idatepicker{
+    width: 50%;
+    display: inline-table;
+}
+.td-datepicker {
+    width: 25%;
+}
+.div-datepicker {
+    width: 80%;
+    margin: auto;
+}
 select:required:invalid {
   padding     : 6px;
   color       : #999;
@@ -1597,7 +1613,16 @@ main .container{
 .capsule {
     padding-top: 14px;
     padding-bottom: 30px;
-    min-height: 300px;
+    min-height: 250px;
+}
+.capsule.informacion-alumno{
+   padding-top: 0;
+}
+.datos-personales {
+    width: 20%;
+}
+.datos-escolares {
+    width: 48%;
 }
 #gestionL{
     margin: 0;
@@ -1675,7 +1700,10 @@ button {
 .info-personal-header {
     display: inline-block;
     vertical-align: bottom;
-    padding: 0cm 2cm;
+    padding: 0cm 0.5cm;
+}
+.fila {
+   text-align: left;
 }
 .info-trayectorias {
     margin: 2% 0 2% 0;
@@ -1689,4 +1717,10 @@ button {
 .capsule.solicitud_re .contenido {
     width: 90%;
     margin: auto;
+}
+body main .container {
+    min-height: 300px;
+}
+.center {
+    text-align: center;
 }

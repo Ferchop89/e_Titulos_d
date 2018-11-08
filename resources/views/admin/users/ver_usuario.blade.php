@@ -45,7 +45,11 @@
                 <tr>
                     {{-- {{$roles=[]}} --}}
                     @foreach ($roles as $role)
-                        <th scope="col">{{ $role->descripcion}}</th>
+                       @if ($role->id == 1)
+                          <th scope="col">{{ $role->descripcion}}</th>
+                       @elseif ($role->id > 9)
+                          <th scope="col">{{ $role->descripcion}}</th>
+                       @endif
                     @endforeach
                     {{-- {{dd($role->descripcion)}} --}}
                 </tr>
@@ -57,7 +61,7 @@
                     <label class="form-check-label" for="Admin">Admin</label>
                 </div>
             </td>
-            <td>
+            {{-- <td>
                 <div class="form-check form-check-inline">
                     <input type="checkbox" {{ $user->roles()->where('nombre','FacEsc')->count()>0 ? 'Checked' : '' }} class="filled-in form-check-input" name="FacEsc" id="FacEsc" value="2" OnClick="return false;">
                     <label class="form-check-label" for="FacEsc">FacEsc</label>
@@ -111,6 +115,31 @@
                 <div class="form-check form-check-inline">
                     <input type="checkbox" class="form-check-input" name="Invit" id="Invit" value="9" checked="checked"  OnClick="return false;">
                     <label class="form-check-label" for="Invit">Invit</label>
+                </div>
+            </td> --}}
+
+            <td>
+                <div class="form-check form-check-inline">
+                    <input type="checkbox" {{ $user->roles()->where('nombre','Director')->count()>0 ? 'Checked' : '' }} class="form-check-input" name="Director" id="Director" value="10"  OnClick="return false;">
+                    <label class="form-check-label" for="Director">Director</label>
+                </div>
+            </td>
+            <td>
+                <div class="form-check form-check-inline">
+                    <input type="checkbox" {{ $user->roles()->where('nombre','SecGral')->count()>0 ? 'Checked' : '' }} class="form-check-input" name="SecGral" id="SecGral" value="11"  OnClick="return false;">
+                    <label class="form-check-label" for="SecGral">Secretario</label>
+                </div>
+            </td>
+            <td>
+                <div class="form-check form-check-inline">
+                    <input type="checkbox" {{ $user->roles()->where('nombre','Rector')->count()>0 ? 'Checked' : '' }} class="form-check-input" name="Rector" id="Rector" value="12"  OnClick="return false;">
+                    <label class="form-check-label" for="Rector">Rector</label>
+                </div>
+            </td>
+            <td>
+                <div class="form-check form-check-inline">
+                    <input type="checkbox" {{ $user->roles()->where('nombre','Jtit')->count()>0 ? 'Checked' : '' }} class="form-check-input" name="Jtit" id="Jtit" value="13"  OnClick="return false;">
+                    <label class="form-check-label" for="Jtit">J Titulos</label>
                 </div>
             </td>
         </table>

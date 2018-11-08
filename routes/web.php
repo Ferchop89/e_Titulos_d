@@ -1,5 +1,7 @@
 <?php
 use App\Http\Controllers\Admin\WSController;
+use App\Models\LotesUnam;
+use App\Models\SolicitudSep;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,6 +21,9 @@ use Illuminate\Http\Request;
 //
 Route::get('/', function () {
     return redirect('/login');
+});
+Route::get('/home', function () {
+    return redirect('/registroTitulos/home');
 });
 // Route::get('/login', function () {
 //     return redirect('/registroTitulos/contactos/login');
@@ -44,6 +49,8 @@ Route::get('/test2', function(){
    $ws=new WSController();
    $ws->ws_DGIRE('305016614');
 });
+
+
 // Route::get('/m1',[
 //   'uses'=> 'RutasController@Menu1',
 //   'as'=> 'm1',
@@ -118,30 +125,11 @@ Route::get('/buscar/{num_cta}', 'EtitulosController@showInfo')
       ->where('num_cta','[0-9]+')
       ->name('eSearchInfo');
 
-Route::get('/registroTitulos/response/firma', 'SelloController@sendingInfo');
-Route::post('/registroTitulos/response/firma', function(Request $request){
-   define("PKCS7_HEADER", "-----BEGIN PKCS7-----");
-   $result = "";
-   if(isset($_POST['firmas']))
-   {
-      $result = $_POST['firmas'];
-   }
-   else {
-      echo "Error: No se recibió el resultado de la firma";
-   }
-   if(substr($result, strpos($result, PKCS7_HEADER), strlen(PKCS7_HEADER)) == PKCS7_HEADER) {
-      echo "Firma exitosa";
-   }
-   else {
-      if($result == 102 || $result == 103){
-         $errMsg = "error";
-      }
-      elseif($result >= 104 && $result <= 107){
-         $errMsg = "error";
-      }
-   }
-   dd($request, json_decode($request->firmas)->signatureResults[0], base64_encode(json_decode($request->firmas)->signatureResults[0]));
-});
+// Route::get('/registroTitulos/response/firma', 'SelloController@sendingInfo');
+
+
+
+
 
 Route::get('/registroTitulos/verify/firma', 'SelloController@verifySignature');
 
@@ -158,12 +146,7 @@ Route::get('/registroTitulos/verify/firma', 'SelloController@verifySignature');
 
 // Route::get('/registroTitulos/contactos/login', 'AutTransInfo\LoginController@showLoginForm')->name('login');
 
-Route::get('filtraCedula',[
-  'uses'=> 'SolicitudTituloeController@showPendientes',
-  'as'=> 'filtraCedula',
-  'middleware' => 'roles',
-  'roles' => ['Admin']
-]);
+
 Route::get('infoCedula/{cuenta}/{carrera}',[
    'uses'=> 'SolicitudTituloeController@infoCedula',
    'as'=> 'infoCedula',
@@ -175,8 +158,65 @@ Route::get('infoCedula/{ids}',[
    'middleware' => 'roles',
    'roles' => ['Admin']
 ]);
-Route::post('registroTitulos/firma', [
-   'uses'=> 'SolicitudTituloeController@nameButton',
+
+Route::get('registroTitulos/cadena/{lote}/{cargo}',[
+   'uses'=> 'SolicitudTituloeController@loteCadena',
    'middleware' => 'roles',
-   'roles' => ['Admin']
+   'roles' => ['admin']
 ]);
+Route::post('test/firmas/{lote}/{cargo}',[
+   'uses'=> 'SelloController@sendingInfo',
+   'as' => 'sendingInfo',
+   'middleware' => 'roles',
+   'roles' => ['admin']
+]);
+
+  // Route::get('loteCedulas', function(){
+  //     $data = DB::table('solicitudes_sep')
+  //              ->select(DB::raw('fec_emision_tit as lote, count(*) as total'))
+  //              ->where('fecha_lote','<>','NULL')
+  //              ->orderBy('fecha_lote','asc')
+  //              ->groupBy('lote')
+  //              ->pluck('lote','total')->all();
+  //     return $data;
+  //   });
+
+Route::get('test_wsdgp', 'EnvioSepController@index');
+
+Route::get('ati-list', function(){
+$alumnos = DB::connection('condoc_ati')->table('alumnos')->select('num_cta')->get();
+// $alumnos = ['068081935'];
+// dd($alumnos);
+$datos = "";
+foreach ($alumnos as $key => $value) {
+   $cuenta = substr($value->num_cta, 0, 8);
+   $verif = substr($value->num_cta, 8, 1);
+   // $cuenta = substr($value, 0, 8);
+   // $verif = substr($value, 8, 1);
+   $query = "SELECT tit_fec_emision_tit FROM Titulos WHERE tit_ncta = '".$cuenta."' AND tit_dig_ver = '".$verif."'";
+   $fechaE = DB::connection('sybase')->select($query);
+   if($fechaE != [])
+   {
+
+      if($fechaE[0]->tit_fec_emision_tit!= null)
+      {
+         $datos = $value->num_cta.','.$fechaE[0]->tit_fec_emision_tit;
+         // $datos = $value.','.$fechaE[0]->tit_fec_emision_tit;
+         echo "<pre>
+         $datos
+         </pre>";
+      }
+   }
+
+}
+// dd($datos);
+});
+
+/*Graficas */
+Route::get('/cedulasG' ,[
+    'uses'=> 'GrafiController@cedulas',
+    'as' => 'cedulasG',
+    'roles' => ['Admin']
+]);
+/*Fin de procedimientos de graficas*/
+Route::get('/nombreCarrera', 'PruebasController@carreras');

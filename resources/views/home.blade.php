@@ -1,23 +1,20 @@
 @extends('layouts.app')
 
+@section('estilos')
+    <link href="{{ asset('css/MenuHome.css') }}" rel="stylesheet">
+@endsection
+
 @section('content')
-<div id="is" class="container">
-    <div class="row">
-        <div class="col-md-8 col-md-offset-2">
-            <div class="panel panel-default">
-                <div class="panel-heading">Dashboard</div>
-
-                <div class="panel-body">
-                    @if (session('status'))
-                        <div class="alert alert-success">
-                            {{ session('status') }}
-                        </div>
-                    @endif
-
-                    You are logged in!
-                </div>
-            </div>
-        </div>
+<div id="is" class="container capsule home">
+  <div class="panel panel-default">
+    <div class="padre">
+      <div class="hijo">
+        <span>Bienvenid@ al sistema CONDOC</span>
+      </div>
     </div>
+  </div>
 </div>
+@endsection
+@section('animaciones')
+    <script type="text/javascript" src="{{ asset('js/MenuHome.js') }}"></script>
 @endsection

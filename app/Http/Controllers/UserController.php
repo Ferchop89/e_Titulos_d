@@ -74,13 +74,17 @@ class UserController extends Controller
 
         // verificamos si se encuentra verificada la casilla entonces lo asociamos a la tabla pivote
         if( isset($_POST['Admin'])) { $user->roles()->attach( $_POST['Admin'] ); }
-        if( isset($_POST['FacEsc'])) { $user->roles()->attach( $_POST['FacEsc'] ); }
-        if( isset($_POST['AgUnam'])) { $user->roles()->attach( $_POST['AgUnam'] ); }
-        if( isset($_POST['Jud'])) { $user->roles()->attach( $_POST['Jud'] ); }
-        if( isset($_POST['Sria'])) { $user->roles()->attach( $_POST['Sria'] ); }
-        if( isset($_POST['JSecc'])) { $user->roles()->attach( $_POST['JSecc'] ); }
-        if( isset($_POST['JArea'])) { $user->roles()->attach( $_POST['JArea'] ); }
-        if( isset($_POST['Ofisi'])) { $user->roles()->attach( $_POST['Ofisi'] ); }
+        // if( isset($_POST['FacEsc'])) { $user->roles()->attach( $_POST['FacEsc'] ); }
+        // if( isset($_POST['AgUnam'])) { $user->roles()->attach( $_POST['AgUnam'] ); }
+        // if( isset($_POST['Jud'])) { $user->roles()->attach( $_POST['Jud'] ); }
+        // if( isset($_POST['Sria'])) { $user->roles()->attach( $_POST['Sria'] ); }
+        // if( isset($_POST['JSecc'])) { $user->roles()->attach( $_POST['JSecc'] ); }
+        // if( isset($_POST['JArea'])) { $user->roles()->attach( $_POST['JArea'] ); }
+        // if( isset($_POST['Ofisi'])) { $user->roles()->attach( $_POST['Ofisi'] ); }
+        if( isset($_POST['Director'])) { $user->roles()->attach( $_POST['Director'] ); }
+        if( isset($_POST['SecGral'])) { $user->roles()->attach( $_POST['SecGral'] ); }
+        if( isset($_POST['Rector'])) { $user->roles()->attach( $_POST['Rector'] ); }
+        if( isset($_POST['Jtit'])) { $user->roles()->attach( $_POST['Jtit'] ); }
         $user->roles()->attach( '9' ); // por omision, el usuario tiene el rol de invitado
 
       return redirect()->route('users');  // redireccionamos al listado de usuarios
@@ -130,13 +134,17 @@ class UserController extends Controller
 
         // verificamos si se encuentra verificada la casilla entonces lo asociamos a la tabla pivote
         if( isset($_POST['Admin'])) { $user->roles()->attach( $_POST['Admin'] ); }
-        if( isset($_POST['FacEsc'])) { $user->roles()->attach( $_POST['FacEsc'] ); }
-        if( isset($_POST['AgUnam'])) { $user->roles()->attach( $_POST['AgUnam'] ); }
-        if( isset($_POST['Jud'])) { $user->roles()->attach( $_POST['Jud'] ); }
-        if( isset($_POST['Sria'])) { $user->roles()->attach( $_POST['Sria'] ); }
-        if( isset($_POST['JSecc'])) { $user->roles()->attach( $_POST['JSecc'] ); }
-        if( isset($_POST['JArea'])) { $user->roles()->attach( $_POST['JArea'] ); }
-        if( isset($_POST['Ofisi'])) { $user->roles()->attach( $_POST['Ofisi'] ); }
+        // if( isset($_POST['FacEsc'])) { $user->roles()->attach( $_POST['FacEsc'] ); }
+        // if( isset($_POST['AgUnam'])) { $user->roles()->attach( $_POST['AgUnam'] ); }
+        // if( isset($_POST['Jud'])) { $user->roles()->attach( $_POST['Jud'] ); }
+        // if( isset($_POST['Sria'])) { $user->roles()->attach( $_POST['Sria'] ); }
+        // if( isset($_POST['JSecc'])) { $user->roles()->attach( $_POST['JSecc'] ); }
+        // if( isset($_POST['JArea'])) { $user->roles()->attach( $_POST['JArea'] ); }
+        // if( isset($_POST['Ofisi'])) { $user->roles()->attach( $_POST['Ofisi'] ); }
+        if( isset($_POST['Director'])) { $user->roles()->attach( $_POST['Director'] ); }
+        if( isset($_POST['SecGral'])) { $user->roles()->attach( $_POST['SecGral'] ); }
+        if( isset($_POST['Rector'])) { $user->roles()->attach( $_POST['Rector'] ); }
+        if( isset($_POST['Jtit'])) { $user->roles()->attach( $_POST['Jtit'] ); }
         $user->roles()->attach( '9' ); // por omision, el usuario tiene el rol de invitado
 
         $user->procedencia_id = isset($_POST['FacEsc']) ? request()->input('procedencia_id') : null;

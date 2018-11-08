@@ -18,7 +18,7 @@
     <div class="d-flex justify-content-between align-items-end mb-3">
         <h2 id="titulo">{{$title.": ".$total}}</h2>
         {{-- <p class="button">
-            <a href="{{ route('admin/usuarios/nuevo') }}" class="btn btn-primary">Nuevo Usuario</a>
+            <a href="{{ route('infoCedula',['ids'=>'check']) }}" class="btn btn-primary">ACTUALIZAR TODO</a>
         </p> --}}
     </div>
     @if(count($lists)>0)
@@ -30,17 +30,26 @@
             {{ Form::close() }}
          </div>
       </div>
-
+      @include('errors/flash-message')
    {{-- Desplegado el acordion de solicitudes filtradas --}}
-   {!! $acordeon !!}
+      <form action='/registroTitulos/firma' method='post'>
+         {!! csrf_field() !!}
+         {!! $acordeon !!}
+         <input type='submit' name='enviar' value='Enviar'/>
+         <input type='submit' name='actualizar' value='Actualizar Todo'/>
+      </form>
+
 
     @else
-        <p>
-            No hay Solcitudes registradas.
-        </p>
+    <br><br>
+    <div class="alert alert-danger alert-block detalles_info">
+      <button type="button" class="close" data-dismiss="alert">×</button>
+      <strong>No hay solicitudes registradas.</strong>
+    </div>
     @endif
 </div>
-{{-- <div class="paginador">
-    {{ $lists->links()}}
-</div> --}}
+
+@endsection
+@section('animaciones')
+   <script src="{{asset('js/check.js')}}"></script>
 @endsection

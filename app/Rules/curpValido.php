@@ -30,14 +30,15 @@ class curpValido implements Rule
     {
         $valid = new WSController();
         $respuesta = $valid->ws_RENAPO($value);
-        $var = (array)simplexml_load_string($respuesta->return)->attributes()->statusOper;
-        if($var[0] == 'EXITOSO')
+        if(isset($respuesta->return))
         {
-           return true;
+            $var = (array)simplexml_load_string(utf8_encode($respuesta->return))->attributes()->statusOper;
+            if($var[0] == 'EXITOSO')
+            {
+               return true;
+            }
         }
-        else {
-           return false;
-        }
+        return false;
     }
 
     /**
@@ -47,6 +48,6 @@ class curpValido implements Rule
      */
     public function message()
     {
-        return 'CURP no valido.';
+      return (session()->has('errorWS') ? session('errorWS') : 'CURP no valido.');
     }
 }

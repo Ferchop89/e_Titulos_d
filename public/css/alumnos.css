@@ -123,3 +123,28 @@ input#num_cta{
   font-size: 10px;
   font-weight: bold;
 }
+
+.head_DGP h3{
+  line-height: 48%;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+#t01 {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 11px;
+    padding-top: 3%;
+}
+
+#t01 th, #t01 td {
+    text-align: left;
+    padding: 2px;
+}
+
+#t01 tr:nth-child(even){background-color: #F5F5F5}
+
+#t01 th {
+    background-color: #5D6975;
+    color: white;
+}

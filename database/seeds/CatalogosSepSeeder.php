@@ -43,20 +43,18 @@ class CatalogosSepSeeder extends Seeder
           // Solo elegimos las carreras de la UNAM
          if($dato[0]=='090001')
          {
-
-            if ( Carrera::where(['CVE_INSTITUCION'=>'090001', 'CVE_SEP'=>$dato[5] ])->first() != [] ) {
-               break;
+            if ( empty(Carrera::where('CVE_INSTITUCION','090001')->where('CVE_SEP',$dato[5])->first()) ) {
+               $carrera = new Carrera();
+               $carrera->CVE_OFICIAL='';
+               $carrera->CVE_INSTITUCION = $dato[0];
+               $carrera->NOMBRE_INSTITUCION = $dato[1];
+               $carrera->TIPO_DE_SOSTENIMIENTO = $dato[2];
+               $carrera->TIPO_EDUCATIVO = $dato[3];
+               $carrera->NIVEL_DE_ESTUDIOS = $dato[4];
+               $carrera->CVE_SEP = $dato[5];
+               $carrera->CARRERA = $dato[6];
+               $carrera->save();
             }
-           $carrera = new Carrera();
-           $carrera->CVE_OFICIAL='';
-           $carrera->CVE_INSTITUCION = $dato[0];
-           $carrera->NOMBRE_INSTITUCION = $dato[1];
-           $carrera->TIPO_DE_SOSTENIMIENTO = $dato[2];
-           $carrera->TIPO_EDUCATIVO = $dato[3];
-           $carrera->NIVEL_DE_ESTUDIOS = $dato[4];
-           $carrera->CVE_SEP = $dato[5];
-           $carrera->CARRERA = $dato[6];
-           $carrera->save();
          }
        }
        // Archivo _firmas

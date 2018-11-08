@@ -13,6 +13,7 @@
 @endsection --}}
 
 @section('content')
+	<div class="loader"></div>
 <div class="container cont_aut">
 	<div  class="ati_vista">
 		<h2 align="center">AUTORIZACIÓN DE TRANSFERENCIA DE INFORMACIÓN</h2>
@@ -169,7 +170,7 @@
 	 					 </span>
 	 			 @endif
 				 <br>
-			 		<input type="submit" class="btn btn-primary" value="Guardar">
+			 		<input type="submit" name='btnEnviar' id='btnEnviar' class="btn btn-primary" value="Enviar">
 			</p></div>
 			</div>
 		</form>
@@ -189,4 +190,7 @@
 			</div>
 	</div>
 </div>
+@endsection
+@section('animaciones')
+	<script src="{{asset('js/loadingDownload.js')}}"></script>
 @endsection

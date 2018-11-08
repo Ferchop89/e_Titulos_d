@@ -5,22 +5,39 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use App\Http\Traits\Consultas\XmlCadenaErrores;
+use Carbon\Carbon;
+use DB;
+use Session;
+
 class SelloController extends Controller
 {
+   use XmlCadenaErrores;
    public function sendingInfo()
    {
-      $url = "https://condoc.dgae.unam.mx/registroTitulos/response/firma";
       // $datos = "||1.0|3|MUOC810214HCHRCR00|Director de Articulación de Procesos|SECRETARÍA DE EDUCACIÓN|Departamento de Control Escolar|23DPR0749T|005|23|TSEP180817HRECTR|EDGAR|SORIANO|SANCHEZ|2|7.8|2017-01-01T12:05:00||";
       // $datos = "||1.0|201800001|TSEP180817HRECTR00|3|RECTOR|DR.|090001|UNIVERSIDAD NACIONAL AUTÓNOMA DE MÉXICO|103601|DOCTORADO EN CIENCIAS (BIOLOGÍA)|1979/01/01|2000/01/01|8|DECRETO DE CREACIÓN||SELIL890909FDFRL10|LUZ MARIA GRACIELA|Serrano|LIMON|biologia@gmail.com|2000-12-14|01|POR TESIS|2000-09-12|2000-09-12|1|2|ART. 55 LRART. 5 CONST|09|CIUDAD DE MÉXICO|FACULTAD DE CIENCIAS|1|MAESTRÍA|09|CIUDAD DE MÉXICO|1976/01/01|1978/01/01||";
+      // $datos .= "'@_@'";
+      // $datos .= "||1.0|201800001|TSEP180817HRECTR00|3|RECTOR|DR.|090001|UNIVERSIDAD NACIONAL AUTÓNOMA DE MÉXICO|103601|DOCTORADO EN CIENCIAS (BIOLOGÍA)|1979/01/01|2000/01/01|8|DECRETO DE CREACIÓN||SELIL890909FDFRL10|LUZ MARIA GRACIELA|Serrano|LIMON|biologia@gmail.com|2000-12-14|01|POR TESIS|2000-09-12|2000-09-12|1|2|ART. 55 LRART. 5 CONST|09|CIUDAD DE MÉXICO|FACULTAD DE CIENCIAS|1|MAESTRÍA|09|CIUDAD DE MÉXICO|1976/01/01|1978/01/01||";
+      // $datos .= "'@_@'";
+      // $datos .= "||1.0|201800001|TSEP180817HRECTR00|3|RECTOR|DR.|090001|UNIVERSIDAD NACIONAL AUTÓNOMA DE MÉXICO|103601|DOCTORADO EN CIENCIAS (BIOLOGÍA)|1979/01/01|2000/01/01|8|DECRETO DE CREACIÓN||SELIL890909FDFRL10|LUZ MARIA GRACIELA|Serrano|LIMON|biologia@gmail.com|2000-12-14|01|POR TESIS|2000-09-12|2000-09-12|1|2|ART. 55 LRART. 5 CONST|09|CIUDAD DE MÉXICO|FACULTAD DE CIENCIAS|1|MAESTRÍA|09|CIUDAD DE MÉXICO|1976/01/01|1978/01/01||";
+      // $datos = "||1.0|201800001|UIES180831HDFSEP01|3|RECTOR|DR.|090001|UNIVERSIDAD NACIONAL AUTÓNOMA DE MÉXICO|103601|DOCTORADO EN CIENCIAS (BIOLOGÍA)|1979/01/01|2000/01/01|8|DECRETO DE CREACIÓN||SELIL890909FDFRL10|LUZ MARIA GRACIELA|Serrano|LIMON|biologia@gmail.com|2000-12-14|01|POR TESIS|2000-09-12|2000-09-12|1|2|ART. 55 LRART. 5 CONST|09|CIUDAD DE MÉXICO|FACULTAD DE CIENCIAS|1|MAESTRÍA|09|CIUDAD DE ";
+      // $datos .= "MÉXICO|1976/01/01|1978/01/01||@_@||1.0|201800001|UIES180831HDFSEP01|3|RECTOR|DR.|090001|UNIVERSIDAD NACIONAL AUTÓNOMA DE MÉXICO|103601|DOCTORADO EN CIENCIAS (BIOLOGÍA)|1979/01/01|2000/01/01|8|DECRETO DE CREACIÓN||SELIL890909FDFRL10|LUZ MARIA GRACIELA|Serrano|LIMON|biologia@gmail.com|2000-12-14|01|POR TESIS|2000-09-12|2000-09-12|1|2|ART. 55 LRART. 5 CONST|09|CIUDAD DE MÉXICO|FACULTAD DE CIENCIAS|1|MAESTRÍA|09|CIUDAD DE ";
+      // $datos .= "MÉXICO|1976/01/01|1978/01/01||@_@||1.0|201800001|UIES180831HDFSEP01|3|RECTOR|DR.|090001|UNIVERSIDAD NACIONAL AUTÓNOMA DE MÉXICO|103601|DOCTORADO EN CIENCIAS (BIOLOGÍA)|1979/01/01|2000/01/01|8|DECRETO DE CREACIÓN||SELIL890909FDFRL10|LUZ MARIA GRACIELA|Serrano|LIMON|biologia@gmail.com|2000-12-14|01|POR TESIS|2000-09-12|2000-09-12|1|2|ART. 55 LRART. 5 CONST|09|CIUDAD DE MÉXICO|FACULTAD DE CIENCIAS|1|MAESTRÍA|09|CIUDAD DE MÉXICO|1976/01/01|1978/01/01||";
+
+
+      // $datos = "||||@_@||||@_@||||";
       // $curp = "TSEP180817HRECTR00";
-
-      $datos = "||1.0|201800001|UIES180831HDFSEP01|6|SECRETARIO GENERAL|DR.|090001|UNIVERSIDAD NACIONAL AUTÓNOMA DE MÉXICO|103601|DOCTORADO EN CIENCIAS (BIOLOGÍA)|1979/01/01|2000/01/01|8|DECRETO DE CREACIÓN||SELIL890909FDFRL10|LUZ MARIA GRACIELA|Serrano|LIMON|biologia@gmail.com|2000-12-14|01|POR TESIS|2000-09-12|2000-09-12|1|2|ART. 55 LRART. 5 CONST|09|CIUDAD DE MÉXICO|FACULTAD DE CIENCIAS|1|MAESTRÍA|09|CIUDAD DE MÉXICO|1976/01/01|1978/01/01||";
+      $url = "https://condoc.dgae.unam.mx/registroTitulos/response/firma";
+      $datos = $this->loteCadena($_GET['fecha_lote'], "Directora");
+      dd($datos);
       $curp = "UIES180831HDFSEP01";
+      // dd($datos);
 
-      // $datos = "||1.0|201800001|TSEP180817HDGRAL00|9|DIRECTOR GENERAL|MTRA.|090001|UNIVERSIDAD NACIONAL AUTÓNOMA DE MÉXICO|103601|DOCTORADO EN CIENCIAS (BIOLOGÍA)|1979/01/01|2000/01/01|8|DECRETO DE CREACIÓN||SELIL890909FDFRL10|LUZ MARIA GRACIELA|Serrano|LIMON|biologia@gmail.com|2000-12-14|01|POR TESIS|2000-09-12|2000-09-12|1|2|ART. 55 LRART. 5 CONST|09|CIUDAD DE MÉXICO|FACULTAD DE CIENCIAS|1|MAESTRÍA|09|CIUDAD DE MÉXICO|1976/01/01|1978/01/01||";
-      // $curp = "TSEP180817HDGRAL00";
+      // return redirect()->route();
 
-      session(['lote' => '900']);
+
+
       return view('/menus/sendingCadena', compact('url', 'datos', 'curp', 'user'));
    }
 
@@ -49,5 +66,245 @@ class SelloController extends Controller
     // $data = $request->json()->all();
 
          return view('/menus/verifySignature', compact('info', 'url', 'curp'));
+   }
+   public function recibeFirma()
+   {
+      define("PKCS7_HEADER", "-----BEGIN PKCS7-----");
+      $result = "";
+      if(isset($_POST['firmas']))
+      {
+         $result = $_POST['firmas'];
+      }
+      else {
+         echo "Error: No se recibió el resultado de la firma";
+      }
+      if(substr($result, strpos($result, PKCS7_HEADER), strlen(PKCS7_HEADER)) == PKCS7_HEADER) {
+         // Lote.
+         $lote = $_GET['lote'];
+         // arreglo de numeros de cuenta correspondientes a la firma
+         $cuentas = explode('*',$_GET['cuentas']);
+         // arreglo de cadenas firmadas correspondientes a los numeros de cuente en el arreglo $cuentas
+         $cadenas = json_decode($result)->signatureResults;
+         // cuenta de cadenas regresadas
+         $numCadRequest = count(json_decode($result)->signatureResults);
+         // Almacenamiento de las firmas
+         $this->guardaFirma($cuentas, $cadenas, $lote, $this->envioVSrecepcion($numCadRequest, $lote));
+         return redirect()->route('registroTitulos/response/firma');
+      }
+      else {
+         if($result == 102 || $result == 103){
+            $errMsg = "error";
+         }
+         elseif($result >= 104 && $result <= 107){
+            $errMsg = "error";
+         }
+      }
+      // dd($result, $_GET);
+      // dd($result, json_decode($result->firmas)->signatureResults, base64_encode(json_decode($result->firmas)->signatureResults[0]));
+   }
+   public function guardaFirma($cuentas, $cadenas, $lote, $estado)
+   {
+      // dd(unserialize($cadenas), $lote);
+      $rol = Auth::user()->roles()->first()->nombre;
+      $msj = "";
+      switch ($rol) {
+         case 'Jtit':
+            $msj = $this->guardarTitulos($cuentas, $cadenas, $lote, $estado);
+            break;
+         case 'Director':
+            $msj = $this->guardarDirectora($cuentas, $cadenas, $lote, $estado);
+            break;
+         case 'SecGral':
+            $msj = $this->guardarSecretario($cuentas, $cadenas, $lote, $estado);
+            break;
+         case 'Rector':
+            $msj = $this->guardarRector($cuentas, $cadenas, $lote, $estado);
+            break;
+         default:
+            $msj = "Permisos insuficientes";
+            break;
+      }
+      return $msj;
+   }
+
+   public function envioVSrecepcion($cadRequest, $lote){
+      $enviaron = DB::table('solicitudes_sep')
+                 ->where('fecha_lote', $lote)
+                 ->count();
+      if($cadRequest == $enviaron)
+      {
+         return true;
+      }
+      else {
+         return false;
+      }
+   }
+   public function guardarTitulos($cuentas, $cadenas, $lote, $estado){
+      if($estado){
+         // Se ha realizado la firma 1
+         DB::table('lotes_unam')
+                    ->where('fecha_lote', $lote)
+                    ->update(['firma0' => true,
+                              'fec_firma0'   => Carbon::now(),
+                     ]);
+         // Se actualizan las firmas0 en la tabla de solicituds
+         for ($k=0; $k < count($cadenas); $k++) {
+            DB::table('solicitudes_sep')
+                        ->where('fecha_lote', $lote)
+                        ->where('num_cta',$cuentas[$k])
+                       ->update([
+                                 'firma0' => $cadenas[$k],
+                                 'status' => 3,
+                        ]);
+         }
+         $msj = "Firma exitosa";
+         Session::flash('info', $msj);
+      }
+      else {
+         // Se regresa a un estado anterior los archivos de lotesUnam y Solcitudes_sep
+         DB::table('lotes_unam')
+                    ->where('fecha_lote', $lote)
+                    ->update(['firma0' => false,
+                              'fec_firma0'   => Carbon::now(),
+                     ]);
+         for ($k=0; $k < count($cadenas); $k++) {
+            DB::table('solicitudes_sep')
+                        ->where('fecha_lote', $lote)
+                        ->where('num_cta',$cuentas[$k])
+                       ->update([
+                                 'firma0' => '',
+                                 'status' => 2,
+                        ]);
+         }
+         $msj = "Error: Inconsistencia en firmas enviadas y recibidas, lote -> ".$lote;
+         Session::flash('error', $msj);
+      }
+      return $msj;
+
+   }
+   public function guardarDirectora($cuentas, $cadenas, $lote, $estado){
+      if($estado){
+         // Se ha realizado la firma 1
+         DB::table('lotes_unam')
+                    ->where('fecha_lote', $lote)
+                    ->update(['firma1' => true,
+                              'fec_firma1'   => Carbon::now(),
+                     ]);
+         // Se actualizan las firmas1 en la tabla de solicituds
+         for ($k=0; $k < count($cadenas); $k++) {
+            DB::table('solicitudes_sep')
+                        ->where('fecha_lote', $lote)
+                        ->where('num_cta',$cuentas[$k])
+                       ->update([
+                                 'firma1' => $cadenas[$k],
+                                 'status' => 4,
+                        ]);
+         }
+         $msj = "Firma exitosa";
+         Session::flash('info', $msj);
+      }
+      else {
+         // Se regresa a un estado anterior los archivos de lotesUnam y Solcitudes_sep
+         DB::table('lotes_unam')
+                    ->where('fecha_lote', $lote)
+                    ->update(['firma1' => false,
+                              'fec_firma1'   => Carbon::now(),
+                     ]);
+         for ($k=0; $k < count($cadenas); $k++) {
+            DB::table('solicitudes_sep')
+                        ->where('fecha_lote', $lote)
+                        ->where('num_cta',$cuentas[$k])
+                       ->update([
+                                 'firma1' => '',
+                                 'status' => 3,
+                        ]);
+         }
+         $msj = "Error: Inconsistencia en firmas enviadas y recibidas, lote -> ".$lote;
+         Session::flash('error', $msj);
+      }
+      return $msj;
+
+   }
+   public function guardarSecretario($cuentas, $cadenas, $lote, $estado){
+      if($estado){
+         DB::table('lotes_unam')
+                    ->where('fecha_lote', $lote)
+                    ->update(['firma2' => true,
+                              'fec_firma2'   => Carbon::now(),
+                     ]);
+         // Se actualizan las firmas2 en la tabla de solicituds
+         for ($k=0; $k < count($cadenas); $k++) {
+            DB::table('solicitudes_sep')
+                        ->where('fecha_lote', $lote)
+                        ->where('num_cta',$cuentas[$k])
+                        ->update([
+                                 'firma2' => $cadenas[$k],
+                                 'status' => 5,
+                        ]);
+         }
+         $msj = "Firma exitosa";
+         Session::flash('info', $msj);
+      }
+      else {
+         // Se regresa a un estado anterior los archivos de lotesUnam y Solcitudes_sep
+         DB::table('lotes_unam')
+                    ->where('fecha_lote', $lote)
+                    ->update(['firma2' => false,
+                              'fec_firma2'   => Carbon::now(),
+                     ]);
+         for ($k=0; $k < count($cadenas); $k++) {
+            DB::table('solicitudes_sep')
+                        ->where('fecha_lote', $lote)
+                        ->where('num_cta',$cuentas[$k])
+                        ->update([
+                                 'firma2' => '',
+                                 'status' => 4,
+                        ]);
+         }
+         $msj = "Error: Inconsistencia en firmas enviadas y recibidas, lote -> ".$lote;
+         Session::flash('error', $msj);
+      }
+      return $msj;
+   }
+   public function guardarRector($cuentas, $cadenas, $lote, $estado){
+      if($estado){
+         DB::table('lotes_unam')
+                    ->where('fecha_lote', $lote)
+                    ->update(['firma3' => true,
+                              'fec_firma3'   => Carbon::now(),
+                     ]);
+         // Se actualizan las firmas3 en la tabla de solicituds
+         for ($k=0; $k < count($cadenas); $k++) {
+            DB::table('solicitudes_sep')
+                        ->where('fecha_lote', $lote)
+                        ->where('num_cta',$cuentas[$k])
+                       ->update([
+                                 'firma3' => $cadenas[$k],
+                                 'status' => 6,
+                        ]);
+         }
+         $msj = "Firma exitosa";
+         Session::flash('info', $msj);
+      }
+      else {
+         // Se regresa a un estado anterior los archivos de lotesUnam y Solcitudes_sep
+         DB::table('lotes_unam')
+                    ->where('fecha_lote', $lote)
+                    ->update(['firma3' => false,
+                              'fec_firma3'   => Carbon::now(),
+                     ]);
+         for ($k=0; $k < count($cadenas); $k++) {
+            DB::table('solicitudes_sep')
+                        ->where('fecha_lote', $lote)
+                        ->where('num_cta',$cuentas[$k])
+                       ->update([
+                                 'firma3' => '',
+                                 'status' => 5,
+                        ]);
+         }
+         $msj = "Error: Inconsistencia en firmas enviadas y recibidas, lote -> ".$lote;
+         Session::flash('error', $msj);
+      }
+      return $msj;
    }
 }

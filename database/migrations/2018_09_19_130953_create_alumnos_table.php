@@ -28,6 +28,7 @@ class CreateAlumnosTable extends Migration
            $table->boolean('autoriza')->default(false);
            $table->boolean('activo')->default(true);
            $table->date('fecha_nac');
+           $table->string('ip_usuario', 15)->nullable();
            $table->timestamps();
         });
     }

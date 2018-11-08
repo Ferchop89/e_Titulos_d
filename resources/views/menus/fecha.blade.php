@@ -3,33 +3,60 @@
     CONDOC | @yield('esp')
 @endsection
 @section('location')
-    <div>
+    {{-- <div>
         <p id="navegacion">
             <a href="{{ route('home') }}"><i class="fa fa-home" style="font-size:28px"></i></a>
             <a href="#"><span> >> </span>
             <span> </span>  </a> >>
             <a href="#"> {{$title}} </a> </p>
-    </div>
+    </div> --}}
 @endsection
 @section('estilos')
-    @yield('sub-estilos')
+   @section('estilos')
+   	<link href="{{ asset('css/loading.css') }}" rel="stylesheet">
+      <link href="{{ asset('css/solicitudesPendientes.css') }}" rel="stylesheet">
+      <link href="{{ asset('css/colordate.css') }}" rel="stylesheet">
+   @endsection
+@yield('sub-estilos')
 @endsection
 @section('content')
+    <br>
     <h2 id="titulo">{{$title}}</h2>
-    <div id="is" class="container">
+    <div class="loader"></div>
+    <div id="is" class="container viewFecha">
             <div class="panel panel-default">
-                {{-- <div class="panel-heading">@yield('esp')</div> --}}
                 <div class="panel-body">
 
                     @yield('ruta')
                         {!! csrf_field() !!}
-                        <label for="fecha"> Selecciona una fecha: </label>
+                        {{-- <label for="fecha"> Seleccione una fecha: </label> --}}
                         @if(isset($fecha))
-                           {{-- <input id="num_cta" type="text" name="num_cta" value="{{$num_cta}}" maxlength="9" /> --}}
                            <input id="fecha" type="date" name="fecha" value="{{$fecha}}">
+                           {{-- <div class="td-datepicker">
+                              <div class="form-group">
+                                 <label for="datepicker" class="datepicker">Emisión de título:</label>
+                                 <div class="input-group idatepicker">
+                                    <input name = "datepicker" type="text" id="datepicker" class="form-control" value ={{$fecha_d}}>
+                                    <span class="input-group-addon">
+                                       <i class="fa fa-search"></i>
+                                    </span>
+                                 </div>
+                              </div>
+                           </div> --}}
                         @else
                             {{-- <input id="num_cta" type="text" name="num_cta" maxlength="9" /> --}}
-                            <input id="fecha" type="date" name="fecha">
+                            {{-- <input id="fecha" type="date" name="fecha"> --}}
+                            <div class="div-datepicker">
+                               <div class="form-group">
+                                  <label for="datepicker" class="datepicker">Seleccione una fecha:</label>
+                                  <div class="input-group idatepicker">
+                                     <input name = "datepicker" type="text" id="datepicker" class="form-control">
+                                     {{-- <span class="input-group-addon">
+                                        <i class="fa fa-calendar"></i>
+                                     </span> --}}
+                                  </div>
+                               </div>
+                            </div>
                         @endif
                         @if ($errors->any())
                             <div id="error" class="alert alert-danger">
@@ -49,12 +76,9 @@
                 </div>
             </div>
 </div>
-   @include('errors/flash-message')
-   @yield('errores')
-<div class="capsule informacion-alumno">
-    @yield('identidadAlumno')
-</div>
-<div class="solicitudes">
-    @yield('info-alumno')
-</div>
+<div class="detalles_info">@include('errors/flash-message')</div>
+@endsection
+@section('animaciones')
+   <script  src="{{ asset('js/datepickerBlockDouble.js') }}" ></script>
+   <script src="{{asset('js/loading.js')}}"></script>
 @endsection

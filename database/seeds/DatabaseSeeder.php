@@ -19,14 +19,16 @@ class DatabaseSeeder extends Seeder
           'role_user',
           'menus',
           '_autorizaciones',
-          '_cancelaciones',
+          '_cancelacionesSep',
           '_entidades',
           '_carreras',
           '_estudios',
           '_firmas',
           '_legales',
           '_modos',
+          'lotes_unam',
           'solicitudes_sep',
+          '_status_cedula',
           '_codigos_error_feu'
       ]);
       // En este orden porque los roles deben existir antes que los usuarios

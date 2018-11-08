@@ -9,14 +9,30 @@ trait TitulosFechas {
 
   public function consultaTitulosDate($fecha)
   {
-     $query = "SELECT tit_ncta+tit_dig_ver AS num_cta, dat_nombre, tit_plancarr, tit_nivel, carrp_nombre, carrp_plan, plan_nombre, tit_fec_emision_tit, tit_libro, tit_foja, tit_folio FROM Titulos ";
+     $fechaPartes = explode("-", $fecha);
+     $query = "SELECT tit_ncta+tit_dig_ver AS num_cta, dat_nombre, dat_sistema, tit_plancarr, tit_nivel, carrp_nombre, carrp_plan, plan_nombre, tit_fec_emision_tit, tit_libro, tit_foja, tit_folio FROM Titulos ";
      $query .= "INNER JOIN Datos ON Titulos.tit_ncta = Datos.dat_ncta AND Titulos.tit_plancarr = Datos.dat_car_actual ";
      $query .= "INNER JOIN Carrprog ON Datos.dat_car_actual = Carrprog.carrp_cve ";
      $query .= "INNER JOIN Planteles ON plan_cve = carrp_plan ";
-     $query .= "WHERE Titulos.tit_fec_emision_tit = '".$fecha."'";
-     // $query .= "AND tit_nivel != '07'";
-     // dd($query);
+     //Números de cuenta problematicos
+     $query .= "WHERE (tit_ncta+tit_dig_ver)<>'503459419' AND ";
+     $query .= "(tit_ncta+tit_dig_ver)<>'503006594' AND ";
+     $query .=       "(datepart(year,  tit_fec_emision_tit) = ".$fechaPartes[0]." AND ";
+     $query .=       "datepart(month,  tit_fec_emision_tit) = ".$fechaPartes[1]." AND ";
+     $query .=       "datepart(day,  tit_fec_emision_tit) = ".$fechaPartes[2].")";
+     // consulta
      $datos = DB::connection('sybase')->select($query);
+     // $cuenta = 1;
+     // foreach ($datos as $key => $value) {
+     //    // // if ($value->num_cta=='503459419') {
+     //    // //
+     //    // // }
+     //    echo "<p>";
+     //    // echo "orden ".$cuenta++.' cuenta: '.$value->num_cta.'   carrera:'.$value->tit_plancarr;
+     //    echo $cuenta++.','.$value->num_cta.','.$value->tit_plancarr;
+     //    echo "</p>";
+     // }
+     // dd("fin");
      return $datos;
   }
   public function consultaFotos($num_cta){
@@ -50,8 +66,7 @@ trait TitulosFechas {
      $query .= "INNER JOIN Planteles ON plan_cve = carrp_plan ";
      $query .= "WHERE Titulos.tit_ncta = '".$cuenta."' ";
      $query .= "AND Titulos.tit_dig_ver = '".$verif."' ";
-     // $query .= "AND tit_nivel != '07'";
-     dd($query,'consultaDatos');
+
      $datos = DB::connection('sybase')->select($query);
      $info = array();
      foreach ($datos as $key => $value) {
@@ -60,6 +75,7 @@ trait TitulosFechas {
      }
      return $info;
   }
+
   public function consultaSolicitudSep($cuenta, $cveCarrera){
     $info = DB::connection('condoc_eti')->table('solicitudes_sep')->where('num_cta', $cuenta)->where('cve_carrera', $cveCarrera)->get();
         if($info->isEmpty())
@@ -73,9 +89,10 @@ trait TitulosFechas {
    }
 
    public function createSolicitudSep( $num_cta, $nombre, $nivel, $cve_carrera,
-                                       $libro,$foja,$folio,$fechaEmision,
+                                       $libro,$foja,$folio,$fechaEmision, $sistema,
                                        $user_id)
    {
+      $cuentas = array(); /*El indice cero es alta, cambio, no se actualiza*/
       $dato = SolicitudSep::where('num_cta',$num_cta)->
                             where('cve_carrera',$cve_carrera)->first();
       // Realizamos la consulta que contiene datos y (si tiene) errores;
@@ -83,6 +100,12 @@ trait TitulosFechas {
       // dd($num_cta,$nombre,$cve_carrera,$dato->nombre_completo);
       if (!count($dato))
       {
+         if($sistema == 2){
+            $sistema =  "DGIRE";
+         }
+         else {
+            $sistema = "SIAE";
+         }
          //  No se encuentra el registro, se da de alta.
          $solicitud = new SolicitudSep();
          $solicitud->num_cta = $num_cta;
@@ -95,22 +118,34 @@ trait TitulosFechas {
          $solicitud->folio  = $folio;
          $solicitud->datos = serialize($datosyerrores[0]);
          $solicitud->errores = serialize($datosyerrores[1]);
+         $solicitud->paridad = serialize($datosyerrores[2]);
+         $solicitud->sistema = $sistema;
          $solicitud->user_id = $user_id;
          $solicitud->save();
+         $cuenta = array(1, 0, 0);
       } else
       {
          // Se encuentra el registro, solo se actualiza libro, foja, folio, datos y errores
-         DB::table('solicitudes_sep')
-                    ->where('id', $dato->id)
-                    ->update(['libro'   => $libro,
-                              'foja'    => $foja,
-                              'folio'   => $folio,
-                              'datos'   => serialize($datosyerrores[0]),
-                              'errores' => serialize($datosyerrores[1])
-                     ]);
+         if ($dato->status == 1) {
+            // El registro ya habia sido autorizado
+            DB::table('solicitudes_sep')
+                       ->where('id', $dato->id)
+                       ->update(['libro'   => $libro,
+                                 'foja'    => $foja,
+                                 'folio'   => $folio,
+                                 'datos'   => serialize($datosyerrores[0]),
+                                 'errores' => serialize($datosyerrores[1]),
+                                 'paridad' => serialize($datosyerrores[2])
+                        ]);
+            $cuenta = array(0, 1, 0);
+         }
+         else{
+            $cuenta = array(0, 0, 1);
+         }
       }
+      return $cuenta;
    }
-   public function createUserLogin($num_cta, $pass, $apellido1, $apellido2, $nombres, $curp, $correo, $fecha_nac){
+   public function createUserLogin($num_cta, $pass, $apellido1, $apellido2, $nombres, $curp, $correo){
 
       $usuario = new Alumno();
       $usuario->num_cta = $num_cta;
@@ -120,7 +155,6 @@ trait TitulosFechas {
       $usuario->nombres = $nombres;
       $usuario->curp = $curp;
       $usuario->correo = $correo;
-      $usuario->fecha_nac = $fecha_nac;
       $usuario->save();
    }
    public function consultaFechaNac($cuenta, $verif){
@@ -146,6 +180,17 @@ trait TitulosFechas {
         }
       }
       return $fecha_nac;
+   }
+   public function consultaSistema($cuenta, $verif, $carrera, $nivel){
+      $sistema = DB::connection('sybase')->table('Datos')
+                                             ->select('dat_sistema')
+                                                ->where('dat_ncta', $cuenta)
+                                                ->where('dat_dig_ver', $verif)
+                                                ->where('dat_car_actual', $carrera)
+                                                ->where('dat_nivel', $nivel)
+                                             ->orderBy('dat_fecha_alta', 'desc')
+                                             ->first();
+      return $sistema->dat_sistema;
    }
    public function consultaCURP($cuenta, $verif){
       $curp = DB::connection('sybase')->table('Datos')->select('dat_curp')->where('dat_ncta', $cuenta)->where('dat_dig_ver', $verif)->orderBy('dat_fecha_alta', 'desc')->first();
@@ -173,6 +218,77 @@ trait TitulosFechas {
       }
       return $curp;
    }
+   public function carreraNombre($clv_carrera){
+      $query = "SELECT carrp_nombre FROM Carrprog ";
+      $query .= "WHERE carrp_cve = '".$clv_carrera."'";
+      $nombreCarrera = DB::connection('sybase')->select($query);
+      if(!empty($nombreCarrera)){
+         $nombreCarrera = $nombreCarrera[0]->carrp_nombre;
+      }
+      else {
+         $nombreCarrera = "";
+      }
+     return $nombreCarrera;
+   }
 
+   public function titulosA($anio)
+   {
+      // estadisticas de titulos, enviados, no enviados y pendientes por año.
+
+      // Año y mes para filtrar la consulta.
+      $mysql        = "DATE_FORMAT(fec_emision_tit,'%Y-%m-%d') as emisionYmd,";
+      $mysql       .= "SUM(CASE WHEN status <> 1 THEN 1 ELSE 0 END) AS enviadas, ";
+      $mysql       .= "SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS noenviadas ";
+      $mysqlWhere   = "DATE_FORMAT(fec_emision_tit, '%Y') >= '".$anio."'";
+      $mysqlData    = DB::table('solicitudes_sep')
+                    ->select(DB::raw($mysql))
+                    ->whereRaw($mysqlWhere)
+                    ->groupBy('fec_emision_tit')->get();
+
+      $sybase        = " tit_fec_emision_tit AS emision, ";
+      $sybase       .= " COUNT(*) AS total ";
+      $sybasewhere   = " datepart(year,  tit_fec_emision_tit) >= ".$anio;
+      $sybaseData  = DB::connection('sybase')
+                    ->table('Titulos')
+                    ->select(DB::raw($sybase))
+                    ->whereRaw($sybasewhere)
+                    ->groupBy('tit_fec_emision_tit')
+                    ->get();
+
+      // EL arreglo de referencia para fechas de emision de Titulos es Títulos, no solicitudes_sep
+      // por lo que el ciclo exterior itera en ese arreglo.
+
+      $resultado = array();
+      // $resultado integra los dos conjuntos de datos provenientes de mysql y sybase
+      if ($sybaseData!=[]) {
+         // la informacion proveniente de títulos tiene mayor prioridad que la de solicitudes_sep
+         $sSep = array();
+         if ($mysqlData!=[]) {
+           foreach ($mysqlData as $registros) {
+               $sSep[$registros->emisionYmd] = ["enviadas"=>$registros->enviadas,'noenviadas'=>$registros->noenviadas];
+           }
+         }
+        foreach ($sybaseData as $valores) {
+            $llave = substr($valores->emision,0,10);
+            if (array_key_exists($llave,$sSep)) {
+               // La llave existe en los dos arreglos
+               // Se contabilizan las pendientes que son las cédulas que estan en titulos pero no en solicitudes_sep
+               $pendientes = $valores->total-$sSep[$llave]['enviadas']-$sSep[$llave]['noenviadas'];
+               $resultado[$llave] = ['total'=>$valores->total,
+                                     'enviadas'=>$sSep[$llave]['enviadas'],
+                                     'noenviadas'=>$sSep[$llave]['noenviadas'],
+                                     'pendientes'=> $pendientes];
+            } else {
+               // solo se tienen los registros de Titulos
+               $resultado[$llave] = ['total'=>$valores->total,'enviadas'=>0,'noenviadas'=>0,'pendientes'=>$valores->total];
+            }
+        }
+      }
+      if ($resultado!=[]) {
+        ksort($resultado);
+      }
+
+      return $resultado;
+   }
 
 }

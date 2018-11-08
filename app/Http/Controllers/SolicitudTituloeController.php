@@ -7,17 +7,37 @@ use DB;
 use Session;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Models\{SolicitudSep, Web_Service, AutTransInfo, LotesUnam};
+use App\Models\{SolicitudSep, Web_Service, AutTransInfo, LotesUnam, SolicitudesCanceladas};
 use App\Http\Controllers\Admin\WSController;
 // Traits.
 use App\Http\Traits\Consultas\XmlCadenaErrores;
 use App\Http\Traits\Consultas\TitulosFechas;
 use App\Http\Traits\Consultas\LotesFirma;
 
+use App\Services\PayUService\Exception;
+
 class SolicitudTituloeController extends Controller
 {
    use TitulosFechas, XmlCadenaErrores, LotesFirma;
 
+   public function loteCadena($fecha,$cargo)
+   {
+      // obtencion un lote de cadenas orignales firmadas por la Jtit, Directora, Secretario o RECTOR
+      $datos = SolicitudSep::where('status', 2)->
+                             where('fecha_lote',$fecha)->get();
+      // El folio se forma por la fecha del loteCadena
+      $folio = carbon::parse($fecha)->format('Ymdhis');
+      $responsable = $cadenaResp = '';
+      // Se recorren las cuentas de alumnos que no tienen errores
+      foreach ($datos as $datosAlumno) {
+         $responsable = $this->integraNodosUnam($folio,unserialize($datosAlumno->datos),$cargo);
+         // generamos la cadena por alumno e integramos el lote
+         $cadena = $this->cadenaOriginal($responsable,$cargo);
+         $cadenaResp = $cadenaResp.'@_@'.$cadena;
+      }
+      $cadenaResp = substr($cadenaResp, 3,strlen($cadenaResp)-3);
+      return $cadenaResp;
+   }
    public function searchAlum()
    {
         return view('/menus/search_eTitulos');
@@ -47,7 +67,7 @@ class SolicitudTituloeController extends Controller
       $trayectorias = $this->consultaTitulos($cuenta, $verif);
       return view('/menus/search_eTitulosInfo', ['numCta' => $num_cta,'foto' => $foto, 'identidad' => $identidad, 'trayectorias' => $trayectorias]);
     }
-   public function existRequest($num_cta, $nombre,$carrera, $nivel)
+   public function existRequest($num_cta, $nombre, $carrera, $nivel)
    {
       $solicitud = $this->consultaSolicitudSep($num_cta, $carrera);
       if($solicitud != false)
@@ -56,27 +76,33 @@ class SolicitudTituloeController extends Controller
          Session::flash('error', $msj);
       }
       else {
-         $fecha_nac = $this->consultaFechaNac(substr($num_cta, 0, 8), substr($num_cta, 8, 1));
-         //$pass = str_replace("-", "", $fecha_nac);
-         $year = substr($fecha_nac, 0, 4);
-         $month = substr($fecha_nac, 5, 2);
-         $day = substr($fecha_nac, 8, 2);
-         $pass = $day.$month.$year;
-         //dd($pass);
          $curp = $this->consultaCURP(substr($num_cta, 0, 8), substr($num_cta, 8, 1));
-         // dd($fecha_nac, $pass);
-         $this->createSolicitudSep($num_cta, $nombre, $nivel, $carrera, Auth::id());
+         $sistema = $this->consultaSistema(substr($num_cta, 0, 8), substr($num_cta, 8, 1), $carrera, $nivel);
+         // Traemos $libro, Fecha, Folio y Fojo
+         $query  = "SELECT tit_libro, tit_foja, tit_folio, tit_fec_emision_tit FROM Titulos ";
+         $query .= "WHERE tit_ncta='".substr($num_cta,0,8)."' AND tit_plancarr='".$carrera."'";
+         $info   = (array)DB::connection('sybase')->select($query)[0];
+         // Damos de alta una solicitud SEP
+         $this->createSolicitudSep($num_cta, $nombre, $nivel, $carrera,
+                                   trim($info['tit_libro']), trim($info['tit_foja']),
+                                   trim($info['tit_folio']), $info['tit_fec_emision_tit'],
+                                   $sistema,
+                                   Auth::id());
 
-         $this->createUserLogin($num_cta, $pass, $nombre, $curp, $fecha_nac);
          $msj = "La solicitud con el número de cuenta ".$num_cta." y carrera ".$carrera." fue recibida";
          Session::flash('success', $msj);
       }
       return redirect()->route('eSearchInfo', ['numCta' => $num_cta]);
    }
-   public function listaErr()
+   public function listaErr($queryFecha)
    {
-      // Generacion de la lista de errores
-      $lists = SolicitudSep::all();
+      // Generacion de la lista de errores condicionado por la fecha elegida y solo si no han sido enviados a firma
+      $queryBase = "SELECT * FROM solicitudes_sep WHERE status=1 AND ";
+      $query  = ($queryFecha=='')? $queryBase: $queryBase.$queryFecha;
+
+      $lists = DB::connection('condoc_eti')->select($query);
+      // $lists = SolicitudSep::where()->all();
+
       $total = count($lists);
       $listaErrores = array();
       // Para cada alumno, se revisa el arreglo de errores almacenados en cada registro
@@ -89,35 +115,87 @@ class SolicitudTituloeController extends Controller
             }
          }
       }
+
+      $listaErrores['_00_todos'] = '-- Todos los registros --';
+      ksort($listaErrores);
+
       return $listaErrores;
    }
    public function showPendientes()
    {
-      // $total = SolicitudSep::count();
-      // $lists = SolicitudSep::paginate(10);
-      // $this->actualiza()
-      if (isset(request()->listaErrores)) {
-         // parametros de filtrado
-         $query = "SELECT * FROM solicitudes_sep  where ";
-         foreach (request()->listaErrores as $key => $value) {
-            $query .= "errores LIKE '%".$value."%' OR  ";
-         }
-         $query = substr($query,0,strlen($query)-5);
-         $lists = DB::connection('condoc_eti')->select($query);
+      // Muestra la vista de solicitudes pendientes de enviar a firma.
+      $queryFecha = '';
+      // Se establecen parametros adicionales para usar como fecha de filtrado
+      if (isset(request()->datepicker)) {
+         // Se invierte la fecha porque el DatePicker la presente invertida
+         $fecha_o = request()->datepicker;
+         $fecha_d = substr($fecha_o,0,2);$fecha_m=substr($fecha_o,3,2);$fecha_a=substr($fecha_o,6,4);
+         $fecha = Carbon::parse($fecha_a."/".$fecha_m."/".$fecha_d)->format('Y/m/d');
+         // regresamos el formato de la fecha_d para usarlo como valor inicial en el datepicker
+         $fecha_d = request()->datepicker;
       } else {
-         // sin parametro de filtrado.
-         $lists = SolicitudSep::where('status', '=', null)->get();
-         // dd($lists);
+         // Como no se especifica la fecha se carga la fecha de emision de titulo mas proxima
+         $fechaSolicitud = SolicitudSep::where('status','=',1)
+                           ->orderBy('fec_emision_tit')
+                           ->pluck('fec_emision_tit')
+                           ->last();
+         $fecha =  Carbon::parse($fechaSolicitud)->format('Y/m/d');
+         // para el DatePicker
+         $fecha_d =  Carbon::parse($fechaSolicitud)->format('d/m/Y');
       }
+      // Si existe fecha en el datepicker, la enviamos como parametro para elegir los errores de la fecha elegida
+      $queryFecha = $this->queryFecha($fecha);
+      // dd($queryFecha);
+      // dd($fecha);
+      $listaErrores =  $this->listaErr($queryFecha);
+
+      $query = ''; // query de condiciones multiples de errores en cédulas
+      $queryBase = "SELECT * FROM solicitudes_sep WHERE (status = 1) ";
+      // Preguntamos si se la elegido una opcion en el menu de inconsistencias
+      if (isset(request()->eSelect)) {
+         // Se encuentran elecciones en el arreglo
+
+         if (in_array("_00_todos",request()->eSelect)){
+            // La solicitud contiene el item --todos los registros--
+            // Seleccionamos como unica opcion
+            $seleccion = $listaErrores['_00_todos'];
+         } else {
+            // No tiene el item "todos", pero se seleccionaron varios errores.
+            $query='';
+            foreach (request()->eSelect as $key => $value) {
+               $query .= "errores LIKE '%".$value."%' OR ";
+            }
+            // Retiramos el ultimo OR de la cadena $query
+            $query = "AND (".substr($query,0,strlen($query)-4).") ";
+            // Los valores seleccionados son los mismos que regresan en el request
+            $seleccion = request()->eSelect;
+         }
+         // Consulta general a Solicitudes_sep y parametros de filtrado.
+         // Si existe datepicker, agregamos la condicion (AND)
+         $query = $queryBase.$query.' AND '.$queryFecha;
+      } else {
+         // No existe una elección previa, se entra por primera vez a la vista
+         $seleccion = ['_00_todos'];
+         $query  = $queryBase.' AND '.$queryFecha;
+
+         // Se recalculan todos los errores
+      }
+      $lists  = DB::connection('condoc_eti')->select($query);
       $acordeon = $this->acordionTitulosUpdate($lists);
-      // $acordeon = $this->acordionTitulos($lists);
       // total de registros
       $total = count($lists);
-      $title = 'Solicitudes para Envio de Firma';
-      // Lista de Errores
-      $listaErrores = $this->listaErr();
+      $title = 'Solicitudes de cédula profesional electrónica';
+      return view('menus/lista_solicitudes',
+            compact('title','lists', 'total','listaErrores','acordeon','seleccion','fecha_d'));
+   }
+   public function queryFecha($fecha)
+   {
+      $fechaP = explode("/", $fecha);
+      $query = " (YEAR(fec_emision_tit) = ".$fechaP[0]." AND ";
+      $query .= " MONTH(fec_emision_tit) = ".$fechaP[1]." AND ";
+      $query .= " DAY(fec_emision_tit) = ".$fechaP[2].")";
+      return $query;
 
-      return view('menus/lista_solicitudes', compact('title','lists', 'total','listaErrores','acordeon'));
    }
    public function infoCedula($cuenta,$carrera)
    {
@@ -125,173 +203,134 @@ class SolicitudTituloeController extends Controller
       $this->actualizaFLFF($cuenta,$carrera);
       return redirect()->route('filtraCedula');
    }
-
-   public function acordionTitulos($data)
-   {
-     // Elaboracion del acordion con listas.
-     $composite = "<div class='panel-group' id='accordion'>";
-
-     for ($i=0; $i < count($data) ; $i++) {
-      $x_list = $i + 1;
-
-
-      $composite .=    "<div class='panel panel-default'>";
-      $composite .=         "<div class='panel-heading'>";
-      $composite .=            "<h4 class='panel-title'>";
-      $composite .=              "<a data-toggle='collapse' data-parent='#accordion' href='#collapse".$x_list."'>";
-
-      $composite .=                 "<table class='table'>";
-      $composite .=                    "<thead class='thead-dark'>";
-      $composite .=                    "<tr>";
-      $composite .=                    "<th class='left' scope='col'>".$data[$i]->id."</th>";
-      $composite .=                    "<th class='left' scope='col'>".$data[$i]->num_cta."</th>";
-      $composite .=                    "<th class='left' scope='col'>".$data[$i]->nombre_completo."</th>";
-      $composite .=                    "<th class='left' scope='col'>".substr($data[$i]->fec_emision_tit,0,10)."</th>";
-      $lifofo    = $data[$i]->libro."-".$data[$i]->foja."-".$data[$i]->folio ;
-      $composite .=                    "<th class='left' scope='col'>".$lifofo."</th>";
-      $composite .=                    "<th class='left' scope='col'>".$data[$i]->nivel."</th>";
-      $composite .=                    "<th class='left' scope='col'>".$data[$i]->cve_carrera."</th>";
-      // desSerializamos la lista de errores para convertirla en array
-      $listaErrores = unserialize($data[$i]->errores);
-      // Cuenta de errores, si existe la llave "sin errores", ponemos en cero la cuenta de errores
-      $cuentaE = (array_key_exists('sin errores',$listaErrores))? 0: count($listaErrores);
-      $composite .=                    "<th class='left' scope='col'>".$cuentaE."</th>";
-      $composite .=                    "</tr>";
-      $composite .=                    "</thead>";
-      $composite .=                 "</table>";
-
-      // $composite .=              "Cuenta ".$data[$i]->num_cta."; Nombre ".$data[$i]->nombre_completo."; errores ".count(unserialize($data[$i]->errores));
-
-      $composite .=              "</a>";
-      $composite .=            "</h4>";
-      $composite .=         "</div>";
-      // solo el primer listado se despliega, los demas se colapsan.
-      $collapse   =       (count($data)==1)? 'in': '';
-      $composite .=       "<div id='collapse".$x_list."' class='panel-collapse collapse ".$collapse."'>";
-      $composite .=       "<div class='panel-body'>";
-      $link       =       'infoCedula/'.$data[$i]->num_cta."/".$data[$i]->cve_carrera;
-      // $composite .=       "</br><a href=$link>ActualizaLink</a></br></br>";
-      $composite .=       "<form action='infoCedula/".$data[$i]->num_cta."/".$data[$i]->cve_carrera."'>";
-      $composite .=       "<input type='submit' value='actualiza' />";
-      $composite .=       "</form>";
-      $composite .=        "<div class='table-responsive'>";
-      $composite .=         "<table class='table table-striped table-dark'>";
-      $composite .=           "<thead>";
-      $composite .=             "<tr>";
-      $composite .=               "<th scope='col'>#</th>";
-      $composite .=               "<th scope='col'><strong>Llave XML</strong></th>";
-      $composite .=               "<th scope='col'><strong>Contendido</strong></th>";
-      $composite .=               "<th scope='col'><strong>Observacion</strong></th>";
-      $composite .=             "</tr>";
-      $composite .=           "</thead>";
-      $composite .=           "<tbody>";
-      $regis = 0;
-      // Creamos un arreglo de datos a partir del contenido del campo datos.
-      $listaDatos = unserialize($data[$i]->datos);
-      foreach ( $listaDatos as $key => $value) {
-         $composite .=           "<tr>";
-         $composite .=             "<th scope='row'>".($regis++)."</th>";
-         $composite .=               "<td>".$key."</td>";
-         $composite .=               "<td>".$value."</td>";
-         // Determinamos si existe la llave en la lista de errores para desplegarlo como obsevacion
-         $observa    = array_key_exists($key,$listaErrores)? $listaErrores[$key]: '';
-         $composite .=               "<td>".$observa."</td>";
-         $composite .=           "</tr>";
-      }
-      $composite .=            "</tbody>";
-      $composite .=         "</table>";
-      $composite .=        "</div>"; // cierra el table responsive
-      $composite .=       "</div>"; // cierra el panel-body
-      $composite .=      "</div>"; // cierra el collapse
-      $composite .=     "</div>"; // cierra el panel-default
-     }
-     $composite .= "<div>"; // cierra el acordeon
-
-     return $composite;
-   }
    public function acordionTitulosUpdate($data)
    {
       // Elaboracion del acordion con listas.
-     $composite = "<div class='panel-group' id='accordion'>";
-     for ($i=0; $i < count($data) ; $i++) {
-      $x_list = $i + 1;
-      $composite .=    "<div class='panel panel-default'>";
-      $composite .=         "<div class='panel-heading'>";
-      $composite .=            "<h4 class='panel-title'>";
-      $composite .=              "<input type='checkbox' name='check_list[]' value='".$data[$i]->id."'>";
-      $composite .=              "<a data-toggle='collapse' data-parent='#accordion' href='#collapse".$x_list."'>";
+      $composite = "<div class='Heading'>";
+      $composite .=  "<div class='Cell id'>";
+      $composite .=     "<p># Solicitud</p>";
+      $composite .=  "</div>";
+      $composite .=  "<div class='Cell cta'>";
+      $composite .=     "<p>No. Cuenta</p>";
+      $composite .=  "</div>";
+      $composite .=  "<div class='Cell name'>";
+      $composite .=     "<p>Nombre</p>";
+      $composite .=  "</div>";
+      $composite .=  "<div class='Cell date'>";
+      $composite .=     "<p>Fecha</p>";
+      $composite .=  "</div>";
+      $composite .=  "<div class='Cell book'>";
+      $composite .=     "<p>Libro-Foja-Folio</p>";
+      $composite .=  "</div>";
+      $composite .=  "<div class='Cell level'>";
+      $composite .=     "<p>Nivel</p>";
+      $composite .=  "</div>";
+      $composite .=  "<div class='Cell cve'>";
+      $composite .=     "<p>Cve Carrera</p>";
+      $composite .=  "</div>";
+      $composite .=  "<div class='Cell sistema'>";
+      $composite .=     "<p>Sistema</p>";
+      $composite .=  "</div>";
+      $composite .=  "<div class='Cell nError center'>";
+      $composite .=     "<p>Errores</p>";
+      $composite .=  "</div>";
+      $composite .="</div>";
+      $composite .="<div class='Heading Cell actions center'>";
+      $composite .= "<div class='switch demo3'>
+  <input type='checkbox' id='checkAll'>
+  <label><i></i>
+  </label>
+</div>";
+      // $composite .=  "<input type='checkbox' id='checkAll'>";
+      // $composite .=     "<i id='checkAll' class='fa fa-check fa-2x' aria-hidden='true'></i>";
+      $composite .="</div>";
+      for ($i=0; $i < count($data) ; $i++) {
+         $x_list = $i + 1;
+         $composite .= "<div class='fila'>";
+         $composite .="<div class='accordion-a'>";
+         $composite .=  "<a class = 'a-row' data-toggle='collapse' data-parent='#accordion' href='#collapse".$x_list."'>";
+         $composite .=     "<div class='Row'>";
+         $composite .=        "<div class='Cell id right'>";
+         $composite .=           "<p>".$data[$i]->id."</p>";
+         $composite .=        "</div>";
+         $composite .=        "<div class='Cell cta'>";
+         $composite .=           "<p>".$data[$i]->num_cta."</p>";
+         $composite .=        "</div>";
+         $composite .=        "<div class='Cell name'>";
+         $composite .=           "<p>".$data[$i]->nombre_completo."</p>";
+         $composite .=        "</div>";
+         $composite .=        "<div class='Cell date'>";
+         $composite .=           "<p>".Carbon::parse($data[$i]->fec_emision_tit)->format('d/m/Y')."</p>";
+         $composite .=        "</div>";
+         $composite .=        "<div class='Cell book'>";
+         $composite .=           "<p>".$data[$i]->libro."-".$data[$i]->foja."-".$data[$i]->folio."</p>";
+         $composite .=        "</div>";
+         $composite .=        "<div class='Cell level'>";
+         $composite .=           "<p>".$data[$i]->nivel."</p>";
+         $composite .=        "</div>";
+         $composite .=        "<div class='Cell cve'>";
+         $composite .=           "<p>".$data[$i]->cve_carrera."</p>";
+         $composite .=        "</div>";
+         $composite .=        "<div class='Cell sistema'>";
+         $composite .=           "<p>".$data[$i]->sistema."</p>";
+         $composite .=        "</div>";
+         // desSerializamos la lista de errores para convertirla en array
+         $listaErrores = unserialize($data[$i]->errores);
+         $composite .=        "<div class='Cell nError center'>";
+         // Si la lista de errores contiene el item "sin errores" entonces la cuenta se despliegan "0" errores.
+         $composite .=           "<p>".(in_Array('Sin errores',$listaErrores)? 0 : count($listaErrores))."</p>";
+         $composite .=        "</div>";
+         $composite .=     "</div>";
+         $composite .=  "</a>";
+         $composite .="</div>";
+         $composite .="<div class='Cell btns'>";
+         $composite .=  "<input type='checkbox' name='check_list[]' value='".$data[$i]->id."'>";
+         $composite .="</div>";
+         $composite .=    "</div>";
 
-      $composite .=                 "<table class='table'>";
-      $composite .=                    "<thead class='thead-dark'>";
-      $composite .=                    "<tr>";
-      $composite .=                    "<th class='left' scope='col'>".$data[$i]->id."</th>";
-      // $composite .= "<option value="{{$place->id}}" @foreach($job->places as $p) @if($place->id == $p->id)selected="selected"@endif @endforeach>{{$place->name}}</option>";
-      $composite .=                    "<th class='left' scope='col'>".$data[$i]->num_cta."</th>";
-      $composite .=                    "<th class='left' scope='col'>".$data[$i]->nombre_completo."</th>";
-      $composite .=                    "<th class='left' scope='col'>".substr($data[$i]->fec_emision_tit,0,10)."</th>";
-      $lifofo    = $data[$i]->libro."-".$data[$i]->foja."-".$data[$i]->folio ;
-      $composite .=                    "<th class='left' scope='col'>".$lifofo."</th>";
-      $composite .=                    "<th class='left' scope='col'>".$data[$i]->nivel."</th>";
-      $composite .=                    "<th class='left' scope='col'>".$data[$i]->cve_carrera."</th>";
-      // desSerializamos la lista de errores para convertirla en array
-      $listaErrores = unserialize($data[$i]->errores);
-      // Cuenta de errores, si existe la llave "sin errores", ponemos en cero la cuenta de errores
-      $cuentaE = (array_key_exists('sin errores',$listaErrores))? 0: count($listaErrores);
-      $composite .=                    "<th class='left' scope='col'>".$cuentaE."</th>";
-      $composite .=                    "</tr>";
-      $composite .=                    "</thead>";
-      $composite .=                 "</table>";
+         // solo el primer listado se despliega, los demas se colapsan.
+         $collapse   =(count($data)==1)? 'in': '';
+         $composite .="<div id='collapse".$x_list."' class='panel-collapse collapse ".$collapse."'>";
+         $composite .=  "<div class='panel-body'>";
+         $composite .=     "<div class='table-responsive'>";
+         $composite .=        "<table class='table table-striped table-dark'>";
+         $composite .=           "<thead>";
+         $composite .=              "<tr>";
+         $composite .=                 "<th scope='col'>#</th>";
+         $composite .=                 "<th scope='col'><strong>Llave XML</strong></th>";
+         $composite .=                 "<th scope='col'><strong>SEP</strong></th>";
+         $composite .=                 "<th scope='col'><strong>UNAM</strong></th>";
+         $composite .=                 "<th scope='col'><strong>Observación</strong></th>";
+         $composite .=              "</tr>";
+         $composite .=           "</thead>";
+         $composite .=           "<tbody>";
+         $regis = 0;
+         // Creamos un arreglo de datos a partir del contenido del campo datos.
 
-      // $composite .=              "Cuenta ".$data[$i]->num_cta."; Nombre ".$data[$i]->nombre_completo."; errores ".count(unserialize($data[$i]->errores));
-
-      $composite .=              "</a>";
-      $composite .=            "</h4>";
-      $composite .=         "</div>";
-      // solo el primer listado se despliega, los demas se colapsan.
-      $collapse   =       (count($data)==1)? 'in': '';
-      $composite .=       "<div id='collapse".$x_list."' class='panel-collapse collapse ".$collapse."'>";
-      $composite .=       "<div class='panel-body'>";
-      $link       =       'infoCedula/'.$data[$i]->num_cta."/".$data[$i]->cve_carrera;
-      // $composite .=       "</br><a href=$link>ActualizaLink</a></br></br>";
-      $composite .=       "<form action='infoCedula/".$data[$i]->num_cta."/".$data[$i]->cve_carrera."'>";
-      $composite .=       "<input type='submit' value='actualiza' />";
-      $composite .=       "</form>";
-      $composite .=        "<div class='table-responsive'>";
-      $composite .=         "<table class='table table-striped table-dark'>";
-      $composite .=           "<thead>";
-      $composite .=             "<tr>";
-      $composite .=               "<th scope='col'>#</th>";
-      $composite .=               "<th scope='col'><strong>Llave XML</strong></th>";
-      $composite .=               "<th scope='col'><strong>Contendido</strong></th>";
-      $composite .=               "<th scope='col'><strong>Observacion</strong></th>";
-      $composite .=             "</tr>";
-      $composite .=           "</thead>";
-      $composite .=           "<tbody>";
-      $regis = 0;
-      // Creamos un arreglo de datos a partir del contenido del campo datos.
-      $listaDatos = unserialize($data[$i]->datos);
-      foreach ( $listaDatos as $key => $value) {
-         $composite .=           "<tr>";
-         $composite .=             "<th scope='row'>".($regis++)."</th>";
-         $composite .=               "<td>".$key."</td>";
-         $composite .=               "<td>".$value."</td>";
-         // Determinamos si existe la llave en la lista de errores para desplegarlo como obsevacion
-         $observa    = array_key_exists($key,$listaErrores)? $listaErrores[$key]: '';
-         $composite .=               "<td>".$observa."</td>";
-         $composite .=           "</tr>";
-      }
-      $composite .=            "</tbody>";
-      $composite .=         "</table>";
-      $composite .=        "</div>"; // cierra el table responsive
-      $composite .=       "</div>"; // cierra el panel-body
-      $composite .=      "</div>"; // cierra el collapse
-      $composite .=     "</div>"; // cierra el panel-default
-   }
-      $composite .= "<div>"; // cierra el acordeon
-      // $composite .=       "<input type='submit' value='Enviar' />";
-
-
-
+         // if ($data[$i]->num_cta=='099266406') {
+         //    dd($data[$i]->datos);
+         // }
+         $listaDatos = unserialize($data[$i]->datos);
+         $paridad = unserialize($data[$i]->paridad);
+         foreach ( $listaDatos as $key => $value) {
+            $composite .=           "<tr>";
+            $composite .=              "<td>".($regis++)."</td>";
+            $composite .=              "<td class='envio-sep'>".$key."</td>";
+            $composite .=              "<td class='envio-sep'>".$value."</td>";
+            // Actualizamos la informacion de clave carrera UNAM si existe clave SEP para la misma
+            $datoUnam  = array_key_exists($key,$paridad)? $paridad[$key]: '';
+            $composite .=              "<td>".$datoUnam."</td>";
+            // Determinamos si existe la llave en la lista de errores para desplegarlo como obsevacion
+            $observa    = array_key_exists($key,$listaErrores)? $listaErrores[$key]: '';
+            $composite .=              "<td class='envio-sep'>".$observa."</td>";
+            $composite .=           "</tr>";
+         }
+         $composite .=           "</tbody>";
+         $composite .=        "</table>";
+         $composite .=     "</div>"; // cierra el table responsive
+         $composite .=  "</div>"; // cierra el panel-body
+         $composite .="</div>"; // cierra el collapse
+     }
      return $composite;
    }
    public function searchAlumDate()
@@ -301,32 +340,52 @@ class SolicitudTituloeController extends Controller
    public function postSearchAlumDate(Request $request)
    {
         $request->validate([
-            'fecha' => 'required'
+            'datepicker' => 'required'
         ],[
-            'fecha.required' => 'El campo es obligatorio',
+            'datepicker.required' => 'El campo es obligatorio',
             // 'num_cta.numeric' => 'El campo debe contener solo números',
             // 'num_cta.digits'  => 'El campo debe ser de 9 dígitos',
         ]);
-        return redirect()->route('eSearchInfoDate', ['fecha'=>$request->fecha]);
+        $mda = explode("/", $request->datepicker);
+        $amd = $mda[2]."-".$mda[1]."-".$mda[0];
+        $this->showInfoDate($amd);
+        return redirect()->route('registroTitulos/buscar/fecha');
+
    }
    public function showInfoDate($fecha)
    {
       // dd($fecha);
       $datos = $this->consultaTitulosDate($fecha);
-      $registros=0;
+      $procesa = array(0,0,0);
       // $fechaView  = Carbon::createFromDate($fecha);
       $fechaView = Carbon::createFromFormat('Y-m-d', $fecha);
       foreach ($datos as $key => $value) {
-         $this->createSolicitudSep($value->num_cta, $value->dat_nombre,
+         $act = $this->createSolicitudSep($value->num_cta, $value->dat_nombre,
                                    $value->tit_nivel,$value->tit_plancarr,
                                    trim($value->tit_libro),trim($value->tit_foja),trim($value->tit_folio),
-                                   substr($value->tit_fec_emision_tit,0,10),
+                                   // substr($value->tit_fec_emision_tit,0,10),
+                                   $value->tit_fec_emision_tit,
+                                   $value->dat_sistema,
                                    Auth::id());
-         $registros++;
+         $procesa[0] += $act[0];
+         $procesa[1] += $act[1];
+         $procesa[2] += $act[2];
       }
-      $msj = "Se solicitaron ".$registros." registros con fecha ".$fechaView->format('d-m-Y');
+      $msj = "Se procesaron ".($procesa[0]+$procesa[1]+$procesa[2])." registros con fecha ".$fechaView->format('d-m-Y').":";
+      if($procesa[0] > 0)
+      {
+         $msj .= "<p> ->".$procesa[0]." se dieron de alta </p>";
+      }
+      if($procesa[1] > 0)
+      {
+         $msj .= "<p> ->".$procesa[1]." se actualizaron</p>";
+      }
+      if($procesa[2] > 0)
+      {
+         $msj .= "<p> ->".$procesa[2]." no se actualizaron, debido a que ya pasaron al proceso de firma</p>";
+      }
       Session::flash('info', $msj);
-      return view('/menus/search_eTitulosDate');
+      // return view('/menus/search_eTitulosDate');
    }
    public function nameButton()
    {
@@ -336,16 +395,14 @@ class SolicitudTituloeController extends Controller
          {
             $date = Carbon::now();
             $date = $date->format('Y-m-d h:i:s');
-            $this->enviarFirma($_POST['check_list'], $date);
-            $msj = "Se enviaron ".count($_POST['check_list'])." registros.";
-            Session::flash('info', $msj);
-            return redirect()->route('solicitudesPendientes');
+            $msj = $this->enviarFirma($_POST['check_list'], $date);
+            return redirect()->route('registroTitulos/lista-solicitudes/pendientes');
          }
          elseif (isset($_POST['actualizar'])) {
             $this->actualizaFLFFIds($_POST['check_list']);
             $msj = "Se actualizaron ".count($_POST['check_list'])." registros.";
             Session::flash('info', $msj);
-            return redirect()->route('solicitudesPendientes');
+            return redirect()->route('registroTitulos/lista-solicitudes/pendientes');
          }
       }
       $msj = "No se selecciono ningún registro.";
@@ -353,6 +410,10 @@ class SolicitudTituloeController extends Controller
       return redirect()->route('solicitudesPendientes');
 
 
+   }
+   public function verTitulos()
+   {
+      return $this->titulosA(2000);
    }
 
 }

@@ -166,8 +166,12 @@ return [
         Illuminate\View\ViewServiceProvider::class,
         // App para la generación de pdf a favor de informes.
         Barryvdh\DomPDF\ServiceProvider::class,
-
+        Chumper\Zipper\ZipperServiceProvider::class,
         'Collective\Html\HtmlServiceProvider',
+
+
+        // chartjs
+        Fx3costa\LaravelChartJs\Providers\ChartjsServiceProvider::class,
 
         /*
          * Package Service Providers...
@@ -234,6 +238,7 @@ return [
         'Form' => 'Collective\Html\FormFacade',
         'Html' => 'Collective\Html\HtmlFacade',
         'PDF' => Barryvdh\DomPDF\Facade::class,
+        'Zipper' => Chumper\Zipper\Zipper::class,
     ],
 
 ];

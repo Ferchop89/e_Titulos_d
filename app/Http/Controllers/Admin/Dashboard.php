@@ -57,6 +57,10 @@ class Dashboard extends Controller
             'JArea' => '',
             'Ofisi' => '',
             'Invit' => '',
+            'Director' => '',
+            'SecGral' => '',
+            'Rector' => '',
+            'Jtit' => '',
         ],[
             'name.required' => 'El campo nombre es obligatorio',
             'username.required' => 'El alias mínimo es de 6 caracteres',
@@ -88,6 +92,10 @@ class Dashboard extends Controller
         if( isset($_POST['JSecc'])) { $user->roles()->attach( $_POST['JSecc'] ); }
         if( isset($_POST['JArea'])) { $user->roles()->attach( $_POST['JArea'] ); }
         if( isset($_POST['Ofisi'])) { $user->roles()->attach( $_POST['Ofisi'] ); }
+        if( isset($_POST['Director'])) { $user->roles()->attach( $_POST['Director'] ); }
+        if( isset($_POST['SecGral'])) { $user->roles()->attach( $_POST['SecGral'] ); }
+        if( isset($_POST['Rector'])) { $user->roles()->attach( $_POST['Rector'] ); }
+        if( isset($_POST['Jtit'])) { $user->roles()->attach( $_POST['Jtit'] ); }
         $user->roles()->attach( '9' ); // por omision, el usuario tiene el rol de invitado
 
         return redirect()->route('admin/usuarios');  // redireccionamos al listado de usuarios
@@ -134,6 +142,10 @@ class Dashboard extends Controller
         if( isset($_POST['JSecc'])) { $user->roles()->attach( $_POST['JSecc'] ); }
         if( isset($_POST['JArea'])) { $user->roles()->attach( $_POST['JArea'] ); }
         if( isset($_POST['Ofisi'])) { $user->roles()->attach( $_POST['Ofisi'] ); }
+        if( isset($_POST['Director'])) { $user->roles()->attach( $_POST['Director'] ); }
+        if( isset($_POST['SecGral'])) { $user->roles()->attach( $_POST['SecGral'] ); }
+        if( isset($_POST['Rector'])) { $user->roles()->attach( $_POST['Rector'] ); }
+        if( isset($_POST['Jtit'])) { $user->roles()->attach( $_POST['Jtit'] ); }
         $user->roles()->attach( '9' ); // por omision, el usuario tiene el rol de invitado
 
         $user->update($data);

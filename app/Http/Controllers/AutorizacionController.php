@@ -32,6 +32,7 @@ class AutorizacionController extends Controller
       $year = $f->formatLocalized('%Y');
       $fecha = (object)['day' => $day, 'month' => $month, 'year' => $year];
       $alumno = Auth::guard('alumno')->user();
+      session()->forget('errorWS');
       return view('/autorizacion_t_info')->with(compact('fecha', 'alumno'));
     }
 
@@ -39,9 +40,8 @@ class AutorizacionController extends Controller
       $request->validate([
           'nombres' => 'required',
           'apellido1' => 'required',
-          'apellido2' => 'required',
+          // 'apellido2' => 'required',
           'curp' => ['required', 'min:18', 'max:18', new curpValido],
-          // 'num_tel' => 'numeric|min:10',
           'num_cel' => 'required|numeric|min:10',
           'correo' => 'required|email',
           'acepto' => 'required',
@@ -49,14 +49,11 @@ class AutorizacionController extends Controller
           ],[
            'nombres.required' => 'Debes proporcionar tu(s) nombre(s)',
            'apellido1.required' => 'Debes proporcionar tu apellido paterno',
-           'apellido2.required' => 'Debes proporcionar tu apellido materno',
+           // 'apellido2.required' => 'Debes proporcionar tu apellido materno',
            'curp.required' => 'Debes proporcionar tu CURP',
            'curp.min' => 'El CURP debe ser de 18 caracteres.',
            'curp.max' => 'El CURP debe ser de 18 caracteres.',
            'curp.regex' => 'El formato de CURP es incorrecto',
-           // 'num_tel.required' => 'Debes proporcionar tu número de teléfono fijo',
-           // 'num_tel.numeric' => 'El número de teléfono fijo deben ser solo dígitos',
-           // 'num_tel.min' => 'El número de teléfono fijo al menos se forma por 10 dígitos',
            'num_cel.required' => 'Debes proporcionar tu número de teléfono celular',
            'num_cel.numeric' => 'El número de teléfono celular deben ser solo dígitos',
            'num_cel.min' => 'El número de teléfono celular al menos se forma por 10 dígitos',
@@ -86,6 +83,7 @@ class AutorizacionController extends Controller
          $consulta->correo = $_POST['correo'];
          $consulta->autoriza = $aceptacion;
          $consulta->num_cta = $num_cta;
+         $consulta->ip_usuario = $request->ip();
          $consulta->update();
       }
       else {

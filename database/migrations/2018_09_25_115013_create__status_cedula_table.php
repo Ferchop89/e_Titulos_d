@@ -13,10 +13,11 @@ class CreateStatusCedulaTable extends Migration
      */
     public function up()
     {
-      Schema::create('status_cedula', function (Blueprint $table) {
+      Schema::create('_status_cedula', function (Blueprint $table) {
           $table->charset = 'utf8';
           $table->collation = 'utf8_spanish_ci';
-          $table->char('id', 2);
+          $table->increments('id');
+          $table->string('nombreCorto', 20);
           $table->text('descripcion');
       });
     }
@@ -28,6 +29,6 @@ class CreateStatusCedulaTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('status_cedula');
+        Schema::dropIfExists('_status_cedula');
     }
 }

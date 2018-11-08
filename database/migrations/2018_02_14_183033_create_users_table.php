@@ -20,7 +20,7 @@ class CreateUsersTable extends Migration
             $table->increments('id');
             $table->string('name');
             $table->string('username',15)->unique();
-            $table->string('email')->unique();
+            $table->string('email')->nullable();
             $table->string('procedencia_id')->nullable();
             $table->string('password');
             $table->boolean('is_active')->default(true);

@@ -17,15 +17,15 @@ class CreateLotesUnam extends Migration
           $table->charset = 'utf8';
           $table->collation = 'utf8_spanish_ci';
           $table->increments('id');
-          $table->DateTime('fechaLote');
-          $table->text('cadenaFirma1')->nullable();
-          $table->text('cadenaFirma2')->nullable();
-          $table->text('cadenaFirma3')->nullable();
-          $table->text('firma1')->nullable();
-          $table->text('firma2')->nullable();
-          $table->text('firma3')->nullable();
-          $table->text('xml')->nullable();
-          $table->timestamps();
+          $table->DateTime('fecha_lote');
+          $table->boolean('firma0')->default(false);
+          $table->DateTime('fec_firma0')->nullable();
+          $table->boolean('firma1')->default(false);
+          $table->DateTime('fec_firma1')->nullable();
+          $table->boolean('firma2')->default(false);
+          $table->DateTime('fec_firma2')->nullable();
+          $table->boolean('firma3')->default(false);
+          $table->DateTime('fec_firma3')->nullable();
       });
     }
 

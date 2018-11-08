@@ -8,31 +8,50 @@ use Spatie\ArrayToXml\ArrayToXml;
 use \FluidXml\FluidXml;
 use App\Models\Estudio;
 use App\Models\Entidad;
+use App\Models\Carrera;
 use App\Models\SolicitudSep;
 use App\Models\Modo;
 use Carbon\Carbon;
+
+use App\Models\Web_Service;
+use App\Http\Controllers\Admin\WSController;
+
 
 trait XmlCadenaErrores {
 
    public function integraConsulta($cuenta, $digito, $carrera)
    {
-      // integramos consulta y errores,
-      $errores = $items = $resultado = array();
-      // Consulta por porOmision
+      // Integra toda la informacion que previamente ha sido segmentada por temas correspondientes a cada nodos
+      // genera una arreglo con 3 arreglos, datos: arreglo con todos los items a enviar a sep; errores: arreglo
+      // de errores en los items; y paridad: arreglos llaves (como en el arreglos datos) con valores unam.
+
+      $errores = $items = $resultado = $paridad = array();
+      // Consulta por porOmision Integra los Items xml que no requieren consulta y son valores predeterminados
       $consulta = $this->porOmision($cuenta,$digito,$carrera);
       $items = array_merge($items,$consulta);
       // Primer consulta
       $consulta = $this->carrerasProcedencia($cuenta,$digito,$carrera);
       if (isset($consulta['errores'])!=null) {
          $errores = array_merge($errores,$consulta['errores']);
+         // Se elimina de la consulta el item errores porque ya se encuentra en el arreglo $erroers
          unset($consulta['errores']);
       }
+      if (isset($consulta['paridad'])!=null) {
+         $paridad  = array_merge($paridad,$consulta['paridad']);
+         // Se elimina el item "paridad" porque ya swe encuentra en el arreglo $paridad;
+         unset($consulta['paridad']);
+      }
       $items = array_merge($items,$consulta);
-      // Segunda consultaDatos
+      // Segunda consulta de Datos
       $consulta = $this->titulosEscprocedencia($cuenta,$carrera);
       if (isset($consulta['errores'])!=null) {
          $errores = array_merge($errores,$consulta['errores']);
          unset($consulta['errores']);
+      }
+      if (isset($consulta['paridad'])!=null) {
+         $paridad  = array_merge($paridad,$consulta['paridad']);
+         // Se elimina el item "paridad" porque ya swe encuentra en el arreglo $paridad;
+         unset($consulta['paridad']);
       }
       $items = array_merge($items,$consulta);
       // Tecer consulta de Datos
@@ -42,6 +61,11 @@ trait XmlCadenaErrores {
          $errores = array_merge($errores,$consulta['errores']);
          unset($consulta['errores']);
       }
+      if (isset($consulta['paridad'])!=null) {
+         $paridad  = array_merge($paridad,$consulta['paridad']);
+         // Se elimina el item "paridad" porque ya swe encuentra en el arreglo $paridad;
+         unset($consulta['paridad']);
+      }
       $items = array_merge($items,$consulta);
       unset($items['atrib_nivelProf']); // Eliminamos el nivel. No se ocupa en el documento final.
       // Cuarta consultaDatos
@@ -49,6 +73,11 @@ trait XmlCadenaErrores {
       if (isset($consulta['errores'])!=null) {
          $errores = array_merge($errores,$consulta['errores']);
          unset($consulta['errores']);
+      }
+      if (isset($consulta['paridad'])!=null) {
+         $paridad  = array_merge($paridad,$consulta['paridad']);
+         // Se elimina el item "paridad" porque ya swe encuentra en el arreglo $paridad;
+         unset($consulta['paridad']);
       }
       $items = array_merge($items,$consulta);
       // Quinta consultaDatos
@@ -59,75 +88,257 @@ trait XmlCadenaErrores {
       }
       $items = array_merge($items,$consulta);
 
-      // Ordenamos lo items
+      // Ordenamos los items. Todos tienen un sub item (ejem: __05__) y como se agregaron
+      // los items "por omision" que vienen desordenados, es necesario reenumerar para tenerlos consecutivos.
       ksort($items);
 
-      // Verificamos si no se presentaron errores, colocamos el campo "sin errores"
+      // Si no existen los errores, el arreglo de errores
       if ($errores==[]) {
-         $errores['sin errores'] = 'sin errores';
+         $errores['sin errores'] = 'Sin errores';
       }
 
       // Integramos errores y Datos
       $resultado[0] = $items;
       $resultado[1] = $errores;
+      $resultado[2] = $paridad;
 
       return $resultado;
    }
+   public function nombreCarrera($carrera)
+   {
+      // consulta de la clave UNAM y nombre UNAM
+      $query  = 'SELECT ';
+      $query .= 'carrp_cve      AS cveCarrera, ';
+      $query .= 'carrp_nombre   AS nombreCarrera ';
+      $query .= 'from Carrprog ';
+      $query .= "where carrp_cve = '".$carrera."'";
+      $nombreCarrera  = (array)DB::connection('sybase')->select($query);
+      return $nombreCarrera;
+   }
    public function carrerasProcedencia($cuenta,$digito,$carrera)
    {
-      // Clave y Nombre de la carrera SEP considerando la clave de carrera (unam) y el No. de Cuenta
+      // procedimiento de asignacion de clave sep y nombre de carrera para la paridad de informacion
+      // consulta de la clave SEP
       $query1  = 'SELECT ';
       $query1 .= "ori_cve_profesiones AS _09_cveCarrera, ";
       $query1 .= "carrera             AS _10_nombreCarrera ";
       $query1 .= 'from Datos ';
-      $query1 .= 'join Orientaciones on dat_car_actual = ori_plancarr and dat_orientacion = ori_orienta ';
+      $query1 .= 'join Orientaciones on ori_plancarr = dat_car_actual and dat_orientacion = ori_orienta ';
       $query1 .= 'join Carreras_Profesiones on convert(int,ori_cve_profesiones) = clave_carrera ';
-      $query1 .= "where dat_ncta = '".$cuenta."' and dat_dig_ver = '".$digito."' and dat_car_actual = '".$carrera."' ";
-      //  Buscamos el nombre (unam) de la carrera
+      $query1 .= "where ";
+      $query1 .= "dat_ncta = '".$cuenta."' and ";
+      $query1 .= "dat_dig_ver = '".$digito."' and ";
+      $query1 .= "dat_car_actual = '".$carrera."' ";
+      // consulta de la clave UNAM y nombre UNAM
       $query2  = 'SELECT ';
-      $query2 .= 'ori_plancarr      AS _09_cveCarrera, ';
-      $query2 .= 'ori_orienta_nom   AS _10_nombreCarrera ';
-      $query2 .= 'from Orientaciones ';
-      $query2 .= "where ori_plancarr = '".$carrera."'";
-
-      $errores = $datos =  array(); // errores y faltantes
+      $query2 .= 'carrp_cve      AS _09_cveCarrera, ';
+      $query2 .= 'carrp_nombre   AS _10_nombreCarrera ';
+      $query2 .= 'from Carrprog ';
+      $query2 .= "where carrp_cve = '".$carrera."'";
+      // inicialización de arreglos.
+      $errores = $datos = $paridad = array(); // errores y faltantes
       // Buscamos el nombre y carrera SEP
-      $info = (array)DB::connection('sybase')->select($query1);
-      if ($info==[]) {
-         // No existe la clave SEP para la clave de carrera local,
-         $errores['_09_cveCarrera'] = 'Sin clave SEP';
-         $info2 = (array)DB::connection('sybase')->select($query2);
-         if ($info2==[]) {
-            // No existe el nombre para esta carrera_Attr
-            $errores['_10_nombreCarrera'] = "Sin nombre de carrera";
-         } else {
-            // para no ir vacio, Asignamos Clave y Carrera (unam) pero levantamos el error "Sin clave SEP"
-            $datos = $info2[0];
-         }
-      } else {
-         // pasamos Nombre y Carrera SEP al Arreglo Incluye _09_cveCarrera  y _10_nombreCarrera
-         $datos = $info[0];
-      }
-
-      // Verificamos que el query de datos SEP no esta vacio.
-      if ($datos!=[]) {
+      $sep  = (array)DB::connection('sybase')->select($query1); // Carrera SEP
+      $unam = (array)DB::connection('sybase')->select($query2); // Carrera UNAM
+      // Busqueda de la clave SEP
+      if ($sep!=[]) {
          //  Encontro clave y nombre SEP para la clave local ($cuenta y $carrera)
-         $resultado = (array)$datos;
+         $resultado = (array)$sep[0];
       } else {
          // No existe nombre de carrera ni clave
-         $resultado['_09_cveCarrera'] = '----';
-         $resultado['_10_nombreCarrera'] = '----';
+         // Realizamos una nueva busqueda en un archivo temporal de carreras que nos proporciona Eduardo Miranda
+         $carrerasLalo = [ '00452'=>'611310','00923'=>'431302','01157'=>'511301','01210'=>'411305','09121'=>'128304','10646'=>'621301',
+                           '11622'=>'301303','10647'=>'621311','20227'=>'771302','40723'=>'612301','41143'=>'521301','51922'=>'231301',
+                           '61021'=>'211327','61221'=>'411350','61222'=>'411351','61421'=>'452305','61422'=>'452304','61423'=>'452306',
+                           '61424'=>'452303','66621'=>'342319','09021'=>'563313','11136'=>'520396','01214'=>'411350','00253'=>'734369',
+                           '61223'=>'411352','00640'=>'621311','00248'=>'771327','00641'=>'621301','01334'=>'720353',
+                           '01057' => '203312', 	'50922' => '431302', 	'01053' => '245301', 	'01054' => '221351', 	'01055' => '271301', 	'40437' => '611303',
+                           '01056' => '203310', 	'01336' => '720355', 	'00642' => '611313', 	'01061' => '623306', 	'00445' => '611305', 	'00637' => '621311',
+                           '00638' => '621301', 	'01912' => '231301', 	'0123470' => '410731', 	'1003171' => '431798', 	'0093103' => '431715', 	'1003165' => '633722',
+                           '0163100' => '311745', 	'0123429' => '419733', 	'0063200' => '612741', 	'0113157' => '511771', 	'3003020' => '421701', 	'0083077' => '622746',
+                           '0073143' => '612746', 	'0083224' => '622737', 	'0013180' => '621741', 	'0143002' => '421761', 	'0093109' => '431788', 	'0123447' => '419716',
+                           '0093112' => '431742', 	'0093110' => '431755', 	'2000344' => '621766', 	'0113072' => '511730', 	'0093107' => '431731', 	'0113156' => '511702',
+                           '0123443' => '414766', 	'0113158' => '511724', 	'3003021' => '421706', 	'0083220' => '622745', 	'0083164' => '613712', 	'0043191' => '611768',
+                           '0143070' => '421761', 	'0083218' => '613712', 	'0113159' => '511719', 	'0093113' => '431768', 	'2000346' => '511702', 	'0063196' => '621759',
+                           '2000341' => '514745', 	'0063085' => '612741', 	'0083222' => '622746', 	'0803116' => '111705', 	'0043192' => '611706', 	'0043193' => '661701',
+                           '0143167' => '406701', 	'0083226' => '622739', 	'0113161' => '566708', 	'0143166' => '421761', 	'0093190' => '430704', 	'0113155' => '511727',
+                           '0093189' => '457702', 	'0010346' => '612722', 	'0093108' => '431753', 	'0123467' => '410787', 	'0123406' => '410715', 	'0113154' => '511730',
+                           '0123448' => '410785', 	'0013179' => '559702', 	'0093104' => '410778', 	'0010347' => '621741', 	'0073133' => '612732', 	'0104161' => '271501',
+                           '0724087' => '122539', 	'2004146' => '612501', 	'0044115' => '601514', 	'0064073' => '607502', 	'0964087' => '122539', 	'0124096' => '401505',
+                           '3004085' => '121502', 	'0064189' => '607502', 	'1004169' => '311556', 	'0044113' => '601528', 	'0744087' => '122539', 	'0674194' => '341501',
+                           '3004178' => '241584', 	'0664109' => '515530', 	'2004042' => '511533', 	'0794100' => '622502', 	'4004025' => '511530', 	'0594153' => '121579',
+                           '0064193' => '611520', 	'0754101' => '510501', 	'0124085' => '121502', 	'0074146' => '612501', 	'4004146' => '612501', 	'0164169' => '311556',
+                           '4004149' => '245508', 	'0924078' => '104501', 	'0694172' => '642573', 	'0194173' => '231501', 	'0744085' => '121502', 	'0054154' => '515507',
+                           '0024137' => '711504', 	'0164170' => '311578', 	'0974085' => '121502', 	'2004117' => '221538', 	'0104081' => '211502', 	'0104149' => '245508',
+                           '0064190' => '621560', 	'0754103' => '514501', 	'0044116' => '611584', 	'0134130' => '721511', 	'0024125' => '714502', 	'0104089' => '623507',
+                           '0104110' => '221502', 	'0514087' => '122539', 	'0044114' => '611562', 	'0104145' => '261501', 	'0904104' => '514516', 	'6214171' => '613501',
+                           '0034085' => '121502', 	'2004149' => '245508', 	'0104195' => '261505', 	'0104144' => '611545', 	'0054109' => '515530', 	'0134135' => '721516',
+                           '0805090' => '521605', 	'0075146' => '612601', 	'0015092' => '511609', 	'3005088' => '231601', 	'0105145' => '261601', 	'0105110' => '203601',
+                           '0125093' => '411601', 	'0755103' => '505605', 	'0055112' => '515602', 	'0725087' => '122605', 	'0695143' => '121613', 	'0045117' => '611602',
+                           '0675121' => '341601', 	'0125143' => '121613', 	'0165071' => '311618', 	'0715143' => '121613', 	'0085123' => '622601', 	'5005088' => '231601',
+                           '0745087' => '122605', 	'0975085' => '121602', 	'0055109' => '515601', 	'0105148' => '761601',
+                             '70321' => '120309',   '70322' => '120310',   '71024' => '273301',   '20412' => '611302', '0104120' => '221508', '0064192' => '213544',
+                           '0134133' => '721526', '0014198' => '511530', '0695160' => '121602', '0145095' => '421604', '0015111' => '511611', '0795123' => '622601',
+                           '0105089' => '623601', '1005071' => '311618', '0105091' => '245601', '0655085' => '121602', '0035085' => '121602', '0125085' => '121602',
+                           '0695085' => '121602', '3005085' => '121602'];
+         if (array_key_exists($carrera,$carrerasLalo)) {
+            // la carrera existe en el arreglo de Lalo. Entonces buscamos en la tabla de carreras el nombre de la misma.
+            $nombreSep = Carrera::where('CVE_SEP',$carrerasLalo[$carrera])->pluck('CARRERA');
+            if (isset($nombreSep[0])) {
+               $resultado['_09_cveCarrera'] = $carrerasLalo[$carrera];
+               $resultado['_10_nombreCarrera'] = $nombreSep[0];
+               // $resultado['_10_nombreCarrera'] = 'Nombre Eduardo';
+            } else {
+               // No se encuentra la clave Sep
+               $errores['_09_cveCarrera'] = 'Sin clave SEP';
+               // Agregamos al arreglo de resultados la lleve "errores" que contiene un key-value de errores
+               $resultado['errores'] = $errores;
+               $resultado['_09_cveCarrera'] = '----';
+               $resultado['_10_nombreCarrera'] = '----';
+            }
+         } else {
+            $errores['_09_cveCarrera'] = 'Sin clave SEP';
+            // Agregamos al arreglo de resultados la lleve "errores" que contiene un key-value de errores
+            $resultado['errores'] = $errores;
+            $resultado['_09_cveCarrera'] = '----';
+            $resultado['_10_nombreCarrera'] = '----';
+
+         }
       }
-
-      // Si tenenmos errores, se los agregamos al arreglo
-      if ($errores!=[]) {
-         $resultado['errores'] = $errores;
+      // Busqueda de la clave UNAM
+      if ($unam!=[]) {
+         //  Encontro clave y nombre UNAM para clave SEP de la carrera
+         $paridad = (array)$unam[0];
+      } else {
+         // No existe nombre de carrera ni clave
+         $paridad['_09_cveCarrera'] = '----';
+         $paridad['_10_nombreCarrera'] = '----';
       }
-
-      // No tenemos numero Rvoe.
-      $resultado['_15_numeroRvoe'] = '----';
-
+      // Agregamos al arreglos de resultados la llave "paridad" que contiene las llaves de paridad UNAM
+      $resultado['paridad'] = $paridad;
       return $resultado;
+   }
+   public function fechas1136($fecha, $tipoFecha, $item)
+   {
+      // Evaluacion de fechas según el campo escpro_tipo_fec: 1=ddmmaaaa; 2=mmaaaa; 3=aaaaaaaa.
+      // item (11 o 36):  2 (escuela que gradua) o 36 (escuela antecendente al grado)
+      $datos = $errores = $paridad =  array();
+      switch ($tipoFecha) {
+         case '1': // fechas tipo ddmmaaaa suponemos fecha de terminación
+            $fechaX = substr($fecha,4,4).'-'.substr($fecha,2,2).'-'.substr($fecha,0,2) ;
+            if ($item=='11') { // item 11 duracion de la carrera. item 11 (inicio) y 12 (fin obligatorio).
+               $datos['_11_fechaInicio']      = '----';
+               if ( !strtotime($fechaX) || strlen($fecha)!=8 ) {
+                  $datos['_12_fechaTerminacion'] = $fecha;
+                  $errores['_12_fechaTerminacion'] = 'periodo irregular (ddmmaaaa)';
+               } else {
+                  $datos['_12_fechaTerminaciantecedenteon'] = $fechaX;
+                  $paridad['_12_fechaTerminacion'] = $fecha.'. tipo(ddmmaaaa)';
+               }
+            } elseif($item=='36') { // item 36 Solo es obligatorio la fecha de terminacion
+               $datos['_36_fechaInicio']      = '----';
+               if ( !strtotime($fechaX) || strlen($fecha)!=8 ) { // La fecha no es valida
+                  $datos['_37_fechaTerminacion'] = $fecha;
+                  $errores['_37_fechaTerminacion'] = 'periodo irregular (ddmmaaaa)';
+               } else {
+                  $datos['_37_fechaTerminacion'] = $fechaX;
+                  $paridad['_37_fechaTerminacion'] = $fecha.'. tipo(ddmmaaaa)';
+               }
+            }
+            break;
+         case '2': // fechas tipo mmaaaa
+            $fechaX = substr($fecha,2,4).'-'.substr($fecha,0,2).'-01';
+            if ($item=='11') { // item 11 duracion de la carrera. item 11 (inicio) y 12 (fin obligatorio).
+               $datos['_11_fechaInicio']      = '----';
+               if (!strtotime($fechaX) || strlen($fecha)!=6) {
+                  $datos['_12_fechaTerminacion'] = $fecha;
+                  $errores['_12_fechaTerminacion'] = 'periodo irregular (mmaaaa)';
+               } else {
+                  // Fecha validad, colocamos la paridad para comparar los resultados
+                  $datos['_12_fechaTerminacion'] = $fechaX;
+                  $paridad['_12_fechaTerminacion'] = $fecha.'. tipo(mmaaaa)';
+               }
+            } elseif($item=='36') { // item 36 Solo es obligatorio la fecha de terminacion.
+               $datos['_36_fechaInicio'] = '----';
+               if (!strtotime($fechaX) || strlen($fecha)!=6) { // La fecha no es valida
+                  $datos['_37_fechaTerminacion'] = $fecha;
+                  $errores['_37_fechaTerminacion'] = 'periodo irregular tipo(mmaaaa)';
+               } else {
+                  // Fecha validad, colocamos la paridad para comparar los resultados
+                  $datos['_37_fechaTerminacion'] = $fechaX;
+                  $paridad['_37_fechaTerminacion'] = $fecha.'. tipo(mmaaaa)';
+               }
+            }
+            break;
+         case '3': // fechas tipo aaaaaaaa (dos periodos consecutivos)
+            // Si los periodos son iguales (ejemño inicio 2016; final 2016)
+            $fecha1 = substr($fecha,0,4); $fecha2 = substr($fecha,4,4);
+            if ($fecha1 == $fecha2) {
+               // inicio y final son iguales. (enero-diciembre)
+               $fecha1 = substr($fecha,0,4).'-01-01'; $fecha2 = substr($fecha,4,4).'-12-01';
+            } else {
+               // inicio del periodo es diferente al final periodo (enero-enero)
+               $fecha1 = substr($fecha,0,4).'-01-01'; $fecha2 = substr($fecha,4,4).'-01-01';
+            }
+            // verificamos la calidad de la información
+
+            if ($item=='11') { // Periodo de estudios
+               if ( !strtotime($fecha1) || !strtotime($fecha2) || $fecha1>$fecha2 || strlen($fecha)!=8 ) {
+                  $datos['_11_fechaInicio']      = '----';
+                  $datos['_12_fechaTerminacion'] = $fecha;
+                  $errores['_12_fechaTerminacion'] = 'periodo irregular tipo(aaaaAAAA)';
+               } else {
+                  // Fechas correctas
+                  $datos['_11_fechaInicio']      = $fecha1;
+                  $datos['_12_fechaTerminacion'] = $fecha2;
+                  $paridad['_12_fechaTerminacion'] = $fecha.'. tipo(aaaaAAAA)';
+               }
+            } elseif ($item=='36'){ // Periodo antecedente
+               if ( !strtotime($fecha1) || !strtotime($fecha2) || $fecha1>$fecha2 || strlen($fecha)!=8 ) {
+                  $datos['_36_fechaInicio']      = '----';
+                  $datos['_37_fechaTerminacion'] = $fecha;
+                  $errores['_37_fechaTerminacion'] = 'periodo irregular tipo(aaaaAAAA)';
+               } else {
+                  // Fechas correctas
+                  $datos['_36_fechaInicio']      = $fecha1;
+                  $datos['_37_fechaTerminacion'] = $fecha2;
+                  $paridad['_37_fechaTerminacion'] = $fecha.'. tipo(aaaaAAAA)';
+               }
+            }
+            break;
+         default:
+            // No se tiene ninguna de los tipos de fecha esperadas (1,2,3)
+            if ($item=='11') {
+               if ($fecha!='') {
+                  $datos['_11_fechaInicio']      = '----';
+                  $datos['_12_fechaTerminacion'] = $fecha;
+                  $errores['_12_fechaTerminacion'] = 'Tipo de fecha irregular: '.$tipoFecha;
+               } else {
+                  $datos['_11_fechaInicio']      = '----';
+                  $datos['_12_fechaTerminacion'] = '----';
+                  $errores['_12_fechaTerminacion'] = 'Fecha inexistente';
+               }
+
+            } elseif ($item=='36') {
+               if ($fecha!='') {
+                  $datos['_36_fechaInicio']      = '----';
+                  $datos['_37_fechaTerminacion'] = $fecha;
+                  $errores['_37_fechaTerminacion'] = 'Tipo de fecha irregular: '.$tipoFecha;
+               } else {
+                  $datos['_36_fechaInicio']      = '----';
+                  $datos['_37_fechaTerminacion'] = '----';
+                  $errores['_37_fechaTerminacion'] = 'Fecha inexistente';
+               }
+            }
+            break;
+      }
+      if ($errores!=[]) {  // Existen errores
+         $datos['errores'] = $errores;
+      }
+      if ($paridad!=[]) {
+         $datos['paridad'] = $paridad;
+      }
+      return $datos;
    }
    public function titulosEscprocedencia($cuenta,$carrera)
    {
@@ -136,6 +347,7 @@ trait XmlCadenaErrores {
       // nivel anterior
       $query = 'SELECT ';
       $query .= "escpro_fec_exp     AS carrera_fechas, ";
+      $query .= "escpro_tipo_fec    AS fecha_tipo, ";
       $query .= "escpro_nivel_pro   AS atrib_nivelProf ";
       $query .= "FROM Titulos ";
       $query .= "JOIN Escprocedencia ON escpro_ncta = tit_ncta AND escpro_plancarr_act = tit_plancarr ";
@@ -143,55 +355,25 @@ trait XmlCadenaErrores {
       $info = (array)DB::connection('sybase')
                      ->select($query);
 
-      $datos = $errores = array();
-      if ($info==[]) {
+      $datos = $resultado = array();
+      if ($info==[]) {// $query .= "AND tit_nivel != '07'";
             $datos['_11_fechaInicio'] = '----';
             $datos['_12_fechaTerminacion'] = '----';
             $datos['atrib_nivelProf'] =  '--';
-            $errores['_11_fechaInicio'] = 'periodo de estudios irregular';
-            $errores['_12_fechaTerminacion'] = 'periodo de estudios irregular';
-            $errores['_EscuelaProcedencia'] = 'carrera de procedencia sin clave de nivel';
+            $errores['_11_fechaInicio'] = 'periodo de estudios inexistente';
+            $errores['_EscuelaProcedencia'] = 'procedencia sin clave de nivel';
       } else {
          // Existen el periode estudio y en nivle profesionl
          $datos = (array)$info[0];
-         // Se separan los periodos anuales y se convierten en fechas yyyy/01/01
-         $fecha1 = substr($datos['carrera_fechas'],0,4).'/01/01';
-         $fecha2 = substr($datos['carrera_fechas'],4,4).'/01/01';
-         // introducimos al arreglo los valores de las fechas, independientemente si tienen Errores
-         $datos['_11_fechaInicio'] = $fecha1;
-         $datos['_12_fechaTerminacion'] = $fecha2;
-         // Errores: verificamos que los periodos sean correctos p.ejemplo 20082011 (de 2008 a 2011)
-         if(strlen($datos['carrera_fechas'])!=8)
-         {
-            // El periodo de longitud diferente a 8 char solo puede suceder en estudios de preparatoria
-            $errores['_11_fechaInicio'] = 'periodo de estudios irregular';
-            $errores['_12_fechaTerminacion'] = 'periodo de estudios irregular';
-         } else {
-            // Debe poder formarse una fecha y esta no puede ser igual o menor a la final
-            $datos['_11_fechaInicio'] = $fecha1;
-            if (!strtotime($fecha1) || ($fecha1>$fecha2)) {
-               $errores['_11_fechaInicio'] = 'inicio de estudios inválido';
-            }
-            // Debe poder formarse una fecha y esta no puede ser igual o menor a la final
-            $datos['_12_fechaTerminacion'] = $fecha2;
-            if (!strtotime($fecha2) || $fecha1>$fecha2) {
-               $errores['_12_fechaTerminacion'] = 'término de estudios inválido';
-            }
-         }
-         // Ya no necesitamos el campo 'carrera_fechas' en los datos de salida. lo retiramos del arreglo
-         unset($datos['carrera_fechas']);
+         // test
+         $resultado = $this->fechas1136($datos['carrera_fechas'],$datos['fecha_tipo'],'11');
+         // Agregamos el nivel de la carrera_Attr
+         $resultado['atrib_nivelProf'] = $datos['atrib_nivelProf'];
       }
-
-      if ($errores!=[]) {
-         $datos['errores'] = $errores;
-      }
-
-      // Retiramos el campo de antec_fechas
-      return $datos;
+      return $resultado;
    }
    public function titulosDatos($cuenta,$digito,$carrera)
    {
-
       // El nombre viene conbinado, se consulta, se divide en nombre y apellidos; y se omite del arreglo
       $query1 = 'SELECT DISTINCT ';
       $query1 .= "dat_nombre AS _17_nombre ";
@@ -206,112 +388,83 @@ trait XmlCadenaErrores {
       $query2 .= 'autoriza ' ;
       $query2 .= 'FROM alumnos ';
       $query2 .= "where num_cta = '".$cuenta.$digito."'";
+      // $query2 .= "where num_cta = '".$cuenta.$digito."' and ";
+      // $query2 .= "autoriza = 1 ";
 
       // Traemos los datos desde la bdd que los alumnos actualizan y del condoc
       $info_sybase = (array)DB::connection('sybase')->select($query1);
-      $info_mysql = DB::connection('condoc_eti')->select($query2);
-      // $dd($info_sybase,$info_mysql);
+      $info_mysql = DB::connection('condoc_ati')->select($query2);
 
-      // Separamos los nombres registrados en condoc para compararlo con el proporcionado por el alumno
-      $nombreCondoc = $nombre = $apellidoP = $apellidoM = '';
-      if (!$info_sybase==[]) {
-         $asterisco = explode('*',$info_sybase[0]->_17_nombre);
-         switch (count($asterisco)) {
-             case 1: // un solo nombre
-                 $nombre = $asterisco[0];
-                 $nombreCondoc = $nombre;
-                 break;
-             case 2: // nombre y apellido paterno
-                 $apellidoP = $asterisco[0];
-                 $nombre = $asterico[1];
-                 $nombreCondoc = $apellidoP.'*'.$nombre;
-                 break;
-             case 3: // nombre, apellido paterno y apellido materno
-                 $apellidoP = $asterisco[0];
-                 $apellidoM = $asterisco[1];
-                 $nombre = $asterisco[2];
-                 $nombreCondoc = $apellidoP.'*'.$apellidoM.'*'.$nombre;
-                 break;
-         }
-      }
       $datos = $errores = array();
       // Consultamos si el usuario y actualizo los datos
       if ($info_mysql==[]) {
          // El usuario aun no ha actualizado los datos
-         $datos['_16_curp'] = '----';
-         // Si el alumno aún no ha registrado el nombre, lo agregamos de CONDOC
-         $datos['_17_nombre']          = '----';
-         $datos['_18_primerApellido']  = '----';
-         $datos['_19_segundoApellido'] = '----';
-         $datos['_20_correoElectronico'] = '----';
-         $errores['_16_curp'] = 'alumno no ha proporcionado el curp';
-         $errores['_17_nombre'] = 'alumno no a llenado nombre formulario';
-         $errores['_18_primerApellido']  = 'alumno no a llenado apellido paterno formulario';
-         $errores['_19_segundoApellido'] = 'alumno no a llenado apellido materno formulario';
-         $errores['_20_correoElectronico'] = 'alumno no ha llenado correo electronico en formulario';
+         // entonces los buscamos en el Web_Service
+         $ws_SIAE = Web_Service::find(2);
+         $identidad = new WSController();
+         $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, $cuenta.$digito, $ws_SIAE->key);
+
+               if (!empty($identidad)) {
+                  if (isset($identidad->curp)) {
+                     if ($identidad->curp!='') {
+                        $datos['_16_curp'] = $identidad->curp;
+                     } else {
+                        $datos['_16_curp'] = '----';
+                        $errores['_16_curp'] = 'Sin informacion en WS';
+                     }
+                  }else {
+                     $datos['_16_curp'] = '----';
+                     $errores['_16_curp'] = 'Sin informacion en WS';
+                  }
+                  if (isset($identidad->correo1)) {
+                     if ($identidad->correo1!='') {
+                        $datos['_20_correoElectronico'] =  $identidad->correo1;
+                     } else {
+                        $datos['_20_correoElectronico'] = '----';
+                        $errores['_16_curp'] = 'Sin informacion en WS';
+                     }
+                  } else {
+                     $datos['_20_correoElectronico'] = '----';
+                     $errores['_16_curp'] = 'Sin informacion en WS';
+                  }
+                  if (isset($identidad->nombres)) {
+                     $datos['_17_nombre'] =  utf8_encode($identidad->nombres);
+                  } else {
+                     $errores['_16_curp'] = 'Sin informacion en WS';
+                     $datos['_17_nombre'] = '----';
+                  }
+                  if (isset($identidad->apellido1)) {
+                     $datos['_18_primerApellido'] =  utf8_encode($identidad->apellido1);
+                  } else {
+                     $errores['_16_curp'] = 'Sin informacion en WS';
+                     $datos['_18_primerApellido']  = '----';
+                  }
+                  if (isset($identidad->apellido2)) {
+                     $datos['_19_segundoApellido'] =  utf8_encode($identidad->apellido2);
+                  } else {
+                     $errores['_16_curp'] = 'Sin informacion en WS';
+                     $datos['_19_segundoApellido'] = '----';
+                  }
+
+               } else {
+                  // NO se encontro la informacion en el WS
+                  $datos['_16_curp'] = '----';
+                  $datos['_17_nombre']          = '----';
+                  $datos['_18_primerApellido']  = '----';
+                  $datos['_19_segundoApellido'] = '----';
+                  $datos['_20_correoElectronico'] = '----';
+                  // En un solo campo se coloca el error para los campos 16, 17, 18, 19, 20
+                  $errores['_16_curp'] = 'Sin autorización';
+               }
+
       } else
       {
          // El usuario si ha registrado los datos
-         $datos = (array)$info_mysql[0];
-         // Validamos el campo del curp
-         if  ($datos['_16_curp']==null) {
-            // no existe el curp
-              $datos['_16_curp'] = '----';
-            $errores['_16_curp'] = 'alumno aún no ha proporcionado Curp';
-         } else {
-            // Si existe, el curp, validamos si el automno ya valido la transferencia
-            if ($info_mysql[0]->autoriza=='0')
-            {
-               // El curp existe de tabla alumnos, pero la bandera de autoriza esta en blanco
-               $errores['_16_curp'] = 'alumno aún no ha autorizado transferencia de CURP a SEP';
-            }
-         }
-         // Creamos el nombre con '*' para compararlo con el de condoc
-         $nombreMysql = $info_mysql[0]->apellido1.'*'.$info_mysql[0]->apellido2.'*'.$info_mysql[0]->nombres;
-         // Verificamos si el nombre es válido
-         if($nombreMysql=='')
-         {
-            // No existe el nombre del usuario, levantamos un ellror
-            $datos['_17_nombre'] = '----';
-            $datos['_18_primerApellido']  = '----';
-            $datos['_19_segundoApellido'] = '----';
-            $errores['_17_nombre'] = 'alumno aún no ha proporcionado nombre y apellidos';
-         } else {
-            // el nombre ya se encuentra registrado en datos, pero falta validarlo
-            $datos['_17_nombre']          = $info_mysql[0]->nombres;
-            $datos['_18_primerApellido']  = $info_mysql[0]->apellido1;
-            $datos['_19_segundoApellido'] = $info_mysql[0]->apellido2;
-            unset($datos['nombres']);  unset($datos['apellido1']);
-            unset($datos['apellido2']);unset($datos['autoriza']);
-            // Ya utilizamos los camos nombres y apllidos, se retiran del arreglo firmaResponsable
-            // Validamos incosistencias.
-            if ($nombreMysql!=$nombreCondoc) {
-               $errores['_17_nombre'] = 'nombre y apellidos del alumno no coinciden con condoc';
-            } else {
-               // Los nombres del formulario y en condoc coinciden, pero verificamos si ha autorizado
-               if ($info_mysql[0]->autoriza=='0'){
-                  // los nombres si coinciden pero aun lo lo autoriza el usuario
-                  $errores['_17_nombre'] = 'alumno aún no ha autorizado transferencia de Nombre y apellidos a SEP';
-               }
-
-            }
-         }
-
-         // Validamos el campo del correo Electronico
-         if  ($datos['_20_correoElectronico']==null) {
-            // no existe el curp
-              $datos['_20_correoElectronico'] = '----';
-            $errores['_20_correoElectronico'] = 'alumno aún no ha proporcionado Curp';
-         } else {
-            // Si existe, el curp, validamos si el automno ya valido la transferencia
-            $datos['_20_correoElectronico'] = $info_mysql[0]->_20_correoElectronico;
-            if ($info_mysql[0]->autoriza=='0')
-            {
-               // El curp existe de tabla alumnos, pero la bandera de autoriza esta en blanco
-               $errores['_20_correoElectronico'] = 'alumno aún no ha autorizado transferencia de correo a SEP';
-            }
-         }
-
+         $datos['_16_curp']               = $info_mysql[0]->_16_curp;
+         $datos['_17_nombre']             = $info_mysql[0]->nombres;
+         $datos['_18_primerApellido']     = $info_mysql[0]->apellido1;
+         $datos['_19_segundoApellido']    = $info_mysql[0]->apellido2;
+         $datos['_20_correoElectronico']  = $info_mysql[0]->_20_correoElectronico;
       }
       if ($errores!=[]) {
          $datos['errores'] = $errores;
@@ -333,7 +486,7 @@ trait XmlCadenaErrores {
       $info = (array)DB::connection('sybase')
                      ->select($query);
 
-      $datos = $errores = array();
+      $datos = $errores = $paridad = array();
       if ($info==[]) {
          // La consulta no arrojo resultados, los campos para el XML se colocan vacios
          $datos['_21_fechaExpedicion'] = '----';
@@ -363,12 +516,18 @@ trait XmlCadenaErrores {
          $modo = Modo::where('cat_subcve',$datos['_22_idModalidadTitulacion'])->first();
          if ($modo==[]) {
             // Ya existe $datos['_22_idModalidadTitulacion'], pero no la ModalidadTitulacion
-            $datos['_23_ModalidadTitulacion'] =   '----';
-            $errores['_23_ModalidadTitulacion'] = 'modalidad de titulación inexistente';
+            $datos['_22_idModalidadTitulacion'] =  '----';
+            $datos['_23_modalidadTitulacion']   =  '----';
+            // Agregamos el mensaje de error a la llave _22_idModalidadTitulacion
+            $errores['_22_idModalidadTitulacion'] = 'modalidad de titulación inexistente';
 
          } else {
             // Modalidad existencia si existe en catalogo.
-            $datos['_23_modalidadTitulacion'] = $modo->MODALIDAD_TITULACION;
+            $datos['_22_idModalidadTitulacion']    = $modo->ID_MODALIDAD_TITULACION;
+            $datos['_23_modalidadTitulacion']      = $modo->MODALIDAD_TITULACION;
+            // agregamos los datos de paridad que aparecen en la columna de solicitudes.
+            $paridad['_22_idModalidadTitulacion']  = $modo->cat_subcve;
+            $paridad['_23_modalidadTitulacion']    = $modo->cat_nombre;
          }
          // validamos la fecha de examen profesional.
          // $fecha = strtotime($datos['_24_fechaExamenProfesional']);
@@ -402,6 +561,10 @@ trait XmlCadenaErrores {
          $datos['errores'] = $errores;
       }
 
+      if ($paridad!=[]) {
+         $datos['paridad'] = $paridad;
+      }
+
       return $datos;
    }
    public function antecedente($cuenta,$nivel)
@@ -411,7 +574,8 @@ trait XmlCadenaErrores {
       $query .= "escpro_cveproc as clave_escuela_previa, ";
       $query .= "escpro_nivel_pro as ante_nivel, ";
       $query .= "catproc_ent_fed as _34_idEntidadFederativa, ";
-      $query .= "escpro_fec_exp as ante_periodo ";
+      $query .= "escpro_fec_exp as carrera_fechas, ";
+      $query .= "escpro_tipo_fec as fecha_tipo ";
       $query .= "from Escprocedencia ";
       $query .= "join Catprocedencia on catproc_cve = escpro_cveproc ";
       $query .= "join Paisedos on escpro_cveproc = catproc_cve ";
@@ -421,8 +585,8 @@ trait XmlCadenaErrores {
 
       $info = (array)DB::connection('sybase')
                      ->select($query);
-      // Escuela antecedente.
-      $datos = $errores = $resultado = array(); $cuenta = 0;
+      // Escuela antecedente.antecedente
+      $datos = $errores = $resultado = $paridad = array();
       if ($info!=[]) {
          // Agregamos a $info el ultimo registro de $antece que es el nivel previo inferior al actual.
          $datos = (array)$info[count($info)-1];
@@ -435,18 +599,22 @@ trait XmlCadenaErrores {
          // Mapeo del idTipoEstudioAntecedente
          $tipoEstudio = Estudio::where('cat_subcve',$datos['ante_nivel'])->first();
          if (!$tipoEstudio==[]) {
-            $resultado['_32_idTipoEstudioAntecedente'] = $tipoEstudio->ID_TIPO_ESTUDIO_ANTECEDENTE;
-            $resultado['_33_tipoEstudioAntecedente'] = $tipoEstudio->TIPO_ESTUDIO_ANTECEDENTE;
+            $resultado['_32_idTipoEstudioAntecedente']   = $tipoEstudio->ID_TIPO_ESTUDIO_ANTECEDENTE;
+            $resultado['_33_tipoEstudioAntecedente']     = $tipoEstudio->TIPO_ESTUDIO_ANTECEDENTE;
+            $paridad['_32_idTipoEstudioAntecedente']     = $tipoEstudio->cat_subcve;
+            $paridad['_33_tipoEstudioAntecedente']       = $tipoEstudio->cat_nombre;
          } else {
-            $resultado['_32_idTipoEstudioAntecedente'] = '----';
-            $resultado['_33_tipoEstudioAntecedente'] = '----';
+            $resultado['_32_idTipoEstudioAntecedente']   = '----';
+            $resultado['_33_tipoEstudioAntecedente']     = '----';
+            $paridad['_32_idTipoEstudioAntecedente']     = '----';
+            $paridad['_33_tipoEstudioAntecedente']       = '----';
             $errores['_32_idTipoEstudioAntecedente'] = 'tipo de estudio antecedente inválido';
          }
          // Mapeo de la entidad (Unam y Sep manejan diferentes claves)
          if ($datos['_34_idEntidadFederativa']<'00033') {
                $entidad = Entidad::where('pais_cve',$datos['_34_idEntidadFederativa'])->first();
          } else {
-               // Todos las entidades se dejan como "EXTRANJERO"
+               // Todos las entidades se dejan coantecedentemo "EXTRANJERO"
                $entidad = Entidad::where('pais_cve','00033')->first();
          }
 
@@ -458,74 +626,20 @@ trait XmlCadenaErrores {
             $resultado['_35_entidadFederativa'] = '----';
             $errores['_34_idEntidadFederativa'] = 'sin clave de entidad para estudio antecedente';
          }
-         // verificamos la variable que contiene un periodo (> 8 char) o una fecha (8 char)
-         if(strlen($datos['ante_periodo'])==8)
-         {
-            // Solo al nivel bachillerato se le permite tener una longitud de 8 caracteres.
-            // Preguntamos si el nivel es bachillerato (catalogo unam nivel 02)
-            if ($datos['ante_nivel']=='02') {
-               // Se trata de bachillerato, entonces el formato de periordo es ddmmaaaa
-               // y se trata de una sola fecha
-               $fecha = substr($datos['ante_periodo'],4,4).'/'; // año
-                        substr($datos['ante_periodo'],2,2).'/'; // mes
-                        substr($datos['ante_periodo'],0,2); // dia
-               // veficamos si la fecha es una fecha valida
-               if (!strtotime($fecha)) {
-                  // La fecha no se reconoce como valida
-                  // Se prueba si se trata de un periodo
-                  $fecha1 = substr($datos['ante_periodo'],0,4).'/01/01';
-                  $fecha2 = substr($datos['ante_periodo'],4,4).'/01/01';
-                  // unset($resultado['antec_fechas']);
-                  if (!strtotime($fecha1)) {
-                     $resultado['_36_fechaInicio'] = '----';
-                     $errores['_36_fechaInicio'] = 'inicio de estudios antecedente inválido';
-                  } else {
-                     $resultado['_36_fechaInicio'] = $fecha1;
-                  }
-                  if (!strtotime($fecha2)) {
-                     $resultado['_37_fechaTerminacion'] = '----';
-                     $errores['_37_fechaTerminacion'] = 'término de estudios antecedente inválido';
-                  } else {
-                     $resultado['_37_fechaTerminacion'] = $fecha2;
-                  }
-                  if (strtotime($fecha1)>strtotime($fecha2)) {
-                     $errores['_37_fechaTerminacion'] = 'Periodo de estudios antecedente inválido';
-                  }
-
-               } else {
-                  // El periodo es una fecha valida.
-                  // Se colocan las llaves independientemente si tienen error
-                  $resultado['_36_fechaInicio'] = $fecha;
-                  $resultado['_37_fechaTerminacion'] = '----';
-                  $errores['_36_fechaInicio'] = 'periodo de estudios antecedentes irregular';
-               }
-            } else {
-               // el periodo no tiene 8 caracteres, por lo que se trata de un periodo
-               $fecha1 = substr($datos['ante_periodo'],0,4).'/01/01';
-               $fecha2 = substr($datos['ante_periodo'],4,4).'/01/01';
-               // unset($resultado['antec_fechas']);
-               if (!strtotime($fecha1)) {
-                  $resultado['_36_fechaInicio'] = '----';
-                  $errores['_36_fechaInicio'] = 'inicio de estudios antecedente inválido';
-               } else {
-                  $resultado['_36_fechaInicio'] = $fecha1;
-               }
-               if (!strtotime($fecha2)) {
-                  $resultado['_37_fechaTerminacion'] = '----';
-                  $errores['_37_fechaTerminacion'] = 'término de estudios antecedente inválido';
-               } else {
-                  $resultado['_37_fechaTerminacion'] = $fecha2;
-               }
-               if (strtotime($fecha1)>strtotime($fecha2)) {
-                  $errores['_37_fechaTerminacion'] = 'Periodo de estudios antecedente inválido';
-               }
-            }
-         } else {
-            // El periodo no tiene 8 caracteres
-            $resultado['_36_fechaInicio'] = $datos['ante_periodo'];
-            $resultado['_37_fechaTerminacion'] = '----';
-            $errores['_36_fechaInicio'] = 'periodo de estudios antecedente longitud irregular';
+         // Valoramos la fecha y el tipo de fecha para las respuestas 36 y 37
+         $fechas = $this->fechas1136($datos['carrera_fechas'],$datos['fecha_tipo'],'36');
+         // verificamos la existencia del arreglo paridad para incorporarlo al local y elimiarlo de la listados
+         if (array_key_exists('paridad',$fechas)) {
+            $paridad  = array_merge($paridad,$fechas['paridad']);
+            unset($fechas['paridad']);
          }
+         // verificamos la existencia del arreglo errores para incoporarlo al local y eliminarlo del listado
+         if (array_key_exists('errores',$fechas)) {
+            $errores  = array_merge($errores,$fechas['errores']);
+            unset($fechas['errores']);
+         }
+         // El arreglo $fechas solo queda con los datos de los items 36 y 37 por lo que lo mezcamos con el arrego $resultado
+         $resultado = array_merge($resultado,$fechas);
       }
       else {
          // la consulta no arrojo resultados
@@ -535,13 +649,16 @@ trait XmlCadenaErrores {
          $resultado['_35_entidadFederativa'] = '----';
          $resultado['_36_fechaInicio'] = '----';
          $resultado['_37_fechaTerminacion'] = '----';
-         $errores['_31_institucionProcedencia'] = 'escuela de procedencia sin datos';
+         $errores['_31_institucionProcedencia'] = 'procedencia sin datos';
       }
-      // No tenemos el numero de cedula del periodo anterior.
-      $resultado['_38_noCedula'] = '----';
       // agregamos los errores.
       if ($errores!=[]) {
          $resultado['errores'] = $errores;
+      }
+
+      // Agregamos al arreglos de resultados la llave "paridad" que contiene las llaves de paridad UNAM
+      if ($paridad!=[]) {
+         $resultado['paridad'] = $paridad;
       }
       return $resultado;
    }
@@ -558,35 +675,44 @@ trait XmlCadenaErrores {
    }
    public function porOmision()
    {
-      // Arreglo de valores por omisión.
+      // Arreglo de valores por omiRectorsión.
       $datos = array();
       $datos['_01_version'] = '1.0';
       $datos['_07_cveInstitucion'] = '090001';
       $datos['_08_nombreInstitucion'] = 'UNIVERSIDAD NACIONAL AUTÓNOMA DE MÉXICO';
       $datos['_13_idAutorizacionReconocimiento'] = '8';
       $datos['_14_autorizacionReconocimiento'] = 'DECRETO DE CREACIÓN';
+      $datos['_15_numeroRvoe'] = '----';
       $datos['_27_idFundamentoLegalServicioSocial'] = '2';
       $datos['_28_fundamentoLegalServicioSocial'] = 'ART. 55 LRART. 5 CONST';
       $datos['_29_idEntidadFederativa'] = '09';
       $datos['_30_entidadFederativa'] = 'CIUDAD DE MÉXICO';
-
+      $datos['_38_noCedula'] = '----';
       return $datos;
    }
 
    public function cadenaOriginal($nodos,$tipo)
    {
+      // Formacion de la cadena original para cada responsable de firma
       $cadenaOriginal = '||';
       $cadenaOriginal.= $nodos['TituloElectronico']['version'].'|';
       $cadenaOriginal.= $nodos['TituloElectronico']['folioControl'].'|';
       switch ($tipo) {
-         case 'General': // firma el Director General
+         case 'Jtit': // firma el Director General
+               $cadenaOriginal.= $nodos['FirmaResponsable0']['curp'].'|';
+               $cadenaOriginal.= $nodos['FirmaResponsable0']['idCargo'].'|';
+               $cadenaOriginal.= $nodos['FirmaResponsable0']['cargo'].'|';
+               $cadenaOriginal.= ($nodos['FirmaResponsable0']['abrTitulo']=='----')? '|':
+               $nodos['FirmaResponsable0']['abrTitulo'].'|'; // opcional
+            break;
+         case 'Director': // firma el Director General
                $cadenaOriginal.= $nodos['FirmaResponsable1']['curp'].'|';
                $cadenaOriginal.= $nodos['FirmaResponsable1']['idCargo'].'|';
                $cadenaOriginal.= $nodos['FirmaResponsable1']['cargo'].'|';
                $cadenaOriginal.= ($nodos['FirmaResponsable1']['abrTitulo']=='----')? '|':
                $nodos['FirmaResponsable1']['abrTitulo'].'|'; // opcional
             break;
-         case 'Secretario':  // firma el Secretario General
+         case 'SecGral':  // firma el Secretario General
                $cadenaOriginal.= $nodos['FirmaResponsable2']['curp'].'|';
                $cadenaOriginal.= $nodos['FirmaResponsable2']['idCargo'].'|';
                $cadenaOriginal.= $nodos['FirmaResponsable2']['cargo'].'|';
@@ -600,54 +726,52 @@ trait XmlCadenaErrores {
                $cadenaOriginal.= ($nodos['FirmaResponsable3']['abrTitulo']=='----')? '|':
                $nodos['FirmaResponsable3']['abrTitulo'].'|';
             break;
-         default:
-            break;
       }
 
-      $cadenaOriginal.= $nodos['Institucion']['cveInstitucion'].'|';
-      $cadenaOriginal.= $nodos['Institucion']['nombreInstitucion'].'|';
+      $cadenaOriginal .= $nodos['Institucion']['cveInstitucion'].'|';
+      $cadenaOriginal .= $nodos['Institucion']['nombreInstitucion'].'|';
 
-      $cadenaOriginal.= $nodos['Carrera']['cveCarrera'].'|';
-      $cadenaOriginal.= $nodos['Carrera']['nombreCarrera'].'|';
-      $cadenaOriginal.= ($nodos['Carrera']['fechaInicio']=='----')? '|' :
+      $cadenaOriginal .= $nodos['Carrera']['cveCarrera'].'|';
+      $cadenaOriginal .= $nodos['Carrera']['nombreCarrera'].'|';
+      $cadenaOriginal .= ($nodos['Carrera']['fechaInicio']=='----')? '|' :
                          $nodos['Carrera']['fechaInicio'].'|'; // opcional
-      $cadenaOriginal.= $nodos['Carrera']['fechaTeminacion'].'|';
-      $cadenaOriginal.= $nodos['Carrera']['idAutorizacionReconocimiento'].'|';
-      $cadenaOriginal.= $nodos['Carrera']['autorizacionReconocimiento'].'|';
-      $cadenaOriginal.= ($nodos['Carrera']['numeroRvoe']=='----')? '|' :
+      $cadenaOriginal .= $nodos['Carrera']['fechaTeminacion'].'|';
+      $cadenaOriginal .= $nodos['Carrera']['idAutorizacionReconocimiento'].'|';
+      $cadenaOriginal .= $nodos['Carrera']['autorizacionReconocimiento'].'|';
+      $cadenaOriginal .= ($nodos['Carrera']['numeroRvoe']=='----')? '|' :
                          $nodos['Carrera']['numeroRvoe'].'|'; // opcional
 
-      $cadenaOriginal.= $nodos['Profesionista']['curp'].'|';
-      $cadenaOriginal.= $nodos['Profesionista']['nombre'].'|';
-      $cadenaOriginal.= $nodos['Profesionista']['primerApellido'].'|';
-      $cadenaOriginal.= ($nodos['Profesionista']['segundoApellido']=='----')? '|' :
+      $cadenaOriginal .= $nodos['Profesionista']['curp'].'|';
+      $cadenaOriginal .= $nodos['Profesionista']['nombre'].'|';
+      $cadenaOriginal .= $nodos['Profesionista']['primerApellido'].'|';
+      $cadenaOriginal .= ($nodos['Profesionista']['segundoApellido']=='----')? '|' :
                          $nodos['Profesionista']['segundoApellido'].'|'; // opcional
-      $cadenaOriginal.= $nodos['Profesionista']['correoElectronico'].'|';
+      $cadenaOriginal .= $nodos['Profesionista']['correoElectronico'].'|';
 
-      $cadenaOriginal.= $nodos['Expedicion']['fechaExpedicion'].'|';
-      $cadenaOriginal.= $nodos['Expedicion']['idModalidadTitulacion'].'|';
-      $cadenaOriginal.= $nodos['Expedicion']['modalidadTitulacion'].'|';
-      $cadenaOriginal.= ($nodos['Expedicion']['fechaExamenProfesional']=='----')? '|' :
+      $cadenaOriginal .= $nodos['Expedicion']['fechaExpedicion'].'|';
+      $cadenaOriginal .= $nodos['Expedicion']['idModalidadTitulacion'].'|';
+      $cadenaOriginal .= $nodos['Expedicion']['modalidadTitulacion'].'|';
+      $cadenaOriginal .= ($nodos['Expedicion']['fechaExamenProfesional']=='----')? '|' :
                          $nodos['Expedicion']['fechaExamenProfesional'].'|'; // opcional
-      $cadenaOriginal.= ($nodos['Expedicion']['fechaExencionExamenProfesional']=='----')? '|':
+      $cadenaOriginal .= ($nodos['Expedicion']['fechaExencionExamenProfesional']=='----')? '|':
                          $nodos['Expedicion']['fechaExencionExamenProfesional'].'|'; // opcional
-      $cadenaOriginal.= $nodos['Expedicion']['cumpioServicioSocial'].'|';
-      $cadenaOriginal.= $nodos['Expedicion']['idFundamentoLegalServicioSocial'].'|';
-      $cadenaOriginal.= $nodos['Expedicion']['fundamentoLegalServicioSocial'].'|';
-      $cadenaOriginal.= $nodos['Expedicion']['inEntidadFederativa'].'|';
-      $cadenaOriginal.= $nodos['Expedicion']['entidadFederativa'].'|';
+      $cadenaOriginal .= $nodos['Expedicion']['cumpioServicioSocial'].'|';
+      $cadenaOriginal .= $nodos['Expedicion']['idFundamentoLegalServicioSocial'].'|';
+      $cadenaOriginal .= $nodos['Expedicion']['fundamentoLegalServicioSocial'].'|';
+      $cadenaOriginal .= $nodos['Expedicion']['inEntidadFederativa'].'|';
+      $cadenaOriginal .= $nodos['Expedicion']['entidadFederativa'].'|';
 
-      $cadenaOriginal.= $nodos['Antecedente']['institucionProcedencia'].'|';
-      $cadenaOriginal.= $nodos['Antecedente']['idTipoEstudioAntecedente'].'|';
-      $cadenaOriginal.= $nodos['Antecedente']['tipoEstudioAntecedente'].'|';
-      $cadenaOriginal.= $nodos['Antecedente']['idEntidadFederativa'].'|';
-      $cadenaOriginal.= $nodos['Antecedente']['entidadFederativa'].'|';
-      $cadenaOriginal.= ($nodos['Antecedente']['fechaInicio']=='----')? '|' :
+      $cadenaOriginal .= $nodos['Antecedente']['institucionProcedencia'].'|';
+      $cadenaOriginal .= $nodos['Antecedente']['idTipoEstudioAntecedente'].'|';
+      $cadenaOriginal .= $nodos['Antecedente']['tipoEstudioAntecedente'].'|';
+      $cadenaOriginal .= $nodos['Antecedente']['idEntidadFederativa'].'|';
+      $cadenaOriginal .= $nodos['Antecedente']['entidadFederativa'].'|';
+      $cadenaOriginal .= ($nodos['Antecedente']['fechaInicio']=='----')? '|' :
                          $nodos['Antecedente']['fechaInicio'].'|'; // opcional
-      $cadenaOriginal.= $nodos['Antecedente']['fechaTerminacion'].'|';
-      $cadenaOriginal.= ($nodos['Antecedente']['noCedula']=='----')? '|' :
-                         $nodos['Antecedente']['noCedula'].'|'; // opcional
-      $cadenaOriginal = '||';
+      $cadenaOriginal .= $nodos['Antecedente']['fechaTerminacion'].'|';
+      $cadenaOriginal .= ($nodos['Antecedente']['noCedula']=='----')? '' :
+                         $nodos['Antecedente']['noCedula']; // opcional
+      $cadenaOriginal .= '||';
 
       return $cadenaOriginal;
    }
@@ -671,60 +795,246 @@ trait XmlCadenaErrores {
       return $tituloXML;
    }
     // Integración de toda información para todos los nodos.
-   public function integraNodos($datos,$sello1,$sello2,$sello3)
+   public function integraNodosUnam($folio,$datos,$cargo)
    {
       // Integra todos los arreglos de atributos en un arreglos general
       $componentes = array();
 
       // Nodo Titulo Electronico Ejemplo 1.0|2345678|
-      $folio = '201800001';
       $componentes['TituloElectronico'] = $this->tituloElectronico_Attr($folio);
 
       // Nodo Firma Responsable Ejemplo EICA750212HDFRNL01|3|RECTOR|LIC.|
-      $nombre='Rector';$apellidoPat='Rector';$apeMat='UNAM';
-      $curp='TSEP180817HRECTR00';$idCarg='3';$cargo='RECTOR';$titulo='DR.';
-      $certR = 'CertificadoResponsable'; $noCertR='Numero de CertificadoResponsanble';
-      $componentes['FirmaResponsable1'] = $this->firmaResp_Attr($nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo,$sello1,$certR,$noCertR);
-
-      $nombre='Secretario';$apellidoPat='General';$apeMat='UNAM';
-      $curp='TSEP180817HSECRE00';$idCarg='6';$cargo='SECRETARIO GENERAL';$titulo='DR.';
-      $certR = 'CertificadoResponsable'; $noCertR='Numero de CertificadoResponsanble';
-      $componentes['FirmaResponsable2'] = $this->firmaResp_Attr($nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo,$sello2,$certR,$noCertR);
-
-      $nombre='Directora';$apellidoPat='DGAE';$apeMat='UNAM';
-      $curp='TSEP180817HDGRAL00';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='MTRA.';
-      $certR = 'CertificadoResponsable'; $noCertR='Numero de CertificadoResponsanble';
-      $componentes['FirmaResponsable3'] = $this->firmaResp_Attr($nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo,$sello3,$certR,$noCertR);
+      switch ($cargo) {
+         case 'Jtit':
+            $nombre='DIANA';$apellidoPat='GONZALEZ';$apeMat='NIETO';
+            // $curp='UIES180831HDFSEP03';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
+            $curp='UIES180831S04';$idCarg='5';$cargo='JEFA DEL DEPARTAMENTO DE TITULOS';$titulo='LIC.';
+            $certR = 'CertificadoResponsable'; $noCertR='874796688606327447';
+            $componentes['FirmaResponsable0'] = $this->firmaResp_AttrUnam(
+                        $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo);
+            break;
+         case 'Director':
+            $nombre='IVONNE';$apellidoPat='RAMIREZ';$apeMat='WENCE';
+            // $curp='UIES180831HDFSEP03';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
+            $curp='UIES180831S03';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
+            $certR = 'CertificadoResponsable'; $noCertR='1682280437054458477';
+            $componentes['FirmaResponsable1'] = $this->firmaResp_AttrUnam(
+                        $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo);
+            break;
+         case 'SecGral':
+            $nombre='LEONARDO';$apellidoPat='LOMELI';$apeMat='VANEGAS';
+            $curp='UIES180831S02';$idCarg='6';$cargo='SECRETARIO GENERAL';$titulo='DR.';
+            $certR = 'CertificadoResponsable'; $noCertR='3121493390511228062';
+            $componentes['FirmaResponsable2'] = $this->firmaResp_AttrUnam(
+                        $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo);
+            break;
+         case 'Rector':
+            $nombre='ENRIQUE LUIS';$apellidoPat='GRAUE';$apeMat='WIECHERS';
+            $curp='UIES180831S01';$idCarg='3';$cargo='RECTOR';$titulo='DR.';
+            $certR = 'CertificadoResponsable'; $noCertR='7608878899635960696 ';
+            $componentes['FirmaResponsable3'] = $this->firmaResp_AttrUnam(
+                        $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo);
+            break;
+      }
 
       // Nodo Institucion. Ejemplo 010033|UNIVERSIDAD TECNOLÓGICA DE AGUASCALIENTES|
-      $cveInstitucion=$datos['_07_cveInstitucion'];$nombreInstitucion=$datos['_08_nombreInstitucion'];
-      $componentes['Institucion'] = $this->institucion_Attr($cveInstitucion,$nombreInstitucion);
+      $cveInstitucion=$datos['_07_cveInstitucion'];
+      $nombreInstitucion=$datos['_08_nombreInstitucion'];
+      $componentes['Institucion'] = $this->institucion_Attr($cveInstitucion,
+                                                            $nombreInstitucion);
 
       // Nodo Carrera. Ejemplo 103339|INGENIERÍA EN NANOTECNOLOGÍA|2004-08-16|2009-06-12|5|ACTA DE SESIÓN|(vacio numeroRvoe)|
-      $cveCarrera=$datos['_09_cveCarrera'];$nombreCarrera=$datos['_10_nombreCarrera'];$fechaInicio=$datos['_11_fechaInicio'];$fechaTerminacion=$datos['_12_fechaTerminacion'];
-      $idAutorizacionReconocimiento=$datos['_13_idAutorizacionReconocimiento'];$autorizacionReconocimiento=$datos['_14_autorizacionReconocimiento'];$noRvoe=$datos['_15_numeroRvoe'];
+      $cveCarrera=$datos['_09_cveCarrera'];
+      $nombreCarrera=$datos['_10_nombreCarrera'];
+      $fechaInicio=$datos['_11_fechaInicio'];
+      $fechaTerminacion=$datos['_12_fechaTerminacion'];
+      $idAutorizacionReconocimiento=$datos['_13_idAutorizacionReconocimiento'];
+      $autorizacionReconocimiento=$datos['_14_autorizacionReconocimiento'];
+      $noRvoe=$datos['_15_numeroRvoe'];
       // $nombreCarrera = 'DOCTORADO EN CIENCIAS (BIOLOGÍA)';
-      $componentes['Carrera'] = $this->carrera_Attr($cveCarrera,$nombreCarrera,$fechaInicio,$fechaTerminacion,$idAutorizacionReconocimiento,$autorizacionReconocimiento,$noRvoe);
+      $componentes['Carrera'] = $this->carrera_Attr($cveCarrera,$nombreCarrera,
+                                                    $fechaInicio,$fechaTerminacion,
+                                                   $idAutorizacionReconocimiento,
+                                                   $autorizacionReconocimiento,$noRvoe);
 
       // Nodo Profesionista. Ejemplo:  AICA770112HDFRNL01|ANTONIO|ALPIZAR|CASTRO|antonio.alpizar@gmail.com|
-      $curp=$datos['_16_curp'];$nombre=trim($datos['_17_nombre']);$apePat=$datos['_18_primerApellido'];$apeMat=$datos['_19_segundoApellido'];$correo=$datos['_20_correoElectronico'];
-      // dd('codificacion de nombre:',mb_detect_encoding($nombre),$nombre);
+      $curp=$datos['_16_curp'];
+      $nombre=trim($datos['_17_nombre']);
+      $apePat=$datos['_18_primerApellido'];
+      $apeMat=$datos['_19_segundoApellido'];
+      $correo=$datos['_20_correoElectronico'];
       // $curp='SELIL890909FDFRL10';$nombre = 'LUZ MARIA GRACIELA'; $apePat='Serrano'; $apeMat = 'LIMON'; $correo='biologia@gmail.com';
-      $componentes['Profesionista'] = $this->profesionista_Attr($curp,$nombre,$apePat,$apeMat,$correo);
+      $componentes['Profesionista'] = $this->profesionista_Attr($curp,$nombre,
+                                                                $apePat,$apeMat,$correo);
 
       // Nodo Expedicion. 2011-08-10|1|POR TESIS|2010-08-16|(FechaExionExamenProfesional)|1|2|ART. 55 LRART. 5 CONST|09|CIUDAD DE MÉXICO|
-      $fechaExpedicion=$datos['_21_fechaExpedicion'];$idModalidadTitulacion=$datos['_22_idModalidadTitulacion'];$modalidadTitulacion=$datos['_23_modalidadTitulacion'];$fechaExamenProfesional=$datos['_24_fechaExamenProfesional'];
-      $fechaEExamenProfesional=$datos['_25_fechaExencionExamenProfesional'];$cumplioServicioSocial=$datos['_26_cumplioServicioSocial'];$idfundamentoSS=$datos['_27_idFundamentoLegalServicioSocial'];$fundamentoSS=$datos['_28_fundamentoLegalServicioSocial'];
-      $idEntidadFederativa=$datos['_29_idEntidadFederativa'];$eFederativa=$datos['_30_entidadFederativa'];
-      $componentes['Expedicion'] = $this->expedicion_Attr($fechaExpedicion,$idModalidadTitulacion,$modalidadTitulacion,$fechaExamenProfesional,$fechaEExamenProfesional,
-                                                          $cumplioServicioSocial,$idfundamentoSS,$fundamentoSS,$idEntidadFederativa,$eFederativa);
+      $fechaExpedicion=$datos['_21_fechaExpedicion'];
+      $idModalidadTitulacion=$datos['_22_idModalidadTitulacion'];
+      $modalidadTitulacion=$datos['_23_modalidadTitulacion'];
+      $fechaExamenProfesional=$datos['_24_fechaExamenProfesional'];
+      $fechaEExamenProfesional=$datos['_25_fechaExencionExamenProfesional'];
+      $cumplioServicioSocial=$datos['_26_cumplioServicioSocial'];
+      $idfundamentoSS=$datos['_27_idFundamentoLegalServicioSocial'];
+      $fundamentoSS=$datos['_28_fundamentoLegalServicioSocial'];
+      $idEntidadFederativa=$datos['_29_idEntidadFederativa'];
+      $eFederativa=$datos['_30_entidadFederativa'];
+      $componentes['Expedicion'] = $this->expedicion_Attr($fechaExpedicion,
+                                          $idModalidadTitulacion,
+                                          $modalidadTitulacion,
+                                          $fechaExamenProfesional,
+                                          $fechaEExamenProfesional,
+                                          $cumplioServicioSocial,
+                                          $idfundamentoSS,$fundamentoSS,
+                                          $idEntidadFederativa,$eFederativa);
 
       // Nodo Antecendente Ejemplo: C.E.T.I.S. NO. 80|4|BACHILLERATO|09|CIUDAD DE MÉXICO|2000-06-12|2003-08-12|(noCedula)||
-      $inst=$datos['_31_institucionProcedencia'];$idTipoE=$datos['_32_idTipoEstudioAntecedente'];$tipoE=$datos['_33_tipoEstudioAntecedente'];$idEntFed=$datos['_34_idEntidadFederativa'];$entFed=$datos['_35_entidadFederativa'];
-      $fechaI=$datos['_36_fechaInicio'];$fechaT=$datos['_37_fechaTerminacion'];$noCedula=$datos['_38_noCedula'];
-      $componentes['Antecedente'] = $this->antecedente_Attr($inst,$idTipoE,$tipoE,$idEntFed,$entFed,$fechaI,$fechaT,$noCedula);
+      $inst=$datos['_31_institucionProcedencia'];
+      $idTipoE=$datos['_32_idTipoEstudioAntecedente'];
+      $tipoE=$datos['_33_tipoEstudioAntecedente'];
+      $idEntFed=$datos['_34_idEntidadFederativa'];
+      $entFed=$datos['_35_entidadFederativa'];
+      $fechaI=$datos['_36_fechaInicio'];
+      $fechaT=$datos['_37_fechaTerminacion'];
+      $noCedula=$datos['_38_noCedula'];
+      $componentes['Antecedente'] = $this->antecedente_Attr($inst,$idTipoE,$tipoE,
+                                                            $idEntFed,$entFed,
+                                                            $fechaI,$fechaT,$noCedula);
 
       return $componentes;
+   }
+   public function integraNodosSep($folio,$datos,$sello1,$sello2,$sello3)
+   {
+      // dd($folio,$datos,$sello1,$sello2,$sello3);
+      // Integra todos los arreglos de atributos en un arreglos general
+      $componentes = array();
+
+      // Nodo Titulo Electronico Ejemplo 1.0|2345678|
+      $componentes['TituloElectronico'] = $this->tituloElectronico_Attr($folio);
+
+      // Nodo responsable 1
+      $nombre='IVONNE';$apellidoPat='RAMIREZ';$apeMat='WENCE';
+      $curp='UIES180831HDFSEP03';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
+      $certR = 'CertificadoResponsable'; $noCertR='1682280437054458477';
+      $componentes['FirmaResponsable1'] = $this->firmaResp_AttrSep(
+                  $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo,
+                  $sello3,$certR,$noCertR);
+      // Nodo responsable2
+      $nombre='LEONARDO';$apellidoPat='LOMELI';$apeMat='VANEGAS';
+      $curp='UIES180831HDFSEP02';$idCarg='6';$cargo='SECRETARIO GENERAL';$titulo='DR.';
+      $certR = 'CertificadoResponsable'; $noCertR='3121493390511228062';
+      $componentes['FirmaResponsable2'] = $this->firmaResp_AttrSep(
+                  $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo,
+                  $sello2,$certR,$noCertR);
+      // Nodo responsable3
+      $nombre='ENRIQUE LUIS';$apellidoPat='GRAUE';$apeMat='WIECHERS';
+      $curp='UIES180831HDFSEP01';$idCarg='3';$cargo='RECTOR';$titulo='DR.';
+      $certR = 'CertificadoResponsable'; $noCertR='7608878899635960696';
+      $componentes['FirmaResponsable3'] = $this->firmaResp_AttrSep(
+                  $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo,
+                  $sello1,$certR,$noCertR);
+
+      // Nodo Institucion. Ejemplo 010033|UNIVERSIDAD TECNOLÓGICA DE AGUASCALIENTES|
+      $cveInstitucion=$datos['_07_cveInstitucion'];
+      $nombreInstitucion=$datos['_08_nombreInstitucion'];
+      $componentes['Institucion'] = $this->institucion_Attr($cveInstitucion,
+                                                            $nombreInstitucion);
+
+      // Nodo Carrera. Ejemplo 103339|INGENIERÍA EN NANOTECNOLOGÍA|2004-08-16|2009-06-12|5|ACTA DE SESIÓN|(vacio numeroRvoe)|
+      $cveCarrera=$datos['_09_cveCarrera'];
+      $nombreCarrera=$datos['_10_nombreCarrera'];
+      $fechaInicio=$datos['_11_fechaInicio'];
+      $fechaTerminacion=$datos['_12_fechaTerminacion'];
+      $idAutorizacionReconocimiento=$datos['_13_idAutorizacionReconocimiento'];
+      $autorizacionReconocimiento=$datos['_14_autorizacionReconocimiento'];
+      $noRvoe=$datos['_15_numeroRvoe'];
+      // $nombreCarrera = 'DOCTORADO EN CIENCIAS (BIOLOGÍA)';
+      $componentes['Carrera'] = $this->carrera_Attr($cveCarrera,$nombreCarrera,
+                                                    $fechaInicio,$fechaTerminacion,
+                                                   $idAutorizacionReconocimiento,
+                                                   $autorizacionReconocimiento,$noRvoe);
+
+      // Nodo Profesionista. Ejemplo:  AICA770112HDFRNL01|ANTONIO|ALPIZAR|CASTRO|antonio.alpizar@gmail.com|
+      $curp=$datos['_16_curp'];
+      $nombre=trim($datos['_17_nombre']);
+      $apePat=$datos['_18_primerApellido'];
+      $apeMat=$datos['_19_segundoApellido'];
+      $correo=$datos['_20_correoElectronico'];
+      // $curp='SELIL890909FDFRL10';$nombre = 'LUZ MARIA GRACIELA'; $apePat='Serrano'; $apeMat = 'LIMON'; $correo='biologia@gmail.com';
+      $componentes['Profesionista'] = $this->profesionista_Attr($curp,$nombre,
+                                                                $apePat,$apeMat,$correo);
+
+      // Nodo Expedicion. 2011-08-10|1|POR TESIS|2010-08-16|(FechaExionExamenProfesional)|1|2|ART. 55 LRART. 5 CONST|09|CIUDAD DE MÉXICO|
+      $fechaExpedicion=$datos['_21_fechaExpedicion'];
+      $idModalidadTitulacion=$datos['_22_idModalidadTitulacion'];
+      $modalidadTitulacion=$datos['_23_modalidadTitulacion'];
+      $fechaExamenProfesional=$datos['_24_fechaExamenProfesional'];
+      $fechaEExamenProfesional=$datos['_25_fechaExencionExamenProfesional'];
+      $cumplioServicioSocial=$datos['_26_cumplioServicioSocial'];
+      $idfundamentoSS=$datos['_27_idFundamentoLegalServicioSocial'];
+      $fundamentoSS=$datos['_28_fundamentoLegalServicioSocial'];
+      $idEntidadFederativa=$datos['_29_idEntidadFederativa'];
+      $eFederativa=$datos['_30_entidadFederativa'];
+      $componentes['Expedicion'] = $this->expedicion_Attr($fechaExpedicion,
+                                          $idModalidadTitulacion,
+                                          $modalidadTitulacion,
+                                          $fechaExamenProfesional,
+                                          $fechaEExamenProfesional,
+                                          $cumplioServicioSocial,
+                                          $idfundamentoSS,$fundamentoSS,
+                                          $idEntidadFederativa,$eFederativa);
+
+      // Nodo Antecendente Ejemplo: C.E.T.I.S. NO. 80|4|BACHILLERATO|09|CIUDAD DE MÉXICO|2000-06-12|2003-08-12|(noCedula)||
+      $inst=$datos['_31_institucionProcedencia'];
+      $idTipoE=$datos['_32_idTipoEstudioAntecedente'];
+      $tipoE=$datos['_33_tipoEstudioAntecedente'];
+      $idEntFed=$datos['_34_idEntidadFederativa'];
+      $entFed=$datos['_35_entidadFederativa'];
+      $fechaI=$datos['_36_fechaInicio'];
+      $fechaT=$datos['_37_fechaTerminacion'];
+      $noCedula=$datos['_38_noCedula'];
+      $componentes['Antecedente'] = $this->antecedente_Attr($inst,$idTipoE,$tipoE,
+                                                            $idEntFed,$entFed,
+                                                            $fechaI,$fechaT,$noCedula);
+
+      return $componentes;
+   }
+   public function loteCadena($fecha,$cargo)
+   {
+      // obtencion un lote de cadenas orignales firmadas por la Directora, Secretario o RECTOR
+      switch ($cargo) {
+         case 'Jtit':
+            $datos = SolicitudSep::where('status', 2)->
+                                where('fecha_lote',$fecha)->get();
+            break;
+         case 'Director':
+            $datos = SolicitudSep::where('status', 3)->
+                                where('fecha_lote',$fecha)->get();
+            break;
+         case 'SecGral':
+            $datos = SolicitudSep::where('status', 4)->
+                                where('fecha_lote',$fecha)->get();
+            break;
+         case 'Rector':
+            $datos = SolicitudSep::where('status', 5)->
+                                where('fecha_lote',$fecha)->get();
+            break;
+         default:
+         $datos = SolicitudSep::where('status', 6)->
+                             where('fecha_lote',$fecha)->get();
+            break;
+      }
+      // El folio se forma por la fecha del loteCadena
+      $folio = carbon::parse($fecha)->format('Ymdhis');
+      $responsable = $cadenaResp = '';
+      // Se recorren las cuentas de alumnos que no tienen errores
+      foreach ($datos as $datosAlumno) {
+         $responsable = $this->integraNodosUnam($folio,unserialize($datosAlumno->datos),$cargo);
+         // generamos la cadena por alumno e integramos el lote
+         $cadena = $this->cadenaOriginal($responsable,$cargo);
+         $cadenaResp = $cadenaResp.'@_@'.$cadena;
+      }
+      $cadenaResp = substr($cadenaResp, 3,strlen($cadenaResp)-3);
+      return $cadenaResp;
    }
 
    public function tituloElectronico_Attr($folio)
@@ -738,7 +1048,7 @@ trait XmlCadenaErrores {
      $datos['xsi:schemalocation'] = "https//www.siged.sep.gob.mx/titulos/ schema.xsd";
      return $datos;
    }
-   public function firmaResp_Attr($nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo,$sello,$certR,$noCertR)
+   public function firmaResp_AttrSep($nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo,$sello,$certR,$noCertR)
    {
      $dato = array();
      $data['nombre'] = $nombre;
@@ -751,6 +1061,15 @@ trait XmlCadenaErrores {
      $data['sello'] = $sello;
      $data['certificadoResponsable'] = $certR;
      $data['noCertificadoResponsable'] = $noCertR;
+     return $data;
+   }
+   public function firmaResp_AttrUnam($curp,$idCarg,$cargo,$titulo)
+   {
+     $dato = array();
+     $data['curp'] = $curp;
+     $data['idCargo'] = $idCarg;
+     $data['cargo'] = $cargo;
+     $data['abrTitulo'] = $titulo; // Opcional
      return $data;
    }
    public function institucion_Attr($cveInstitucion,$nombreInstitucion)
@@ -779,7 +1098,7 @@ trait XmlCadenaErrores {
      $data = array();
      $data['curp'] = $curp;
      $data['nombre'] = $nombre;
-     $data['primerApelldo'] = $apePat;
+     $data['primerApellido'] = $apePat;
      $data['segundoApellido'] = $apeMat; // Opcional, omitir en el XML si esta vacio.
      $data['correoElectronico'] = $correo;
      return $data;
@@ -877,7 +1196,7 @@ trait XmlCadenaErrores {
          // $cadenaOriginal = $this->cadenaOriginal($nodos);
          // Obtención de los Errores.
          if (isset($datos[1])==null) {
-            $errores = 'sin errores';
+            $errores = 'Sin errores';
             if (!in_array($errores,$listaErrores)) {
                $listaErrores[] = $value;
             }
@@ -915,8 +1234,9 @@ trait XmlCadenaErrores {
          $cuenta = substr($elemento->num_cta,0,8);
          $carrera = $elemento->cve_carrera;
          $datos = $this->integraConsulta($cuenta,$digito,$carrera);
+         dd('actualiza por fecha');
          if (isset($datos[1])==null) {
-            $errores = 'sin errores';
+            $errores = 'Sin errores';
             if (!in_array($errores,$listaErrores)) {
                $listaErrores[] = $value;
             }

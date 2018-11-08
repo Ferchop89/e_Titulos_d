@@ -2,6 +2,7 @@
    width: 40%;
    text-align: right;
 }
+
 select[multiple], select[size] {
    height: 66px;
    border: solid 1px;
@@ -29,10 +30,35 @@ select[multiple], select[size] {
    display: table-row;
    font-weight: bold;
    text-align: center;
+   width: 92%;
+   display: inline-block;
+   color: black;
+   background-color: navajowhite
 }
 .Row
 {
+   /* width: 100%; */
+   display: inline-table;
    display: table-row;
+   color: black;
+}
+.a-row {
+   width: 100%;
+}
+/* .Heading{
+   height: 40px;
+   vertical-align: middle;
+} */
+.Heading .Cell {
+   height: 40px;
+   vertical-align: middle;
+}
+.Cell.actions{
+   height: 30px;
+   background-color: navajowhite
+}
+.Cell.btns Input {
+    width: 100%;
 }
 .Cell
 {
@@ -41,35 +67,251 @@ select[multiple], select[size] {
    border-width: thin;
    padding-left: 5px;
    padding-right: 5px;
+   width: auto;
+   height: 30px;
+}
+.Cell_mod{
+  height: auto;
+  display: table-cell;
+  border: solid;
+  border-width: thin;
+  padding-left: 5px;
+  padding-right: 5px;
+  width: auto;
+}
+.Cell p {
+   margin: 0;
 }
 .Cell.id {
-   width: 92px;
+   width: 10%;
+   min-width: 108px;
+}
+.id_f{
+  width: 22%;
+  min-width: 10%;
 }
 .Cell.cta {
-   width: 102px;
+   width: 10%;
+   min-width: 112px;
 }
 .Cell.name {
-   width: 374px;
+   width: 10%;
+   min-width: 420px;
+   text-align: left;
 }
 .Cell.date {
-   width: 104px;
+   width: 10%;
+   min-width: 102px;
 }
 .Cell.book {
-   width: 140px;
+   width: 10%;
+   min-width: 150px;
 }
 .Cell.level {
-   width: 60px;
+   width: 10%;
+   min-width: 58px;
 }
 .Cell.cve {
-   width: 100px;
+   width: 10%;
+   min-width: 130px;
+}
+.Cell.sistema {
+   width: 8%;
+   min-width: 86px;
 }
 .Cell.nError {
-   width: 77px;
+   width: 10%;
+   min-width: 88px;
 }
-.Cell.btns {
-    width: 91px;
-    display: inline-block;
+.accordion-a {
+    width: 92%;
+    display: inline-flex;
+}
+.firmas.progreso .firmas .accordion-a {
+    width: 85%;
+    display: inline-flex;
+}
+.Heading.Cell.actions.center {
+    height: 40px;
+}
+.Cell.btns, .Cell.actions {
+   width: 8%;
+   display: inline-block;
+   vertical-align: top;
+   font-weight: bold;
+   color: black;
+}
+.firmas.progreso .firmas .Cell.btns{
+   width: 15%;
+}
+.firmas.progreso .firmas #btnEnvioSep{
+   margin: 5px;
 }
 .panel-collapse {
     border: solid 1px black;
+}
+.fa.fa-trash {
+    margin: 4px 24px;
+}
+
+.solicitud_f{
+  margin: auto;
+  font-family: Arial, sans-serif;
+  font-size: 18.5px;
+}
+
+.firmas.firmas p {
+   font-size: 20px;
+   padding: 9px 2px;
+   font-weight: normal;
+}
+/**/
+.firmas .id{
+   width: 30%;
+}
+.firmas .fechaLote{
+   width: 40%;
+}
+.firmas .numCedulaxLote{
+   width: 30%;
+}
+/**/
+.firmas.progreso .firmas .id{
+   width: 30%;
+}
+.firmas.progreso .firmas .fechaLote{
+   width: 40%;
+}
+.firmas.progreso .firmas .fechaLote_f{
+  width: 40%;
+}
+.firmas.progreso .firmas .fechaLote_f{
+  width: 35%;
+}
+.firmas.progreso .firmas_total {
+  width: 22%;
+}
+.firmas.progreso .firmas .numCedulaxLote{
+   width: 22%;
+}
+.firmado p{
+  color: #228B22;
+}
+.menor{
+  width: 40%;
+}
+.firmas.firmas .Row {
+   width: 100%;
+   display: inline-flex;
+   color: black;
+}
+.firmas.firmas .Cell{
+   height: auto;
+}
+.firmas.firmas #btnFirma{
+   margin: 0;
+}
+.firmas.firmas .Cell.btns {
+   height: auto;
+   text-align: center;
+}
+.firmas.firmas .Cell.btns Input {
+   width: auto;
+}
+.firmas.firmas form {
+   margin: 4.9px 2px;
+}
+.firmas span{
+  display:inline-block;
+}
+.indice{
+  font-family: Arial, sans-serif;
+  font-size: 20px;
+}
+.oculto{
+  visibility: hidden;
+  display: none;
+}
+.btn{
+  margin-top: 8%;
+  margin-bottom: 8%;
+}
+.btn_mod{
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.f_rec{color: blue;}
+.f_dir{color: #006600;}
+.f_sec{color: #cc6600;}
+.f_dirt{color: #FF0000;}
+
+.menu_f{
+  margin-left: 0;
+}
+
+.detalles_info {
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 5%;
+  text-align: center;
+}
+
+.b_btn{
+  margin-top: 2%;
+  margin-bottom: 2%;
+}
+.aFirma .btn {
+    margin-top: 4%;
+    margin-bottom: 4%;
+}
+.aFirma #error {
+    margin-top: 0;
+}
+.proceso_t{
+  font-family: Arial, sans-serif;
+  font-size: 18.5px;
+}
+.proceso_alumno table,  .proceso_alumno th, .proceso_alumno td{
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+.proceso_alumno th, .proceso_alumno td {
+    padding: 10px;
+}
+#btn-update {
+   float: left;
+}
+thead tr {
+    color: black;
+}
+.envio-sep {
+    color: black;
+    font-weight: lighter;
+}
+td{
+   font-weight: lighter;
+}
+.centrar{
+  margin-top: 7%;
+}
+.datos-escolares tr {
+    color: black;
+}
+.info-personal {
+    color: black;
+}
+.datos-escolares thead th {
+    color: white;
+}
+.detalle-lote .lote {
+   margin-bottom: 60px;
+}
+.detalle-lote .btn {
+   margin-top: 3%;
+   margin-bottom: 3%;
+}
+.fa-arrow-circle-o-left{
+   font-size: 48px;
 }

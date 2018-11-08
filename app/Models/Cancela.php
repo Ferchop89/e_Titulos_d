@@ -6,9 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cancela extends Model
 {
-    protected $table = '_cancelaciones';
-    protected $primaryKey = 'ID_MOTIVO_CAN'; // or null    
-    public $incrementing = false;
+    protected $table = '_cancelacionesSep';
     public $timestamps = false;
 
 }
