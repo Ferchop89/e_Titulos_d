@@ -1,3 +1,6 @@
+html{
+   width: 100%;
+}
 .right {
    width: 40%;
    text-align: right;
@@ -25,22 +28,46 @@ select[multiple], select[size] {
    font-weight: bold;
    font-size: larger;
 }
+/* .pre-accordion {
+    width: 100%;
+    margin: auto;
+}
+.div-accordion {
+    width: 100%;
+    margin: auto;
+    overflow-x: auto;
+    min-width: 1365px;
+} */
+.pre-accordion {
+   overflow-x: auto;
+}
+.div-accordion {
+    white-space: nowrap;
+}
 .Heading
 {
    display: table-row;
    font-weight: bold;
    text-align: center;
+   /* width: 1262px; */
    width: 92%;
    display: inline-block;
    color: black;
    background-color: navajowhite
 }
+.solicitudes.aFirma .Heading{
+   width: 100%;
+   display: block;
+}
 .Row
 {
    /* width: 100%; */
-   display: inline-table;
-   display: table-row;
+   /* display: inline-table;
+   display: table-row; */
    color: black;
+}
+.div-accordion .fila .Heading{
+    height: 40px;
 }
 .a-row {
    width: 100%;
@@ -127,6 +154,10 @@ select[multiple], select[size] {
     width: 92%;
     display: inline-flex;
 }
+.solicitudes.aFirma .accordion-a{
+   width: 100%;
+   display: block;
+}
 .firmas.progreso .firmas .accordion-a {
     width: 85%;
     display: inline-flex;
@@ -135,6 +166,7 @@ select[multiple], select[size] {
     height: 40px;
 }
 .Cell.btns, .Cell.actions {
+   /* width: 109px; */
    width: 8%;
    display: inline-block;
    vertical-align: top;
@@ -314,4 +346,14 @@ td{
 }
 .fa-arrow-circle-o-left{
    font-size: 48px;
+}
+
+#info-solicitud-alumno {
+    height: 100%;
+}
+
+@media screen and (max-height: 480px) {
+  #info-solicitud-alumno {
+    height: calc(100%);
+  }
 }

@@ -26,7 +26,7 @@
         <!-- Sección: estilos -->
         @yield('estilos')
         <!-- /Sección: Links -->
-    </head id="inicio">
+    </head>
     <body id="inicio">
         <header>
             {{-- <div id="skiptocontent"><a href="#maincontent">Saltarse al contenido</a></div> --}}
@@ -169,7 +169,7 @@
 
         </main>
         <!--Principio del Footer -->
-        <footer class="main-footer">
+        <footer class="main-footer" id="footer">
             <div class="list-info">
                 <div class="container">
                     <div class="col-sm-3">
@@ -231,6 +231,8 @@
         <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
         <link href="{{asset('css/select2.css')}}" rel="stylesheet" />
         <script src="{{asset('js/select2.js')}}"></script>
+
+        {{-- <script src="{{asset('js/pantalla.js')}}"></script> --}}
         @yield('animaciones')
     </body>
 </html>

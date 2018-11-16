@@ -6,10 +6,14 @@
    <link href="{{ asset('css/colordate.css') }}" rel="stylesheet">
 @endsection
 @section('content')
-<div class="container firmas progreso">
+<div class="firmas progreso">
     <div class="d-flex justify-content-between align-items-end mb-3">
       <br>
+      @if($lists != null)
         <h2 id="titulo">{{$title.": ".$total}}</h2>
+      @else
+        <h2 id="titulo">{{$title}}</h2>
+      @endif
     </div>
     <!-- <form class="form-group solicitud_f" method="POST" action="{{ url( 'registroTitulos/firmas_progreso' ) }}">
         {!! csrf_field() !!} -->
@@ -69,8 +73,8 @@
          </tr>
       </table>
     </div>
+    @if($lists != null)
     <br/>
-    @if($total>0)
       @include('errors/flash-message')
       {{-- Desplegado el acordion de solicitudes filtradas --}}
       {!! $acordeon !!}

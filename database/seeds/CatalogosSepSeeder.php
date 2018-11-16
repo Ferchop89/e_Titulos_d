@@ -224,6 +224,7 @@ class CatalogosSepSeeder extends Seeder
       $datos[6] = ['06','LICENCIATURA (SUA)','2'];
       $datos[7] = ['07','ESPECIALIDAD','1'];
       $datos[8] = ['08','MAESTRIA','1'];
+      $datos[8] = ['09','DOCTORADO, '1'];
       return $datos;
     }    public function legal()
     {

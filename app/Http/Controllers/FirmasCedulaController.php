@@ -114,10 +114,6 @@ class FirmasCedulaController extends Controller
       $composite .=      "</div>"; // cierra el collapse
       // $composite .=     "</div>"; // cierra el panel-default
   }
-      // $composite .= "<div>"; // cierra el acordeon
-      // $composite .=       "<input type='submit' value='Enviar' />";
-
-
     return $composite;
    }
   public function generaListas($data){
@@ -225,26 +221,127 @@ class FirmasCedulaController extends Controller
 
    public function showFirmasBusqueda()
    {
-     $fecha = DB::table('solicitudes_sep')->where('status', '!=', 1)->orderBy('fec_emision_tit', 'desc')->first();
-     $fecha_formato = Carbon::parse($fecha->fec_emision_tit)->format('d/m/Y');
-     $lote = DB::connection('condoc_eti')->select('select * from solicitudes_sep WHERE fec_emision_tit = "'.$fecha->fec_emision_tit.'%" AND status != 1 order by ABS(libro) ASC, ABS(foja) ASC, ABS(folio) ASC');
-     $total = count($lote);
-     $listaErrores = $this->listaErr();
-     $title = $fecha_formato.' - Solicitudes enviadas a Firma';
-     $acordeon = $this->acordionTitulosF($lote);
-     $libros = DB::connection('condoc_eti')->select('select DISTINCT libro from solicitudes_sep order by ABS(libro) ASC');
-     $fojas = DB::connection('condoc_eti')->select('select DISTINCT foja from solicitudes_sep order by ABS(foja) ASC');
-     $fojas_sel = array(); //Permitirá identificar las fojas por libro
-     foreach ($libros as $key=>$value) {
-       $sql = DB::connection('condoc_eti')->select("select DISTINCT foja from solicitudes_sep WHERE libro = '".$libros[$key]->libro."' order by ABS(foja) ASC");
-       foreach ($sql as $value) {
-        array_push($fojas_sel, $libros[$key]->libro."-".$value->foja);
-       }
-     }
-     return view('menus/firmas_enviadas', compact('title','lote', 'total','acordeon', 'listaErrores', 'libros', 'fojas', 'fojas_sel'));
+      $fecha = DB::table('solicitudes_sep')->where('status', '!=', 1)->orderBy('fec_emision_tit', 'desc')->first();
+      $fechaO = $this->fechaxOmision();
+      $lote = $lotes = $listaErrores = $acordeon = $libros = $fojas = $fojas_sel = null;
+      $total = 0;
+      $title = "Solicitudes enviadas a Firma";
+      if(!empty($fecha))
+      {
+         $fecha_formato = Carbon::parse($fecha->fec_emision_tit)->format('d/m/Y');
+         // $lote = DB::connection('condoc_eti')
+         //          ->select('select * from solicitudes_sep WHERE fec_emision_tit = "'.$fecha->fec_emision_tit.'%" AND status != 1 order by ABS(libro) ASC, ABS(foja) ASC, ABS(folio) ASC');
+         $lote = '';  // lote seleccionado en el menu
+         $lotes = DB::connection('condoc_eti')
+                  ->select("select distinct fecha_lote from solicitudes_sep WHERE DATE_FORMAT(fec_emision_tit,'%d/%m/%Y') = '$fechaO' AND status != 1 order by ABS(libro) ASC, ABS(foja) ASC, ABS(folio) ASC");
+         $solicitudes = DB::connection('condoc_eti')
+                  ->select("select * from solicitudes_sep WHERE DATE_FORMAT(fec_emision_tit,'%d/%m/%Y') = '$fechaO' AND status != 1 order by ABS(libro) ASC, ABS(foja) ASC, ABS(folio) ASC");
+         $total = count($solicitudes);
+         // $listaErrores = $this->listaErr();
+         $title = $fecha_formato.' - Solicitudes enviadas a Firma';
+         $acordeon = $this->acordionTitulosF($solicitudes);
+         $libros = DB::connection('condoc_eti')
+         ->select("select DISTINCT libro from solicitudes_sep where fec_emision_tit='$fecha->fec_emision_tit' order by ABS(libro) ASC");
+         $fojas = DB::connection('condoc_eti')
+         ->select("select DISTINCT foja from solicitudes_sep where fec_emision_tit='$fecha->fec_emision_tit' order by ABS(foja) ASC");
+         $fojas_sel = array(); //Permitirá identificar las fojas por libro
+         $foja = '';  // foja seleccionada en el menu
+         foreach ($libros as $key=>$value) {
+            $sql = DB::connection('condoc_eti')->select("select DISTINCT foja from solicitudes_sep WHERE libro = '".$libros[$key]->libro."' order by ABS(foja) ASC");
+            foreach ($sql as $value) {
+               array_push($fojas_sel, $libros[$key]->libro."-".$value->foja);
+            }
+         }
+      }
+      return view('menus/firmas_enviadas', compact('title','lote','lotes', 'total','acordeon', 'listaErrores', 'libros','fojas_sel','foja', 'fojas','fechaO'));
    }
 
-   public function postFirmasBusqueda(Request $request){
+   public function fechaxOmision()
+   {
+      // Fecha que nos da la ultima fecha de emisión de títulos solo con firma del departamento de
+      $fecha = DB::table('solicitudes_sep')->where('status', '!=', 1)->orderBy('fec_emision_tit', 'desc')->first();
+      return Carbon::parse($fecha->fec_emision_tit)->format('d/m/Y');
+   }
+   public function dataSolicitudes(Request $request)
+   {
+      // dd($request->all());
+      // lote de solicitudes con parametros de fecha, lote y foja.
+      $select = "select * from solicitudes_sep ";
+      $fecha = $request->fecha;
+      $where  = "WHERE DATE_FORMAT(fec_emision_tit,'%d/%m/%Y') = '".$fecha."' ";
+      if ($request->lotes!=0) {
+         $lote = $request->lotes;
+         $where .= "AND fecha_lote = '$lote' ";
+      }
+      if ($request->foja!=0) {
+         $foja = $request->foja;
+         $where .= "AND foja ='$foja' ";
+      }
+      $where .= "AND status <> 1 ";
+      $order  = "order by fecha_lote,libro, foja, folio";
+      $query = $select.$where.$order;
+
+      $lote = DB::connection('condoc_eti')
+               ->select($query);
+      return $lote;
+   }
+
+   public function postFirmasBusqueda(Request $request)
+   {
+      dd($request->all());
+      // Consulta de Solicitudes.
+      $foja = $request->foja;
+      $lote = $request->lote;
+      $fecha = $request->fecha;
+
+      if ($request->foja==0) {
+         //  Menu de lotes contiene los lotes que pertenecen a la fecha de emision de titulo.
+         $queryLotes  = "select distinct fecha_lote from solicitudes_sep ";
+         $queryLotes .= "WHERE DATE_FORMAT(fec_emision_tit,'%d/%m/%Y') = '$fecha' AND status != 1 ";
+         $queryLotes .= "order by ABS(libro) ASC, ABS(foja) ASC, ABS(folio) ASC";
+         // Menu de fojas contiene todas las fojas que pertenecen a la fecha de emisión de titulos
+         $queryFojas  = "select DISTINCT foja from solicitudes_sep ";
+         $queryFojas .= "WHERE fec_emision_tit='$fecha->fec_emision_tit' order by ABS(foja) ASC"
+      }else{
+         // Especificaron la foja
+         if ($request->lote!=0) { // especificaron lote
+            // Menú de lotes contiene los lotes que pertenecen a esta foja
+            $queryLotes  = "select distinct fecha_lote from solicitudes_sep ";
+            $queryLotes .= "WHERE DATE_FORMAT(fec_emision_tit,'%d/%m/%Y') = '$fecha' AND ";
+            $queryLotes .= "AND foja = '$foja' status != 1 ";
+            $queryLotes .= "order by ABS(libro) ASC, ABS(foja) ASC, ABS(folio) ASC";
+         }else
+         {  // Se especifica foja pero no lotes
+            // Se regargan todos los lotes pero se deja apuntando al cero.
+            // Se recargan todas las fojas pero se dejan apuntando
+
+         }
+         //  Se especifica la foja. El Menu de lotes debe contener los lotes asociados a la foja y la fechaEmisionTitulo
+         $queryLotes  = "select distinct fecha_lote from solicitudes_sep ";
+         $queryLotes .= "WHERE DATE_FORMAT(fec_emision_tit,'%d/%m/%Y') = '$fecha' AND ";
+         $queryLotes .= "fecla_lote = '$lote' status != 1 ";
+         $queryLotes .= "order by ABS(libro) ASC, ABS(foja) ASC, ABS(folio) ASC";
+      }
+
+      $lotes = DB::connection('condoc_eti')
+               ->select($queryLotes);
+
+      $foja = $request->foja;
+      $fojas = DB::connection('condoc_eti')
+      ->select("select DISTINCT foja from solicitudes_sep where fec_emision_tit='$fecha->fec_emision_tit' order by ABS(foja) ASC");
+
+      $solicitudes = $this->dataSolicitudes($request);
+      $title = $libros = '';
+      $info = $request->all();
+      //"fecha" => "08/11/2018" "lotes" => "2018-11-09 12:01:29" "foja" => "1078" "consultar" => "Solicitar"
+      $total = count($solicitudes);
+      $listaErrores = $this->listaErr();
+      $acordeon = $this->acordionTitulosF($solicitudes);
+      return view('menus/firmas_enviadas', compact('title','lote','lotes', 'total','acordeon', 'listaErrores', 'libros','fojas_sel','foja', 'fojas','fechaO'));
+      // return view('menus/firmas_enviadas', compact('title','lote', 'total','acordeon', 'listaErrores', 'libros','foja','fojas', 'fojas_sel'));
+   }
+
+   public function postFirmasBusqueda_x(Request $request){
      $libros = DB::connection('condoc_eti')->select('select DISTINCT libro from solicitudes_sep order by ABS(libro) ASC');
      $fojas = DB::connection('condoc_eti')->select('select DISTINCT foja from solicitudes_sep order by ABS(foja) ASC');
      $fojas_sel = array(); //Permitirá identificar las fojas por libro
@@ -393,7 +490,7 @@ class FirmasCedulaController extends Controller
      //   return view('menus/firmas_enviadas', compact('title','lote', 'total','acordeon', 'listaErrores'));
      // }elseif (isset($_POST['consultar_lote'])) {
      //   $request->validate([
-     //       'lote_s' => 'required'
+     //       'lote_s' => 'required'listaErrores
      //   ],[
      //       'lote_s.required' => 'Debes seleccionar una fecha'
      //   ]);
@@ -429,18 +526,18 @@ class FirmasCedulaController extends Controller
 
    public function acordionTitulosF($data)
    {
-      $composite = "<div class='Heading' style='width: 101%;'>";
+      $composite = "<div class='Heading'>";
       $composite .=  "<div class='Cell id'>";
       $composite .=     "<p># Solicitud</p>";
       $composite .=  "</div>";
       $composite .=  "<div class='Cell date'>";
-      $composite .=     "<p>Fecha emisión título</p>";
-      $composite .=  "</div>";
-      $composite .=  "<div class='Cell book'>";
-      $composite .=     "<p>Libro-Foja-Folio</p>";
+      $composite .=     "<p>#Lote</p>";
       $composite .=  "</div>";
       $composite .=  "<div class='Cell cve'>";
       $composite .=     "<p>Fecha Lote</p>";
+      $composite .=  "</div>";
+      $composite .=  "<div class='Cell book'>";
+      $composite .=     "<p>Libro-Foja-Folio</p>";
       $composite .=  "</div>";
       $composite .=  "<div class='Cell cta'>";
       $composite .=     "<p>No. Cuenta</p>";
@@ -460,20 +557,21 @@ class FirmasCedulaController extends Controller
       $composite .="</div>";
       for ($i=0; $i < count($data) ; $i++) {
          $x_list = $i + 1;
-         $composite .= "<div class='accordion-a' style='width: 101%;'>";
+         $composite .= "<div class='accordion-a'>";
          $composite .=  "<a class = 'a-row' data-toggle='collapse' data-parent='#accordion' href='#collapse".$x_list."'>";
          $composite .="<div class='Row'>";
          $composite .=    "<div class='Cell id'>";
          $composite .=       "<p>".$data[$i]->id."</p>";
          $composite .=    "</div>";
+         $fecha_lote =    LotesUnam::select('id')->where('fecha_lote',$data[$i]->fecha_lote)->first();
          $composite .=    "<div class='Cell date'>";
-         $composite .=       "<p>".Carbon::parse($data[$i]->fec_emision_tit)->format('d/m/Y')."</p>";
-         $composite .=    "</div>";
-         $composite .=    "<div class='Cell book'>";
-         $composite .=       "<p>".$data[$i]->libro."-".$data[$i]->foja."-".$data[$i]->folio."</p>";
+         $composite .=       "<p>".$fecha_lote->id."</p>";
          $composite .=    "</div>";
          $composite .=    "<div class='Cell cve'>";
          $composite .=       "<p>".$data[$i]->fecha_lote."</p>";
+         $composite .=    "</div>";
+         $composite .=    "<div class='Cell book'>";
+         $composite .=       "<p>".$data[$i]->libro."-".$data[$i]->foja."-".$data[$i]->folio."</p>";
          $composite .=    "</div>";
          $composite .=    "<div class='Cell cta'>";
          $composite .=       "<p>".$data[$i]->num_cta."</p>";
@@ -500,7 +598,7 @@ class FirmasCedulaController extends Controller
          $composite .= "</div>";
          // solo el primer listado se despliega, los demas se colapsan.
          $collapse   =       (count($data)==1)? 'in': '';
-         $composite .=       "<div id='collapse".$x_list."' class='panel-collapse collapse ".$collapse."' style='width: 101%;'>";
+         $composite .=       "<div id='collapse".$x_list."' class='panel-collapse collapse ".$collapse."'>";
          $composite .=       "<div class='panel-body'>";
          $composite .=        "<div class='table-responsive'>";
          $composite .=         "<table class='table table-striped table-dark'>";
@@ -688,14 +786,14 @@ class FirmasCedulaController extends Controller
       $composite .=     "</div>";
       $composite .= "</div>";
       $composite .= "<div class='Cell btns'>";
-      // $composite .=  "<form action='/test/firmas/".$data[$i]->fechaLote."/Directora' method = 'GET'>";
       $composite .=  "<form action='envioSep' method = 'GET'>";
       // Evaluamos si el lote ya ha sido envioa a la SEP, donde status = 6 y cambiamos el texto del boton
-      // dd($data[$i]->fecha_lote);
       $enviado = SolicitudSep::where('fecha_lote',$data[$i]->fecha_lote)->first();
       $composite .=     "<input type='hidden' id='fechaLote' name='fecha_lote' value='".$data[$i]->fecha_lote."'>";
       if(count($totalF[$i]) == 4){
+      // if(count($totalF[$i]) == 0){
          if ($enviado->status <= 6) {
+            // if ($enviado->status == 2) {
             $composite .=     "<input type='submit' value='Envío SEP' id='btnEnvioSep' class='btn btn-info'/>";
          } else {
             $composite .=     "<input type='submit' value='Enviado SEP' id='btnEnvioSep' class='btn btn-success' disabled/>";
@@ -720,24 +818,36 @@ class FirmasCedulaController extends Controller
      switch ($roles_us[0]) {
         case 'Director':
            $fecha = DB::table('lotes_unam')->where('firma1', '1')->orderBy('fec_firma1', 'desc')->first();
-           $fecha_formato = Carbon::parse($fecha->fec_firma1)->format('d/m/Y');
-           $aux = Carbon::parse($fecha->fec_firma1)->format('Y-m-d');
-           $lote = DB::connection('condoc_eti')
-                  ->select('select * from lotes_unam WHERE firma1 LIKE "1" AND fecha_lote LIKE "'.$aux.'%" order by id');
+           if($fecha != null)
+           {
+             $fecha_formato = Carbon::parse($fecha->fec_firma1)->format('d/m/Y');
+            $aux = Carbon::parse($fecha->fec_firma1)->format('Y-m-d');
+            $lote = DB::connection('condoc_eti')
+                   ->select('select * from lotes_unam WHERE firma1 LIKE "1" AND fecha_lote LIKE "'.$aux.'%" order by id');
+           }
+
            break;
         case 'SecGral':
-           $fecha = DB::table('lotes_unam')->where('firma2', '1')->orderBy('fec_firma2', 'desc')->first();
-           $fecha_formato = Carbon::parse($fecha->fec_firma2)->format('d/m/Y');
-           $aux = Carbon::parse($fecha->fec_firma2)->format('Y-m-d');
-           $lote = DB::connection('condoc_eti')
-                  ->select('select * from lotes_unam WHERE firma2 LIKE "1" AND fecha_lote LIKE "'.$aux.'%" order by id');
+            $fecha = DB::table('lotes_unam')->where('firma2', '1')->orderBy('fec_firma2', 'desc')->first();
+              if($fecha != null)
+              {
+
+                 $fecha_formato = Carbon::parse($fecha->fec_firma2)->format('d/m/Y');
+                 $aux = Carbon::parse($fecha->fec_firma2)->format('Y-m-d');
+                 $lote = DB::connection('condoc_eti')
+                        ->select('select * from lotes_unam WHERE firma2 LIKE "1" AND fecha_lote LIKE "'.$aux.'%" order by id');
+              }
            break;
         case 'Rector':
-           $fecha = DB::table('lotes_unam')->where('firma3', '1')->orderBy('fec_firma3', 'desc')->first();
-           $fecha_formato = Carbon::parse($fecha->fec_firma3)->format('d/m/Y');
-           $aux = Carbon::parse($fecha->fec_firma3)->format('Y-m-d');
-           $lote = DB::connection('condoc_eti')
-                  ->select('select * from lotes_unam WHERE firma3 LIKE "1" AND fecha_lote LIKE "'.$aux.'%" order by id');
+            $fecha = DB::table('lotes_unam')->where('firma2', '1')->orderBy('fec_firma2', 'desc')->first();
+           if($fecha != null)
+           {
+              $fecha = DB::table('lotes_unam')->where('firma3', '1')->orderBy('fec_firma3', 'desc')->first();
+             $fecha_formato = Carbon::parse($fecha->fec_firma3)->format('d/m/Y');
+             $aux = Carbon::parse($fecha->fec_firma3)->format('Y-m-d');
+             $lote = DB::connection('condoc_eti')
+                    ->select('select * from lotes_unam WHERE firma3 LIKE "1" AND fecha_lote LIKE "'.$aux.'%" order by id');
+           }
            break;
      }
 

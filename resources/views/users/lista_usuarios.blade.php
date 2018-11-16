@@ -1,5 +1,8 @@
 @extends('layouts.app')
 @section('title','Usuarios')
+@section('estilos')
+    <link href="{{ asset('css/solicitudesPendientes.css') }}" rel="stylesheet">
+@endsection
 @section('content')
 <div class="container">
     <div class="d-flex justify-content-between align-items-end mb-3">

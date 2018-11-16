@@ -63,7 +63,7 @@ trait TitulosFechas {
      // $query .= "INNER JOIN Orientaciones ON Datos.dat_car_actual = Orientaciones.ori_plancarr ";
      // $query .= "AND Datos.dat_orientacion = Orientaciones.ori_orienta ";
      // $query .= "INNER JOIN Carreras_Profesiones ON convert(int, Orientaciones.ori_cve_profesiones)=Carreras_Profesiones.clave_carrera ";
-     $query .= "INNER JOIN Planteles ON plan_cve = carrp_plan ";
+     $query .= "LEFT JOIN Planteles ON plan_cve = carrp_plan ";
      $query .= "WHERE Titulos.tit_ncta = '".$cuenta."' ";
      $query .= "AND Titulos.tit_dig_ver = '".$verif."' ";
 
@@ -97,7 +97,6 @@ trait TitulosFechas {
                             where('cve_carrera',$cve_carrera)->first();
       // Realizamos la consulta que contiene datos y (si tiene) errores;
       $datosyerrores = $this->integraConsulta(substr($num_cta,0,8),substr($num_cta,8,1),$cve_carrera);
-      // dd($num_cta,$nombre,$cve_carrera,$dato->nombre_completo);
       if (!count($dato))
       {
          if($sistema == 2){
@@ -121,6 +120,7 @@ trait TitulosFechas {
          $solicitud->paridad = serialize($datosyerrores[2]);
          $solicitud->sistema = $sistema;
          $solicitud->user_id = $user_id;
+         $solicitud->ws_ati = $datosyerrores[3];
          $solicitud->save();
          $cuenta = array(1, 0, 0);
       } else
@@ -135,7 +135,8 @@ trait TitulosFechas {
                                  'folio'   => $folio,
                                  'datos'   => serialize($datosyerrores[0]),
                                  'errores' => serialize($datosyerrores[1]),
-                                 'paridad' => serialize($datosyerrores[2])
+                                 'paridad' => serialize($datosyerrores[2]),
+                                 'ws_ati'  => $datosyerrores[3]
                         ]);
             $cuenta = array(0, 1, 0);
          }
@@ -195,7 +196,7 @@ trait TitulosFechas {
    public function consultaCURP($cuenta, $verif){
       $curp = DB::connection('sybase')->table('Datos')->select('dat_curp')->where('dat_ncta', $cuenta)->where('dat_dig_ver', $verif)->orderBy('dat_fecha_alta', 'desc')->first();
       $curp = $curp->dat_curp;
-      // $curp = null;
+      // $curp = null;carreraNombre
       if($curp == null)
       {
         $ws_SIAE = Web_Service::find(2);
@@ -289,6 +290,24 @@ trait TitulosFechas {
       }
 
       return $resultado;
+   }
+
+   //Devuelve la información de la solicitud dada en caso de haber sido cancelada
+   public function consultaCancelacionesS($num_cta){
+     $res = DB::connection('condoc_eti')->select("select * from solicitudes_canceladas WHERE num_cta = '".$num_cta."'");
+     return $res;
+   }
+
+   //Devuelve la descripción del motivo dado
+   public function motivoCom($motivo){
+     $mot = DB::connection('condoc_eti')->select("select DESCRIPCION_CANCELACION from _cancelacionesSep WHERE id = ".$motivo);
+     return $mot;
+   }
+
+   //Devuelve las solicitudes con staus 7 u 8 del alumno seleccionado
+   public function solicitud($num_cta){
+     $sql = DB::connection('condoc_eti')->select("select * from solicitudes_sep where num_cta = '".$num_cta."'");
+     return $sql;
    }
 
 }

@@ -13,7 +13,7 @@
    <link href="{{ asset('css/solicitudesPendientes.css') }}" rel="stylesheet">
 @endsection
 @section('content')
-<div class="container solicitudes aFirma">
+<div class="solicitudes aFirma">
   <div class="d-flex justify-content-between align-items-end mb-3">
     <br>
       <h2 id="titulo">{{$title.": ".$total}}</h2>

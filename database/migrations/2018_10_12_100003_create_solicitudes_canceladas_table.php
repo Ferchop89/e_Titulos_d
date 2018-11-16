@@ -19,8 +19,9 @@ class CreateSolicitudesCanceladasTable extends Migration
             $table->increments('id');
             $table->string('num_cta', 9);
             $table->string('nombre_completo', 200);
+            $table->string('nivel', 2);
             $table->string('cve_carrera', 10);
-            $table->date('fecha_cancelacion');
+            $table->DateTime('fecha_cancelacion');
             $table->unsignedInteger('id_motivoCan');
             //Llaves foráneas
             $table->foreign('id_motivoCan')->references('id')->on('_cancelacionesSep');

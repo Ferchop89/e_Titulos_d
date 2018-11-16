@@ -26,6 +26,7 @@ trait XmlCadenaErrores {
       // de errores en los items; y paridad: arreglos llaves (como en el arreglos datos) con valores unam.
 
       $errores = $items = $resultado = $paridad = array();
+      $fuente = '';
       // Consulta por porOmision Integra los Items xml que no requieren consulta y son valores predeterminados
       $consulta = $this->porOmision($cuenta,$digito,$carrera);
       $items = array_merge($items,$consulta);
@@ -86,6 +87,10 @@ trait XmlCadenaErrores {
          $errores = array_merge($errores,$consulta['errores']);
          unset($consulta['errores']);
       }
+      if (isset($consulta['fuente'])!=null) {
+         $fuente = $consulta['fuente'];
+         unset($consulta['fuente']);
+      }
       $items = array_merge($items,$consulta);
 
       // Ordenamos los items. Todos tienen un sub item (ejem: __05__) y como se agregaron
@@ -101,7 +106,7 @@ trait XmlCadenaErrores {
       $resultado[0] = $items;
       $resultado[1] = $errores;
       $resultado[2] = $paridad;
-
+      $resultado[3] = $fuente;
       return $resultado;
    }
    public function nombreCarrera($carrera)
@@ -372,7 +377,8 @@ trait XmlCadenaErrores {
       }
       return $resultado;
    }
-   public function titulosDatos($cuenta,$digito,$carrera)
+
+   public function titulosDatosAti($cuenta,$digito,$carrera)
    {
       // El nombre viene conbinado, se consulta, se divide en nombre y apellidos; y se omite del arreglo
       $query1 = 'SELECT DISTINCT ';
@@ -387,9 +393,63 @@ trait XmlCadenaErrores {
       $query2 .= 'correo AS _20_correoElectronico, ';
       $query2 .= 'autoriza ' ;
       $query2 .= 'FROM alumnos ';
-      $query2 .= "where num_cta = '".$cuenta.$digito."'";
-      // $query2 .= "where num_cta = '".$cuenta.$digito."' and ";
-      // $query2 .= "autoriza = 1 ";
+      // $query2 .= "where num_cta = '".$cuenta.$digito."'";
+      $query2 .= "where num_cta = '".$cuenta.$digito."' and ";
+      $query2 .= "autoriza = 1 ";
+
+      // Traemos los datos desde la bdd que los alumnos actualizan y del condoc
+      $info_sybase = (array)DB::connection('sybase')->select($query1);
+      $info_mysql = DB::connection('condoc_ati')->select($query2);
+
+      $datos = $errores = array();
+      // Consultamos si el usuario y actualizo los datos
+      if ($info_mysql==[]) {
+         // El usuario aun no ha actualizado los datos
+         // entonces los buscamos en el Web_Service
+         // NO se encontro la informacion en el WS
+         $datos['_16_curp']              = '----';
+         $datos['_17_nombre']            = '----';
+         $datos['_18_primerApellido']    = '----';
+         $datos['_19_segundoApellido']   = '----';
+         $datos['_20_correoElectronico'] = '----';
+         // La actulizacion es via ati_pdf
+         $datos['fuente'] = '0'; // No lo encontro ni en Ati
+         // En un solo campo se coloca el error para los campos 16, 17, 18, 19, 20
+         $errores['_16_curp'] = 'Sin autorización';
+      } else
+      {
+         // El usuario si ha registrado los datos
+         $datos['_16_curp']               = $info_mysql[0]->_16_curp;
+         $datos['_17_nombre']             = $info_mysql[0]->nombres;
+         $datos['_18_primerApellido']     = $info_mysql[0]->apellido1;
+         $datos['_19_segundoApellido']    = $info_mysql[0]->apellido2;
+         $datos['_20_correoElectronico']  = $info_mysql[0]->_20_correoElectronico;
+         // La actulizacion es via ati
+         $datos['fuente'] = '1'; // ati
+      }
+      if ($errores!=[]) {
+         $datos['errores'] = $errores;
+      }
+      return $datos;
+   }
+   public function titulosDatosWs($cuenta,$digito,$carrera)
+   {
+      // El nombre viene conbinado, se consulta, se divide en nombre y apellidos; y se omite del arreglo
+      $query1 = 'SELECT DISTINCT ';
+      $query1 .= "dat_nombre AS _17_nombre ";
+      $query1 .= "FROM Titulos ";
+      $query1 .= "JOIN Datos ON dat_ncta = tit_ncta  AND dat_car_actual = tit_plancarr AND dat_nivel = tit_nivel ";
+      $query1 .= "where dat_ncta = '".$cuenta."' and dat_dig_ver = '".$digito."' and tit_plancarr='".$carrera."'";
+
+      $query2  = 'SELECT DISTINCT ';
+      $query2 .= 'apellido1,apellido2,nombres, ';
+      $query2 .= 'curp AS _16_curp, ';
+      $query2 .= 'correo AS _20_correoElectronico, ';
+      $query2 .= 'autoriza ' ;
+      $query2 .= 'FROM alumnos ';
+      // $query2 .= "where num_cta = '".$cuenta.$digito."'";
+      $query2 .= "where num_cta = '".$cuenta.$digito."' and ";
+      $query2 .= "autoriza = 1 ";
 
       // Traemos los datos desde la bdd que los alumnos actualizan y del condoc
       $info_sybase = (array)DB::connection('sybase')->select($query1);
@@ -445,7 +505,8 @@ trait XmlCadenaErrores {
                      $errores['_16_curp'] = 'Sin informacion en WS';
                      $datos['_19_segundoApellido'] = '----';
                   }
-
+                  // La actualizacion es via ati_pdf
+                  $datos['fuente'] = '2'; // WS
                } else {
                   // NO se encontro la informacion en el WS
                   $datos['_16_curp'] = '----';
@@ -453,6 +514,8 @@ trait XmlCadenaErrores {
                   $datos['_18_primerApellido']  = '----';
                   $datos['_19_segundoApellido'] = '----';
                   $datos['_20_correoElectronico'] = '----';
+                  // La actulizacion es via ati_pdf
+                  $datos['fuente'] = '0'; // No lo encontro ni en Ati ni en WS
                   // En un solo campo se coloca el error para los campos 16, 17, 18, 19, 20
                   $errores['_16_curp'] = 'Sin autorización';
                }
@@ -465,6 +528,113 @@ trait XmlCadenaErrores {
          $datos['_18_primerApellido']     = $info_mysql[0]->apellido1;
          $datos['_19_segundoApellido']    = $info_mysql[0]->apellido2;
          $datos['_20_correoElectronico']  = $info_mysql[0]->_20_correoElectronico;
+         // La actulizacion es via ati
+         $datos['fuente'] = '1'; // ati
+      }
+      if ($errores!=[]) {
+         $datos['errores'] = $errores;
+      }
+      return $datos;
+   }
+
+   public function titulosDatos($cuenta,$digito,$carrera)
+   {
+      // El nombre viene conbinado, se consulta, se divide en nombre y apellidos; y se omite del arreglo
+      $query1 = 'SELECT DISTINCT ';
+      $query1 .= "dat_nombre AS _17_nombre ";
+      $query1 .= "FROM Titulos ";
+      $query1 .= "JOIN Datos ON dat_ncta = tit_ncta  AND dat_car_actual = tit_plancarr AND dat_nivel = tit_nivel ";
+      $query1 .= "where dat_ncta = '".$cuenta."' and dat_dig_ver = '".$digito."' and tit_plancarr='".$carrera."'";
+
+      $query2  = 'SELECT DISTINCT ';
+      $query2 .= 'apellido1,apellido2,nombres, ';
+      $query2 .= 'curp AS _16_curp, ';
+      $query2 .= 'correo AS _20_correoElectronico, ';
+      $query2 .= 'autoriza ' ;
+      $query2 .= 'FROM alumnos ';
+      // $query2 .= "where num_cta = '".$cuenta.$digito."'";
+      $query2 .= "where num_cta = '".$cuenta.$digito."' and ";
+      $query2 .= "autoriza = 1 ";
+
+      // Traemos los datos desde la bdd que los alumnos actualizan y del condoc
+      $info_sybase = (array)DB::connection('sybase')->select($query1);
+      $info_mysql = DB::connection('condoc_ati')->select($query2);
+
+      $datos = $errores = array();
+      // Consultamos si el usuario y actualizo los datos
+      if ($info_mysql==[]) {
+         // El usuario aun no ha actualizado los datos
+         // entonces los buscamos en el Web_Service
+         $ws_SIAE = Web_Service::find(2);
+         $identidad = new WSController();
+         $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, $cuenta.$digito, $ws_SIAE->key);
+
+               if (!empty($identidad)) {
+                  if (isset($identidad->curp)) {
+                     if ($identidad->curp!='') {
+                        $datos['_16_curp'] = $identidad->curp;
+                     } else {
+                        $datos['_16_curp'] = '----';
+                        $errores['_16_curp'] = 'Sin informacion en WS';
+                     }
+                  }else {
+                     $datos['_16_curp'] = '----';
+                     $errores['_16_curp'] = 'Sin informacion en WS';
+                  }
+                  if (isset($identidad->correo1)) {
+                     if ($identidad->correo1!='') {
+                        $datos['_20_correoElectronico'] =  $identidad->correo1;
+                     } else {
+                        $datos['_20_correoElectronico'] = '----';
+                        $errores['_16_curp'] = 'Sin informacion en WS';
+                     }
+                  } else {
+                     $datos['_20_correoElectronico'] = '----';
+                     $errores['_16_curp'] = 'Sin informacion en WS';
+                  }
+                  if (isset($identidad->nombres)) {
+                     $datos['_17_nombre'] =  utf8_encode($identidad->nombres);
+                  } else {
+                     $errores['_16_curp'] = 'Sin informacion en WS';
+                     $datos['_17_nombre'] = '----';
+                  }
+                  if (isset($identidad->apellido1)) {
+                     $datos['_18_primerApellido'] =  utf8_encode($identidad->apellido1);
+                  } else {
+                     $errores['_16_curp'] = 'Sin informacion en WS';
+                     $datos['_18_primerApellido']  = '----';
+                  }
+                  if (isset($identidad->apellido2)) {
+                     $datos['_19_segundoApellido'] =  utf8_encode($identidad->apellido2);
+                  } else {
+                     $errores['_16_curp'] = 'Sin informacion en WS';
+                     $datos['_19_segundoApellido'] = '----';
+                  }
+                  // La actualizacion es via ati_pdf
+                  $datos['fuente'] = '3'; // WS
+               } else {
+                  // NO se encontro la informacion en el WS
+                  $datos['_16_curp'] = '----';
+                  $datos['_17_nombre']          = '----';
+                  $datos['_18_primerApellido']  = '----';
+                  $datos['_19_segundoApellido'] = '----';
+                  $datos['_20_correoElectronico'] = '----';
+                  // La actulizacion es via ati_pdf
+                  $datos['fuente'] = '2'; // No lo encontro en WS
+                  // En un solo campo se coloca el error para los campos 16, 17, 18, 19, 20
+                  $errores['_16_curp'] = 'Sin autorización';
+               }
+
+      } else
+      {
+         // El usuario si ha registrado los datos
+         $datos['_16_curp']               = $info_mysql[0]->_16_curp;
+         $datos['_17_nombre']             = $info_mysql[0]->nombres;
+         $datos['_18_primerApellido']     = $info_mysql[0]->apellido1;
+         $datos['_19_segundoApellido']    = $info_mysql[0]->apellido2;
+         $datos['_20_correoElectronico']  = $info_mysql[0]->_20_correoElectronico;
+         // La actulizacion es via ati
+         $datos['fuente'] = '1'; // ati
       }
       if ($errores!=[]) {
          $datos['errores'] = $errores;
@@ -808,7 +978,8 @@ trait XmlCadenaErrores {
          case 'Jtit':
             $nombre='DIANA';$apellidoPat='GONZALEZ';$apeMat='NIETO';
             // $curp='UIES180831HDFSEP03';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
-            $curp='UIES180831S04';$idCarg='5';$cargo='JEFA DEL DEPARTAMENTO DE TITULOS';$titulo='LIC.';
+            // $curp='UIES180831S04';$idCarg='5';$cargo='JEFA DEL DEPARTAMENTO DE TITULOS';$titulo='LIC.';
+            $curp='GOND701217HP2';$idCarg='5';$cargo='JEFA DEL DEPARTAMENTO DE TITULOS';$titulo='LIC.';
             $certR = 'CertificadoResponsable'; $noCertR='874796688606327447';
             $componentes['FirmaResponsable0'] = $this->firmaResp_AttrUnam(
                         $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo);
@@ -816,21 +987,24 @@ trait XmlCadenaErrores {
          case 'Director':
             $nombre='IVONNE';$apellidoPat='RAMIREZ';$apeMat='WENCE';
             // $curp='UIES180831HDFSEP03';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
-            $curp='UIES180831S03';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
+            // $curp='UIES180831S03';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
+            $curp='RAWI6005073U0';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
             $certR = 'CertificadoResponsable'; $noCertR='1682280437054458477';
             $componentes['FirmaResponsable1'] = $this->firmaResp_AttrUnam(
                         $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo);
             break;
          case 'SecGral':
             $nombre='LEONARDO';$apellidoPat='LOMELI';$apeMat='VANEGAS';
-            $curp='UIES180831S02';$idCarg='6';$cargo='SECRETARIO GENERAL';$titulo='DR.';
+            // $curp='UIES180831S02';$idCarg='6';$cargo='SECRETARIO GENERAL';$titulo='DR.';
+            $curp='LOVL7004289W7';$idCarg='6';$cargo='SECRETARIO GENERAL';$titulo='DR.';
             $certR = 'CertificadoResponsable'; $noCertR='3121493390511228062';
             $componentes['FirmaResponsable2'] = $this->firmaResp_AttrUnam(
                         $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo);
             break;
          case 'Rector':
             $nombre='ENRIQUE LUIS';$apellidoPat='GRAUE';$apeMat='WIECHERS';
-            $curp='UIES180831S01';$idCarg='3';$cargo='RECTOR';$titulo='DR.';
+            // $curp='UIES180831S01';$idCarg='3';$cargo='RECTOR';$titulo='DR.';
+            $curp='GAWE510109C14';$idCarg='3';$cargo='RECTOR';$titulo='DR.';
             $certR = 'CertificadoResponsable'; $noCertR='7608878899635960696 ';
             $componentes['FirmaResponsable3'] = $this->firmaResp_AttrUnam(
                         $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo);
@@ -913,21 +1087,21 @@ trait XmlCadenaErrores {
 
       // Nodo responsable 1
       $nombre='IVONNE';$apellidoPat='RAMIREZ';$apeMat='WENCE';
-      $curp='UIES180831HDFSEP03';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
+      $curp='RAWI6005073U0';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.'; // UIES180831HDFSEP03
       $certR = 'CertificadoResponsable'; $noCertR='1682280437054458477';
       $componentes['FirmaResponsable1'] = $this->firmaResp_AttrSep(
                   $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo,
                   $sello3,$certR,$noCertR);
       // Nodo responsable2
       $nombre='LEONARDO';$apellidoPat='LOMELI';$apeMat='VANEGAS';
-      $curp='UIES180831HDFSEP02';$idCarg='6';$cargo='SECRETARIO GENERAL';$titulo='DR.';
+      $curp='LOVL7004289W7';$idCarg='6';$cargo='SECRETARIO GENERAL';$titulo='DR.'; // UIES180831HDFSEP02
       $certR = 'CertificadoResponsable'; $noCertR='3121493390511228062';
       $componentes['FirmaResponsable2'] = $this->firmaResp_AttrSep(
                   $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo,
                   $sello2,$certR,$noCertR);
       // Nodo responsable3
       $nombre='ENRIQUE LUIS';$apellidoPat='GRAUE';$apeMat='WIECHERS';
-      $curp='UIES180831HDFSEP01';$idCarg='3';$cargo='RECTOR';$titulo='DR.';
+      $curp='GAWE510109C14';$idCarg='3';$cargo='RECTOR';$titulo='DR.';  //UIES180831HDFSEP01
       $certR = 'CertificadoResponsable'; $noCertR='7608878899635960696';
       $componentes['FirmaResponsable3'] = $this->firmaResp_AttrSep(
                   $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo,

@@ -17,7 +17,7 @@
    <link href="{{ asset('css/colordate.css') }}" rel="stylesheet">
 @endsection
 @section('content')
-<div class="container solicitudes">
+<div class="container-solicitudes">
     <div class="d-flex justify-content-between align-items-end mb-3">
       <br>
         <h2 id="titulo">{{$title.": ".$total}}</h2><br><br>
@@ -65,7 +65,11 @@
    <div align="right">
       <form action='/registroTitulos/firma' method='post'>
          {!! csrf_field() !!}
-         {!! $acordeon !!}
+         <div class="pre-accordion">
+            <div class="div-accordion">
+               {!! $acordeon !!}
+            </div>
+         </div>
          <input type='submit' id="btn-update" class="btn btn-primary waves-effect waves-light b_btn" name='actualizar' value='Actualizar Información'/>
          <input type='submit' id="btn-enviar" class="btn btn-primary waves-effect waves-light b_btn" name='enviar' value='Enviar a Firma'/>
       </form>

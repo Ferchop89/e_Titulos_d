@@ -31,6 +31,15 @@ class MenuSeeder extends Seeder
                'order' => 1,
                'is_structure' => 1
            ]);
+           //Departamento de Títulos consultas
+           $m3 = factory(Menu::class)->create([
+               'name' => 'Consultas',
+               'slug' => 'opcion3',
+               'ruta' => '#',
+               'parent' => 0,
+               'order' => 2,
+               'is_structure' => 1
+           ]);
 
            // Opciones de Submenú...
            //Para adminitración de usuarios
@@ -53,7 +62,7 @@ class MenuSeeder extends Seeder
            // --- administración de usuarios
            //Para Departamento de Títulos
            $m100 = factory(Menu::class)->create([
-               'name' => 'Solicitar información de títulos',
+               'name' => 'Cargar solicitudes',
                'slug' => 'opcion-2.1',
                'ruta' => '',
                'parent' => $m2->id,
@@ -85,7 +94,7 @@ class MenuSeeder extends Seeder
                'is_structure' => 1
            ]);
            factory(Menu::class)->create([
-               'name' => 'Actualización y envío',
+               'name' => 'Revisión y aprobación',
                'slug' => 'opcion-2.2.1',
                'parent' => $m200->id,
                'ruta' => 'registroTitulos/lista-solicitudes/pendientes',
@@ -93,7 +102,7 @@ class MenuSeeder extends Seeder
                'is_structure' => 0
            ]);
            $m300 = factory(Menu::class)->create([
-             'name' => 'Solicitudes',
+             'name' => 'Proceso de Firma',
              'slug' => 'opcion-2.3',
              'ruta' => '',
              'parent' => $m2->id,
@@ -110,30 +119,30 @@ class MenuSeeder extends Seeder
            ]);
            $m400 = factory(Menu::class)->create([
                'name' => 'Consultas',
-               'slug' => 'opcion-2.4',
+               'slug' => 'opcion-3.1',
                'ruta' => '',
-               'parent' => $m2->id,
-               'order' => 3,
+               'parent' => $m3->id,
+               'order' => 0,
                'is_structure' => 1
            ]);
            factory(Menu::class)->create([
                'name' => 'Firmas solicitadas',
-               'slug' => 'opcion-2.4.1',
+               'slug' => 'opcion-3.2',
                'parent' => $m400->id,
                'ruta' => 'registroTitulos/firmas_busqueda/seleccion',
                'order' => 0,
                'is_structure' => 0
            ]);
            factory(Menu::class)->create([
-               'name' => 'Progreso de firmas solicitadas',
-               'slug' => 'opcion-2.4.2',
+               'name' => 'Progreso de firmas',
+               'slug' => 'opcion-3.3',
                'parent' => $m400->id,
                'ruta' => 'registroTitulos/firmas_progreso',
                'order' => 1,
                'is_structure' => 0
            ]);
            factory(Menu::class)->create([
-               'name' => 'Firmas enviadas a la SEP',
+               'name' => 'Firmas enviadas a la DGP',
                'slug' => 'opcion-2.4.3',
                'parent' => $m400->id,
                'ruta' => 'registroTitulos/firmas_enviadas',
@@ -149,12 +158,62 @@ class MenuSeeder extends Seeder
                'is_structure' => 0
            ]);
            factory(Menu::class)->create([
-               'name' => 'Cédulas enviadas a la DGP',
+               'name' => 'Solicitudes canceladas',
                'slug' => 'opcion-2.4.5',
                'parent' => $m400->id,
-               'ruta' => 'registroTitulos/cedulas_DGP',
+               'ruta' => 'registroTitulos/solicitudes_canceladas',
                'order' => 4,
                'is_structure' => 0
            ]);
+           //Departamento de Títulos consultas
+           $m4 = factory(Menu::class)->create([
+               'name' => 'DGP',
+               'slug' => 'opcion4',
+               'ruta' => '#',
+               'parent' => 0,
+               'order' => 3,
+               'is_structure' => 1
+           ]);
+           $m500 = factory(Menu::class)->create([
+               'name' => 'DGP',
+               'slug' => 'opcion-4.1',
+               'ruta' => '',
+               'parent' => $m4->id,
+               'order' => 0,
+               'is_structure' => 1
+            ]);
+           factory(Menu::class)->create([
+               'name' => 'Envio de cédulas a DGP',
+               'slug' => 'opcion-4.1.1',
+               'parent' => $m500->id,
+               'ruta' => 'registroTitulos/cedulas_DGP',
+               'order' => 0,
+               'is_structure' => 0
+           ]);
+           //Departamento de Títulos consultas
+           $m5 = factory(Menu::class)->create([
+               'name' => 'Tablero de control',
+               'slug' => 'opcion5',
+               'ruta' => '#',
+               'parent' => 0,
+               'order' => 4,
+               'is_structure' => 1
+           ]);
+           $m600 = factory(Menu::class)->create([
+               'name' => 'Gráficas',
+               'slug' => 'opcion-5.1',
+               'ruta' => '',
+               'parent' => $m5->id,
+               'order' => 0,
+               'is_structure' => 1
+            ]);
+            factory(Menu::class)->create([
+                'name' => 'Gestión de solicitudes',
+                'slug' => 'opcion-5.1.1',
+                'parent' => $m600->id,
+                'ruta' => 'registroTitulos/cedulasG',
+                'order' => 1,
+                'is_structure' => 0
+            ]);
        }
 }

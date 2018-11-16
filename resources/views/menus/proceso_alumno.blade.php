@@ -35,7 +35,11 @@
       <th class="center">Tiempo Transcurrido</th>
     </tr>
     <tr>
-      <td>Solicitud de cédula profesional electrónica <input type="hidden" name="num_cta" value="{{$num_cta}}"></td>
+      <td>
+        Solicitud de cédula profesional electrónica
+        <input type="hidden" name="num_cta" value="{{$num_cta}}">
+        <input type="hidden" name="nivel" value="{{$nivel}}">
+      </td>
       @if($info['solicitud'] != false)
       <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
       <td align="center"><span><a>{{ $info['fecha_sol'] }}</a></span></td>

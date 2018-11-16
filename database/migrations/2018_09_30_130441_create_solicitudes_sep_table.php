@@ -29,6 +29,7 @@ class CreateSolicitudesSepTable extends Migration
             $table->text('errores')->nullable();
             $table->text('paridad')->nullable(); // paridad de catalogos UNAM-SEP
             $table->unsignedInteger('status')->default(1);
+            $table->unsignedInteger('fecha_lote_id')->nullable();
             $table->DateTime('fecha_lote')->nullable();
             $table->text('firma0')->default('');
             $table->text('firma1')->default('');
@@ -36,10 +37,12 @@ class CreateSolicitudesSepTable extends Migration
             $table->text('firma3')->default('');
             $table->char('sistema')->nullable();
             $table->unsignedInteger('user_id');
+            $table->unsignedInteger('ws_ati'); //0 no esta en ATI, 1 para ATI, 2 no esta en WS, 3 WS
             $table->timestamps();
             //Llaves foraneas
             $table->foreign('user_id')->references('id')->on('users');
             $table->foreign('status')->references('id')->on('_status_cedula');
+            $table->foreign('fecha_lote_id')->references('id')->on('lotes_unam');
         });
     }
 

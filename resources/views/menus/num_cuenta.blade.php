@@ -19,7 +19,6 @@
     <h2 id="titulo">{{$title}}</h2>
     <div id="is" class="container viewNumCta">
             <div class="panel panel-default">
-                {{-- <div class="panel-heading">@yield('esp')</div> --}}
                 <div class="panel-body">
 
                     @yield('ruta')

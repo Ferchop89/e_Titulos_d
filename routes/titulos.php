@@ -246,52 +246,33 @@ Route::get('/lista-solicitudes/cedulasPen', function(){
 
    Route::get('/SIAE', function(){
       // Fechas de emision con registros pendientes de validar (sin errores), status no nulo ni vacio
-      $query = " select * from solicitudes_sep where ";
-      $query .= "fec_emision_tit='2018-10-18 00:00:00' OR ";
-      $query .= "fec_emision_tit='2018-10-11 00:00:00' OR ";
-      $query .= "fec_emision_tit='2018-10-04 00:00:00' ";
+      // $query = " select * from solicitudes_sep where ";
+      // $query .= "fec_emision_tit='2018-10-18 00:00:00' OR ";
+      // $query .= "fec_emision_tit='2018-10-11 00:00:00' OR ";
+      // $query .= "fec_emision_tit='2018-10-04 00:00:00' ";
       // $query .= "FROM solicitudes_sep ";
       // $query .= "GROUP BY emision";
       // ws
       $ws_SIAE = Web_Service::find(2);
+      $identidad = new WSController();
+      /*Numero de cuenta con problemas al consumir WS identidad SIAE*/
+      //503459419
+      //503006594
+      //517493614
+      $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '517493614', $ws_SIAE->key);
+      // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '402048477', $ws_SIAE->key);
+      // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '098040607', $ws_SIAE->key);
 
-      $datos = DB::select($query);$cadena = '';
-      foreach ($datos as $value) {
-         $errores = unserialize($value->errores); $cadenaErrores='';
-         asort($errores);
-         foreach ($errores as $error) {
-            $cadenaErrores .= $error.'/';
-         }
-         $identidad = new WSController();
-         // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '517490039', $ws_SIAE->key);
-         $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '084365576', $ws_SIAE->key);
-         // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '503006594', $ws_SIAE->key);
-         // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '503459419', $ws_SIAE->key);
-         // $var = serialize(utf8_encode($identidad->apellido2));
-         // $var2 = unserialize($var);
-         // dd($var,$var2);
-         dd($identidad);
-         $curp = $correo = $curpCorreo = '';
-         if (!empty($identidad)) {
-            if (isset($identidad->curp)) {
-               $curp = ($identidad->curp!='')? 'curp' : '';
-            }
-            if (isset($identidad->correo1)) {
-               $correo = ($identidad->correo1!='')? 'correo': '';
-            }
-            $curpCorreo = $curp.$correo;
-         }
-         $cadena = $value->num_cta.','.$value->nivel.','.$value->fec_emision_tit.','.$cadenaErrores.','.$curpCorreo;
-         echo "<pre>";
-         echo $cadena;
-         echo "</pre>";
-      }
-       // return $datos;
+      // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '517490039', $ws_SIAE->key);
+      // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '503006594', $ws_SIAE->key);
+      // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '503459419', $ws_SIAE->key);
+      dd((array)$identidad);
+      return (array)$identidad;
      });
    Route::get('/DGIRE', function(){
       $ws = new WSController();
       // $respuesta = $ws->ws_DGIRE('503459419');
-      $respuesta = $ws->ws_DGIRE('413532848');
+      $respuesta = $ws->ws_DGIRE('517493614');
       dd($respuesta->respuesta);
    });
 
@@ -377,3 +358,46 @@ Route::post('/cedulas_DGP',[
   //   });
 Route::get('/emisionTitulos/CONDOC', 'SolicitudTituloeController@verTitulos');
 Route::get('/informacionDetallada/lote','AlumnosLotesController@showDetalleLote')->name('detalleLote');
+/*Graficas */
+Route::get('/cedulasG' ,[
+    'uses'=> 'GrafiController@cedulas',
+    'as' => 'registroTitulos/cedulasG',
+    'roles' => ['Admin', 'Jtit']
+]);
+
+/* Solicitudes que hayan sido canceladas */
+Route::get('/solicitudes_canceladas',[
+    'uses'=> 'AlumnosLotesController@showSCanceladas', //Cambiar a FirmasCedulaController
+    'as'=> 'registroTitulos/solicitudes_canceladas',
+    'middleware' => 'roles',
+    'roles' => ['Admin', 'Jtit']
+]);
+Route::post('/solicitudes_canceladas', [
+   'uses' => 'AlumnosLotesController@postSCanceladas',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit']
+]);
+Route::get('/solicitudes_canceladas/{num_cta}', [
+   'uses' => 'AlumnosLotesController@showInfoSC',
+   'as' => 'solicitud_cancelada',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit']
+])->where('num_cta','[0-9]+');
+/* Cédulas que van a cancelarse */
+Route::get('/cedulas_canceladas', [
+  'uses'=> 'AlumnosLotesController@showCancelarC', //Cambiar a FirmasCedulaController
+  'as'=> 'registroTitulos/cedulas_canceladas',
+  'middleware' => 'roles',
+  'roles' => ['Admin', 'Jtit']
+]);
+Route::post('/cedulas_canceladas', [
+   'uses' => 'AlumnosLotesController@postCancelarC',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit']
+]);
+Route::get('/cedulas_canceladas/{num_cta}', [
+   'uses' => 'AlumnosLotesController@showInfoCC',
+   'as' => 'cedula_cancelada',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit']
+])->where('num_cta','[0-9]+');

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Models\{SolicitudSep, Web_Service, AutTransInfo};
 use App\Http\Controllers\Admin\WSController;
 use App\Models\LotesUnam;
+use App\Models\Carrera;
 // Traits.
 use App\Http\Traits\Consultas\XmlCadenaErrores;
 use App\Http\Traits\Consultas\TitulosFechas;
@@ -214,33 +215,65 @@ $carreras = [
            // dd("Permisos");
            break;
      }
-     $total = count($lists);
+     // Cuenta de lotes pendientes. No se usa count($lists) porque esta paginado.
+     $total = $this->lotesPendientes($rol);
      $acordeon = $this->generaListasxLote($lists);
      return view('menus/lista_firmarSolicitudes', compact('title', 'lists', 'total', 'acordeon'));
    }
    public function consultaTitulos(){
-      $lists = LotesUnam::where('firma0',false)
-            ->paginate(10);
+      $lists = LotesUnam::select(['id','fecha_lote'])
+            ->where('firma0',false)
+            ->paginate(5);
       return $lists;
    }
    public function consultaDirector(){
-      $lists = LotesUnam::where('firma1',false)
+      $lists = LotesUnam::select(['id','fecha_lote'])
+            ->where('firma1',false)
             ->where('firma0', true)
-            ->paginate(10);
+            ->paginate(5);
       return $lists;
    }
    public function consultaSecretario(){
-      $lists = LotesUnam::where('firma2', false)
+      $lists = LotesUnam::select(['id','fecha_lote'])
+            ->where('firma2', false)
             ->where('firma1', true)
-            ->paginate(10);
+            ->paginate(5);
       return $lists;
    }
    public function consultaRector(){
-      $lists = LotesUnam::where('firma3', false)
+      $lists = LotesUnam::select(['id','fecha_lote'])
+            ->where('firma3', false)
             ->where('firma2', true)
-            ->paginate(10);
+            ->paginate(5);
       return $lists;
    }
+
+   public function lotesPendientes($rol)
+   {
+      // Cuenta el numero de lotes pendientes de firma por el Rol.
+      $where = "" ;
+      switch ($rol) {
+        case 'Jtit':
+           $where = "firma0 = 0";
+           break;
+        case 'Director':
+           $where = "firma0 = 1 AND firma1 = 0";
+           break;
+        case 'SecGral':
+           $where = "firma1 = 1 AND firma2 = 0";
+           break;
+        case 'Rector':
+           $where = "firma2 = 1 AND firma3 = 0";
+           break;
+        default:
+           break;
+     }
+     $cuenta = LotesUnam::Select('id')
+                           ->whereRaw($where)
+                           ->count();
+     return $cuenta;
+   }
+
    public function generaListasxLote($data){
       // Elaboracion del acordion con listas.
       $curp = $this->authCurp();
@@ -270,7 +303,8 @@ $carreras = [
       $composite .= "</div>";
       $composite .= "<div class='Cell btns'>";
       $url = "https://condoc.dgae.unam.mx/registroTitulos/response/firma?lote=".$data[$i]->fecha_lote."&cuentas=".$cuentas;
-      $composite .=  "<form action='https://enigma.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
+      // $composite .=  "<form action='https://enigma.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
+      $composite .=  "<form action='https://kryptos.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
       $composite .=     "<input type='hidden' name='_token' value='".csrf_token()."'>";
       $composite .=     "<input type='hidden' name='datos' value='".$this->loteCadena($data[$i]->fecha_lote, Auth::user()->roles()->first()->nombre)."'>";
       $composite .=     "<input type='hidden' name='URL' value='".$url."'>";
@@ -301,7 +335,13 @@ $carreras = [
         $composite .=               "<td>".$alumno->num_cta."</td>";
         $composite .=               "<td>".$alumno->nombre_completo."</td>";
         $composite .=               "<td>".$alumno->cve_carrera."</td>";
-        $composite .=               "<td>".$this->carreraNombre($alumno->cve_carrera)."</td>";
+        // Mostrar el nombre de la carrera SEP.
+        $cveSep = unserialize($alumno->datos)['_09_cveCarrera'];
+        $nomCarrera = Carrera::where('CVE_INSTITUCION','090001')
+                              ->where('CVE_SEP',$cveSep)
+                              ->first();
+        $composite .=               "<td>".$nomCarrera->CARRERA."</td>";
+        // $composite .=               "<td>".$this->carreraNombre($alumno->cve_carrera)."</td>";
         $composite .=               "<td>".$alumno->nivel."</td>";
         $composite .=               "<td>".$alumno->sistema."</td>";
         $composite .=           "</tr>";
@@ -320,18 +360,22 @@ $carreras = [
       // $nombre = Auth::user()->username;
       switch ($rol) {
          case 'Jtit':
-            $curp = "UIES180831S04";
+            // $curp = "UIES180831S04";
+            $curp = "GOND701217HP2";
             break;
          case 'Director':
-            $curp = "UIES180831S03";
+            // $curp = "UIES180831S03";
+            $curp = "RAWI6005073U0";
             // $curp = "UIES180831S02";
             break;
          case 'SecGral':
-         $curp = "UIES180831S02";
+         // $curp = "UIES180831S02";
+         $curp = "LOVL7004289W7";
          // $curp = "UIES180831S03";
             break;
          case 'Rector':
-            $curp = "UIES180831S01";
+            // $curp = "UIES180831S01";
+            $curp = "GAWE510109C14";
             break;
       }
       return $curp;

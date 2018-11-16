@@ -20,7 +20,7 @@ class AlumnosLotesController extends Controller
   use TitulosFechas, XmlCadenaErrores, LotesFirma, Utilerias;
 
   public function showprocesoAlumno(){
-     $title = "Trazabilidad de Cédula Electrónica";
+    $title = "Trazabilidad de Cédula Electrónica";
     $num_cta = $_GET['numCta'];
     $nombre = $_GET['nombre'];
     $carrera = $_GET['carrera'];
@@ -231,6 +231,7 @@ class AlumnosLotesController extends Controller
 
       $num_cta = $_POST['num_cta'];
       $nombre = $_POST['nombre'];
+      $nivel = $_POST['nivel'];
       $carrera = $_POST['carrera'];
       $motivo = $_POST['motivo'];
       $hoy = new DateTime();
@@ -242,8 +243,9 @@ class AlumnosLotesController extends Controller
       $sql = SolicitudesCanceladas::insertGetId(
             array('num_cta' => $num_cta,
                   'nombre_completo' => $nombre,
+                  'nivel' => $nivel,
                   'cve_carrera' => $carrera,
-                  'fecha_cancelacion' => $hoy->format("Y-m-d"),
+                  'fecha_cancelacion' => $hoy->format("Y-m-d H:i:s"),
                   'id_motivoCan' => (int)$motivo
       ));
       //Se elimina de la tabla de solicitudes
@@ -252,7 +254,7 @@ class AlumnosLotesController extends Controller
       if(count($total_lote) == 1){
         $sql2 = LotesCancelados::insertGetId(
             array('fecha_lote' => $lote[0]->fecha_lote,
-                  'fecha_cancelacion' => $hoy->format("Y-m-d")
+                  'fecha_cancelacion' => $hoy->format("Y-m-d H:i:s")
         ));
 
         //Y se elimina el lote de lotes_unam
@@ -308,9 +310,61 @@ class AlumnosLotesController extends Controller
       return $composite;
    }
 
-  // public function showEnviadosDGP(){
-  //   $consulta = DB::connection('condoc_eti')->select('select * from condoc_etitulos.solicitudes_sep WHERE status = 7');
-  //   dd($consulta);
-  // }
+   /* ///////////////////////// PASAR A FIRMASCEDULACONTROLLER ///////////////////////// */
+   public function showSCanceladas(){
+     return view('menus/red_solicitudes_canceladas');
+   }
+
+   public function postSCanceladas(Request $request){
+     $request->validate([
+         'num_cta' => 'required|numeric|digits:9'
+     ],[
+         'num_cta.required' => 'El campo es obligatorio',
+         'num_cta.numeric' => 'El campo debe contener solo números',
+         'num_cta.digits'  => 'El campo debe ser de 9 dígitos',
+     ]);
+     return redirect()->route('solicitud_cancelada', ['num_cta'=>$request->num_cta]);
+   }
+
+   public function showInfoSC($num_cta){
+     $cuenta = substr($num_cta, 0, 8);
+     $verif = substr($num_cta, 8, 1);
+     $foto = $this->consultaFotos($cuenta);
+     $info = $this->consultaCancelacionesS($num_cta);
+     if($info == null)
+     {
+        $msj = "No se encuentran registros en cancelaciones con el número de cuenta ".$num_cta;
+        Session::flash('error', $msj);
+        $motivo = null;
+     }else{
+       $motivo = $this->motivoCom($info[0]->id_motivoCan);
+     }
+     return view('/menus/solicitudes_canceladas', ['numCta' => $num_cta,'foto' => $foto, 'info' => $info, 'motivo' => $motivo]);
+   }
+
+   public function showCancelarC(){
+     return view('menus/red_cedulas_canceladas');
+   }
+
+   public function postCancelarC(Request $request){
+     $request->validate([
+         'num_cta' => 'required|numeric|digits:9'
+     ],[
+         'num_cta.required' => 'El campo es obligatorio',
+         'num_cta.numeric' => 'El campo debe contener solo números',
+         'num_cta.digits'  => 'El campo debe ser de 9 dígitos',
+     ]);
+     return redirect()->route('cedula_cancelada', ['num_cta'=>$request->num_cta]);
+   }
+
+   public function showInfoCC($num_cta){
+     $cuenta = substr($num_cta, 0, 8);
+     $verif = substr($num_cta, 8, 1);
+     $foto = $this->consultaFotos($cuenta);
+     $info = $this->solicitud($num_cta);
+     $motivos = $this->motivosCancelacion();
+     return view('/menus/cedulas_canceladas', ['foto' => $foto, 'info' => $info, 'motivos' => $motivos]);
+   }
+   /* ////////////////////////////////////////////////////////////////////////////////// */
 
 }

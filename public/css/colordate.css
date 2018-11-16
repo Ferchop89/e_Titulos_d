@@ -65,6 +65,9 @@
     padding: 9px 20px 9px 9px;
 }
 input#datepicker {
+    width: 100%;
+}
+.viewFecha input#datepicker {
     width: 74%;
 }
 .solicitudes input#datepicker{

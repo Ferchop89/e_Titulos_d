@@ -1700,10 +1700,16 @@ button {
 .info-personal-header {
     display: inline-block;
     vertical-align: bottom;
-    padding: 0cm 0.5cm;
+    padding: 0cm 0.5cm 0cm 0cm;
 }
-.fila {
+.fila{
    text-align: left;
+}
+.container-solicitudes .fila {
+
+   min-width: 1371.8px;
+   width: 100%;
+   margin: auto;
 }
 .info-trayectorias {
     margin: 2% 0 2% 0;

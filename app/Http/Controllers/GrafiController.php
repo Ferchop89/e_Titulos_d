@@ -19,10 +19,10 @@ class GrafiController extends Controller
         $a = $this->cedulasAnio();
         // Ingreso de primera vez else se ingresa por segunda ocasión.
         if ((request()->anio_id==null)||request()->mes_id==null) {
-           // primera vez que se ingresa
-          $aSel = max($a);
-          $m = $this->cedulasMes($aSel);
-          $mSel = max($m);
+           // primera vez que se ingresa; variables en cero si no existen datos.
+          $aSel = ($a   !=[])? max($a): 0;
+          $m    = ($a   !=[])? $this->cedulasMes($aSel): [];
+          $mSel = ($m   !=[])? max($m): 0;
         } else {
           // Se ingresa mas de una vez, direccion contienen las fechas seleccionadas
           $aSel = request()->anio_id;
@@ -30,6 +30,14 @@ class GrafiController extends Controller
           // se obtiene manualmente el maximo del mes, porque el ddmenu trae valores menores a 9 como caracteres
           $mSel = (array_key_exists(request()->mes_id,$m))? request()->mes_id : max($m);
         }
+        // verificamos si el mes es cero (no aay registros), salimos del control sin Datos
+        if ($aSel==0) {
+           // Todos los parametros en cero.
+           $title = 'Tablero Control Cédulas Electrónicas';
+           $chart1='';$cart2='';$a=[];$aSel=0;$mesHtml='';$data=[];$totales=[];
+           return view('graficas/cedulas', compact('chart1','chart2','a', 'aSel','mesHtml','data','title','totales'));
+        }
+        // La consulta si arroja resultados.
         $mesHtml = $this->mesHtml($m,$mSel);
         // patrones de colores
         $paleta['paleta1']  = ['#6ba083','#bcffa8','#5c3c10','#a2792f','#f7ca44','#c40018','#0960bd','#429ffd'];
@@ -67,31 +75,81 @@ class GrafiController extends Controller
          $chart2 = $this->grafica();
 
          $lista = $this->listaErrores($aSel,substr($mSel,0,2));
-         $listaOrd = $this->listaErroresHMTL($lista);
+         $listaHtml = $this->listaErroresHMTL($lista);
 
-         return view('graficas/cedulas', compact('chart1','chart2','a', 'aSel','mesHtml','data','title','totales'));
+         return view('graficas/cedulas', compact('chart1','chart2','a', 'aSel','mesHtml','data','title','totales','listaHtml'));
     }
 
    public function listaErroresHMTL($lista)
    {
       $html = ''; $listaErr = array();
       if ($lista!=[]) { // Si existe una lista de errores.
-         // Iteramos para cada fecha
+         // Iteramos para cada fecha para formar una sola lista de errores
          foreach ($lista as $key => $errores) {
             // iteramos para cada error
             foreach ($errores as $error => $valor) {
-               $errorTxt = substr($error,0,strlen($error)-1);
-               if (isset($listaErr[$errorTxt])==null) { // no existe la llave en el arreglo, lo agregamos
-                  $listaErr[$errorTxt] = $valor;
+               if (isset($listaErr[$error])==null) { // no existe la llave en el arreglo, lo agregamos
+                  $listaErr[$error] = $valor;
                } else {
-                  $listaErr[$errorTxt] += $valor;
+                  $listaErr[$error] += $valor;
                }
             }
          }
          asort($listaErr);
+         if (array_key_exists('Sin errores/',$listaErr)) {
+            unset($listaErr['Sin errores/']);
+         }
+         // iteramos sobre el arreglo original para formar el HTML final y definitivo.
+         // dd($listaErr);
+         $salida = array();
+         foreach ($listaErr as $error => $valor) { // iteramos para cada fecha
+            $html = array();
+            foreach ($lista as $fecha => $errores) {
+               $cantidad = (array_key_exists($error,$errores))? $errores[$error]: 0;
+               $html[$fecha] = $cantidad;
+            }
+            $salida[$error] = $html;
+         }
+         // Impresion del encabezado con fechas
+         // $composite =       "<a class='a-row' data-toggle='collapse' data-parent='#accordion' href='#collapse1'>";
+         $composite=        "<div id='collapse1' class='panel-collapse collapse'>";
+         $composite .=       "<div class='divTableRow header'>";
+         $composite .=         "<div class='divTableCell'>";
+         $composite .=              "<strong>Mensaje</strong>";
+         $composite .=         "</div>";
+         foreach ($lista as $key => $value) {
+            $fechaDma = substr($key,8,2) .'-'. substr($key,5,2) .'-'. substr($key,0,4);
+            $composite .=         "<div class='divTableCell'>";
+            $composite .=        "<strong>".$fechaDma."</strong>";
+            $composite .=         "</div>";
+         }
+         $composite .=         "<div class='divTableCell'>";
+         $composite .=              "<strong>Total</strong>";
+         $composite .=         "</div>";
+         $composite .=       "</div>";
+         foreach ($salida as $error => $fechas) {
+            // error es la primera columna y nos especifica el error.
+            $composite .=      "<div class='divTableRow'>";
+            $composite .=        "<div class='divTableCell'>";
+            $composite .=           "<strong>".$error."</strong>";
+            $composite .=        "</div>";
+            foreach ($fechas as $fecha => $cantidad)  {
+               $composite .=        "<div class='divTableCell'>";
+               // impresion de columnas de encabezado con fechas1136
+               $composite .=           $cantidad;
+                           $composite .=        "</div>";
+            }
+            $composite .=        "<div class='divTableCell'>";
+            // $total es la ultima columna, se agrega como la primera.
+            $total = (array_key_exists($error,$errores))? $listaErr[$error]: 0;
+            $composite .=           $total;
+            $composite .=        "</div>";
+            $composite .=      "</div>";
+         }
+         $composite .= "</div>";
+         // $composite .=      "</a>";
       }
-      // dd($lista,$listaErr);
-      return $html;
+      return $composite;
    }
    public function listaErrores($anio,$mes)
    {

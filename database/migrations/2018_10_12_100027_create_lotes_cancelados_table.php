@@ -18,7 +18,7 @@ class CreateLotesCanceladosTable extends Migration
             $table->collation = 'utf8_spanish_ci';
             $table->increments('id');
             $table->DateTime('fecha_lote');
-            $table->date('fecha_cancelacion');
+            $table->DateTime('fecha_cancelacion');
         });
     }
 

@@ -27,6 +27,29 @@ $(document).ready(function(){
   // datepicker
   var fechas = new Array();
   var rango = new Array();
+  var URLactual = window.location;
+
+  if (URLactual=="https://condoc.dgae.unam.mx/registroTitulos/firmas_busqueda/seleccion") {
+
+     $.get('../lista-solicitudes/cedulasPen2', null, function( data)
+     {
+      $.each( data, function( key, val) {
+          fechas.push({ fecha: key, total: [val[0], val[1] ]});
+       });
+       // establecemos los valores limites del arreglo.
+       limites(fechas);
+     });
+  }
+  else {
+     $.get('cedulasPen2', null, function( data)
+     {
+      $.each( data, function( key, val) {
+          fechas.push({ fecha: key, total: [val[0], val[1] ]});
+       });
+       // establecemos los valores limites del arreglo.
+       limites(fechas);
+     });
+  }
 
   $.get('cedulasPen2', null, function( data)
   {

@@ -45,10 +45,6 @@ Route::get('/test', function(){
    $ws->ws_RENAPO('PAEF890101HDFCSR07');
 
 });
-Route::get('/test2', function(){
-   $ws=new WSController();
-   $ws->ws_DGIRE('305016614');
-});
 
 
 // Route::get('/m1',[
@@ -125,27 +121,7 @@ Route::get('/buscar/{num_cta}', 'EtitulosController@showInfo')
       ->where('num_cta','[0-9]+')
       ->name('eSearchInfo');
 
-// Route::get('/registroTitulos/response/firma', 'SelloController@sendingInfo');
-
-
-
-
-
 Route::get('/registroTitulos/verify/firma', 'SelloController@verifySignature');
-
-// Route::get('test', 'CurpController@validacionCurp');
-
-// Route::get('/contactos/ati', 'AutorizacionController@showATI');
-// Route::post('/contactos/ati', 'AutorizacionController@postATI');
-// Route::get('/contactos/imprimePDF_ATI',[
-//     'uses'=> 'AutorizacionController@PdfAutTransInfo',
-//     'as'=> 'imprimePDF_ATI',
-//     // 'middleware' => 'roles',
-//     // 'roles' => ['Invit', 'Admin']
-//   ]);
-
-// Route::get('/registroTitulos/contactos/login', 'AutTransInfo\LoginController@showLoginForm')->name('login');
-
 
 Route::get('infoCedula/{cuenta}/{carrera}',[
    'uses'=> 'SolicitudTituloeController@infoCedula',
@@ -211,12 +187,28 @@ foreach ($alumnos as $key => $value) {
 }
 // dd($datos);
 });
-
-/*Graficas */
-Route::get('/cedulasG' ,[
-    'uses'=> 'GrafiController@cedulas',
-    'as' => 'cedulasG',
-    'roles' => ['Admin']
-]);
 /*Fin de procedimientos de graficas*/
 Route::get('/nombreCarrera', 'PruebasController@carreras');
+
+Route::get('/prueba', function(){
+   $key = "7e68f8f946faf1a588b15dbfd6bc6cd09486bb78";
+error_reporting(E_ALL);
+
+$postData = array(
+									"ncta" => "414016518",
+									"nip" => "072ce57910eec22f5538d8bc128044b1",
+									"key"  => $key
+									);
+
+   $ch = curl_init();
+   curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+   curl_setopt($ch, CURLOPT_URL, "https://tramites.dgae.unam.mx/ws/soap/loginws.php");
+   curl_setopt($ch, CURLOPT_HEADER, false);
+   curl_setopt($ch, CURLOPT_POST, true);
+   curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
+   curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+   $data = curl_exec($ch);
+   dd($data, $postData);
+   print_r($data);
+   curl_close($ch);
+});

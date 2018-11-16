@@ -206,10 +206,11 @@ class SolicitudTituloeController extends Controller
    public function acordionTitulosUpdate($data)
    {
       // Elaboracion del acordion con listas.
-      $composite = "<div class='Heading'>";
-      $composite .=  "<div class='Cell id'>";
-      $composite .=     "<p># Solicitud</p>";
-      $composite .=  "</div>";
+      $composite = "<div class='fila'>";
+      $composite .=  "<div class='Heading'>";
+      $composite .=     "<div class='Cell id'>";
+      $composite .=        "<p># Solicitud</p>";
+      $composite .=     "</div>";
       $composite .=  "<div class='Cell cta'>";
       $composite .=     "<p>No. Cuenta</p>";
       $composite .=  "</div>";
@@ -237,13 +238,13 @@ class SolicitudTituloeController extends Controller
       $composite .="</div>";
       $composite .="<div class='Heading Cell actions center'>";
       $composite .= "<div class='switch demo3'>
-  <input type='checkbox' id='checkAll'>
-  <label><i></i>
-  </label>
-</div>";
+                        <input type='checkbox' id='checkAll'>
+                           <label><i></i></label>
+                     </div>";
       // $composite .=  "<input type='checkbox' id='checkAll'>";
       // $composite .=     "<i id='checkAll' class='fa fa-check fa-2x' aria-hidden='true'></i>";
       $composite .="</div>";
+            $composite .=   "</div>";
       for ($i=0; $i < count($data) ; $i++) {
          $x_list = $i + 1;
          $composite .= "<div class='fila'>";
