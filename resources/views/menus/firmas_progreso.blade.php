@@ -18,6 +18,7 @@
     <!-- <form class="form-group solicitud_f" method="POST" action="{{ url( 'registroTitulos/firmas_progreso' ) }}">
         {!! csrf_field() !!} -->
     <div class="filtros indice">
+      @if($lists != null)
       <table style="width:100%">
         <tr>
             <td>
@@ -73,7 +74,6 @@
          </tr>
       </table>
     </div>
-    @if($lists != null)
     <br/>
       @include('errors/flash-message')
       {{-- Desplegado el acordion de solicitudes filtradas --}}

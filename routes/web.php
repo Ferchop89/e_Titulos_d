@@ -22,6 +22,11 @@ use Illuminate\Http\Request;
 Route::get('/', function () {
     return redirect('/login');
 });
+
+// Route::get('/', function () {
+//     return 'hola dgaes';
+// });
+
 Route::get('/home', function () {
     return redirect('/registroTitulos/home');
 });
@@ -192,11 +197,20 @@ Route::get('/nombreCarrera', 'PruebasController@carreras');
 
 Route::get('/prueba', function(){
    $key = "7e68f8f946faf1a588b15dbfd6bc6cd09486bb78";
+   $nip = "1111111111";
+   $nip = "0000000000";
+   $nip = sha1($key);
 error_reporting(E_ALL);
 
 $postData = array(
-									"ncta" => "414016518",
-									"nip" => "072ce57910eec22f5538d8bc128044b1",
+									// "ncta" => "414016518",
+									// "nip" => "072ce57910eec22f5538d8bc128044b1",
+									// "key"  => $key
+                           // "ncta" => "414016518",
+									// "nip" => "072ce57910eec22f5538d8bc128044b1",
+                           // "ncta" => "305016614",
+                           "ncta" => "305035929",
+                           "nip" => $nip,
 									"key"  => $key
 									);
 
@@ -208,7 +222,8 @@ $postData = array(
    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
    $data = curl_exec($ch);
-   dd($data, $postData);
+   // dd($data, $_POST, $ch, http_build_query($postData), $_GET, $_POST);
    print_r($data);
+   print_r($ch);
    curl_close($ch);
 });

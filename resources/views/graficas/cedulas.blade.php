@@ -60,13 +60,25 @@
                   @endforeach
                   <div class="divTableCell">{{$totales['Titulos']}}</div>
                </div>
-               <div class="divTableRow">
-                  <div class="divTableCell"><strong>Pendientes</strong></div>
-                  @foreach ($data as $key => $value)
-                     <div class="divTableCell">{{$value['Pendientes']}}</div>
-                  @endforeach
-                  <div class="divTableCell">{{$totales['Pendientes']}}</div>
-               </div>
+               {{-- Si no existen pendientes en todo el mes, no se despliega el rubro --}}
+               @if ($pendientesHTML!='')
+                  <a class= 'a-row' data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+                  <div class="divTableRow">
+                     <div class="divTableCell">
+                        {{-- <a class= 'a-row' data-toggle="collapse" data-parent="#accordion" href="#collapse1"> --}}
+                           <strong>
+                              Pendientes
+                           </strong>
+
+                     </div>
+                        @foreach ($data as $key => $value)
+                           <div class="divTableCell">{{$value['Pendientes']}}</div>
+                        @endforeach
+                        <div class="divTableCell">{{$totales['Pendientes']}}</div>
+                  </div>
+                  {!! $pendientesHTML !!}
+                  </a>
+               @endif
                <a class= 'a-row' data-toggle="collapse" data-parent="#accordion" href="#collapse1">
                <div class="divTableRow">
                   <div class="divTableCell">
@@ -122,92 +134,6 @@
          </div>
       </div>
    </div>
-         {{-- <table class="table table-hover"> --}}
-             {{-- <tr>
-               <td class="row_table" nowrap>Día</td>
-                 @foreach ($data as $key => $value)
-                  <td class="tab_num"><strong>{{$key}}</strong></td>
-                 @endforeach
-               <td class="row_table" nowrap>Total</td>
-             </tr> --}}
-             {{-- <tr>
-               <td class="row_table" nowrap>Títulos</td>
-                 @foreach ($data as $key => $value)
-                  <td class="tab_num">{{$value['Titulos']}}</td>
-                 @endforeach
-                 <td>{{$totales['Titulos']}}</td>
-             </tr> --}}
-             {{-- <tr>
-               <td class="row_table" nowrap>Pendientes</td>
-                 @foreach ($data as $key => $value)
-                  <td class="tab_num">{{$value['Pendientes']}}</td>
-                 @endforeach
-                 <td>{{$totales['Pendientes']}}</td>
-             </tr> --}}
-             {{-- <tr>
-               <td class="row_table" nowrap>
-                  <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">No Autorizadas C/Errores *</a>
-               </td>
-                 @foreach ($data as $key => $value)
-                  <td class="tab_num">{{$value['NoAutorConErr']}}</td>
-                 @endforeach
-                 <td>{{$totales['NoAutorConErr']}}</td>
-             </tr> --}}
-             {{-- <tr>
-               <td class="row_table" nowrap>No Autorizadas S/Errores</td>
-                 @foreach ($data as $key => $value)
-                  <td class="tab_num">{{$value['NoAutorSinErr']}}</td>
-                 @endforeach
-                 <td>{{$totales['NoAutorSinErr']}}</td>
-             </tr> --}}
-             {{-- <tr>
-               <td class="row_table" nowrap>Autorizadas</td>
-                 @foreach ($data as $key => $value)
-                  <td class="tab_num">{{$value['Autorizadas']}}</td>
-                 @endforeach
-                 <td>{{$totales['Autorizadas']}}</td>
-             </tr> --}}
-             {{-- <tr>
-               <td class="row_table" nowrap>En Firma</td>
-                 @foreach ($data as $key => $value)
-                  <td class="tab_num">{{$value['EnFirma']}}</td>
-                 @endforeach
-                 <td>{{$totales['EnFirma']}}</td>
-             </tr> --}}
-             {{-- <tr>
-               <td class="row_table" nowrap>NoEnviadas</td>
-                 @foreach ($data as $key => $value)
-                  <td class="tab_num">{{$value['NoEnviadas']}}</td>
-                 @endforeach
-                 <td>{{$totales['NoEnviadas']}}</td>
-             </tr> --}}
-             {{-- <tr>
-               <td class="row_table" nowrap>Enviadas</td>
-                 @foreach ($data as $key => $value)
-                  <td class="tab_num">{{$value['Enviadas']}}</td>
-                 @endforeach
-                 <td>{{$totales['Enviadas']}}</td>
-             </tr> --}}
-           {{-- </table> --}}
-
-        {{-- <div style="float: left; width: 48%">
-            {!! $chart2->render() !!}
-        </div>
-        <div style="float: left; width: 48%">
-            {!! $chart1->render() !!}
-        </div> --}}
-
-
-    {{-- <div class="panel-group" id="accordion">
-     <div class="panel panel-default"> --}}
-       <a data-toggle="collapse" data-parent="#accordion" href="#collapse1">* No Autorizadas C/Errores</a>
-       <div id="collapse1" class="panel-collapse collapse">
-         <div class="panel-body">{!! $listaHtml !!}</div>
-       </div>
-       <br>
-     {{-- </div>
-   </div> --}}
-
 
    @endif
 @endsection

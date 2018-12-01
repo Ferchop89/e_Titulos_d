@@ -77,7 +77,11 @@ class GrafiController extends Controller
          $lista = $this->listaErrores($aSel,substr($mSel,0,2));
          $listaHtml = $this->listaErroresHMTL($lista);
 
-         return view('graficas/cedulas', compact('chart1','chart2','a', 'aSel','mesHtml','data','title','totales','listaHtml'));
+         $dataPendientes = $this->dataPendientes($aSel,substr($mSel,0,2));
+         // Si no existen cuentas pendientes en todo el mes, la variable $pendientesHTML va a '' y no se despliega en la vista
+         $pendientesHTML = $this->pendientesHTML($dataPendientes);
+
+         return view('graficas/cedulas', compact('chart1','chart2','a', 'aSel','mesHtml','data','title','totales','listaHtml','pendientesHTML'));
     }
 
    public function listaErroresHMTL($lista)
@@ -100,7 +104,6 @@ class GrafiController extends Controller
             unset($listaErr['Sin errores/']);
          }
          // iteramos sobre el arreglo original para formar el HTML final y definitivo.
-         // dd($listaErr);
          $salida = array();
          foreach ($listaErr as $error => $valor) { // iteramos para cada fecha
             $html = array();
@@ -111,7 +114,6 @@ class GrafiController extends Controller
             $salida[$error] = $html;
          }
          // Impresion del encabezado con fechas
-         // $composite =       "<a class='a-row' data-toggle='collapse' data-parent='#accordion' href='#collapse1'>";
          $composite=        "<div id='collapse1' class='panel-collapse collapse'>";
          $composite .=       "<div class='divTableRow header'>";
          $composite .=         "<div class='divTableCell'>";
@@ -147,10 +149,70 @@ class GrafiController extends Controller
             $composite .=      "</div>";
          }
          $composite .= "</div>";
+      }
+      return $composite;
+   }
+
+   public function pendientesHTML($lista)
+   {
+      // Revisamos si no existen pendientes en ninguna de las fechas de emisión del titulo en el meses
+      $cantidad = 0;
+      foreach ($lista as $key => $value) {
+         $cantidad .= count($value);
+      }
+      // Salimos no hubo numeros de cuenta pendientes en ninguna fecha de emisión de titulos del mes.
+      if ($cantidad == 0) {
+         return '';
+      }
+      $html = $composite = '';
+      if ($lista!=[]) { // Si existe una lista de errores.
+         // iteramos sobre el arreglo original para formar el HTML final y definitivo.
+
+         // El numero de iteraciones verticales se refieren a la cantidad de cuentas.
+         // Impresion del encabezado con fechas
+         $composite=        "<div id='collapse2' class='panel-collapse collapse'>";
+         $composite .=       "<div class='divTableRow header'>";
+         $composite .=         "<div class='divTableCell'>";
+         $composite .=              "<strong>Número de Cuenta</strong>";
+         $composite .=         "</div>";
+         foreach ($lista as $key1 => $value1) {
+            $fechaDma = substr($key1,8,2) .'-'. substr($key1,5,2) .'-'. substr($key1,0,4);
+            $composite .=         "<div class='divTableCell'>";
+            $composite .=        "<strong>".$fechaDma."</strong>";
+            $composite .=         "</div>";
+            // numero de cuentas (renglones)
+            $cuentas = count($value1);
+         }
+         $composite .=         "<div class='divTableCell'>";
+         $composite .=              "<strong></strong>";
+         $composite .=         "</div>";
+         $composite .=       "</div>";
+         // foreach ($salida as $error => $fechas) {
+         for ($i=0; $i < $cuentas; $i++) {
+            // error es la primera columna y nos especifica el error.
+            $composite .=      "<div class='divTableRow'>";
+            $composite .=        "<div class='divTableCell'>";
+            $composite .=           "<strong>---></strong>";
+            $composite .=        "</div>";
+            foreach ($lista as $key2 => $value2)  {
+               $composite .=        "<div class='divTableCell'>";
+                  if ($value2[$i]!='') {
+                     $composite .= $value2[$i];
+                  } else {
+                     $composite .= '';
+                  }
+               $composite .=        "</div>";
+            }
+            $composite .=        "<div class='divTableCell'>";
+            $composite .=        "</div>";
+            $composite .=      "</div>";
+         }
+         $composite .= "</div>";
          // $composite .=      "</a>";
       }
       return $composite;
    }
+
    public function listaErrores($anio,$mes)
    {
       // Elabora un analisis de todos los errores en una fecha en particular
@@ -495,6 +557,121 @@ class GrafiController extends Controller
        ksort($resultado);
        return $resultado;
     }
+
+   public function dataPendientes($anio,$mes)
+   {
+      // Regresa los numeros de cuenta que no pasaron de la tabla Títulos a la tabla solicitudes_sep
+      $anioMes = "'".$anio.str_pad($mes,2,0,STR_PAD_LEFT)."'";
+
+      // Obtenemos las fechas de emision de título que ya fueron cargadas
+      $mysql        = "fec_emision_tit";
+      $mysqlWhere   = "DATE_FORMAT(fec_emision_tit, '%Y%m') = ".$anioMes."";
+      $mysqlData    = DB::table('solicitudes_sep')
+                    ->select(DB::raw($mysql))
+                    ->whereRaw($mysqlWhere)
+                    ->groupBy('fec_emision_tit')
+                    ->get();
+      // Fechas que condicionan los registros en la tabla Títulos
+      $arrayIn = array();
+      $in='';
+      foreach ($mysqlData as $key => $value) {
+         $fecha  = $value->fec_emision_tit;
+         $item   = "'$fecha'";
+         $in .= $item.',';
+         array_push($arrayIn,$fecha);
+      }
+      $in = '('.substr($in,0,strlen($in)-1).')';
+      // Set de registros en la Tabla Títulos
+      $sybase        = " tit_ncta+tit_dig_ver as cuenta  ";
+      $sybasewhere   = " tit_fec_emision_tit in $in ";
+      $sybaseData    = DB::connection('sybase')
+                        ->table('Titulos')
+                        ->select(DB::raw($sybase))
+                        ->whereRaw($sybasewhere)
+                        ->orderBy('cuenta')
+                        ->get();
+      // La coleccion se convierte en arreglo para ejecutar una diferencia entre arreglos
+      $arregloA = array();
+      foreach ($sybaseData as $key => $value) {
+         array_push($arregloA, $value->cuenta);
+      }
+
+      // Formato año-mes para recuperar las cédulas de una mes que incluya todas las fechas de emison de títulos
+      $anioMes = "'".$anio.str_pad($mes,2,0,STR_PAD_LEFT)."'";
+
+      $mysql        = "num_cta as cuenta";
+      $mysqlWhere   = "DATE_FORMAT(fec_emision_tit, '%Y%m') = ".$anioMes."";
+      $mysqlData    = DB::table('solicitudes_sep')
+                    ->select(DB::raw($mysql))
+                    ->whereRaw($mysqlWhere)
+                    ->orderBy('cuenta')
+                    ->get();
+      // Coleccion de numeros de cuenta en Solicitudes Sep para un año-mes
+     $arregloB = array();
+     foreach ($mysqlData as $key => $value) {
+        array_push($arregloB, $value->cuenta);
+     }
+
+     // Obtenemos la diferecia entre los dos arreglos para conocer las cédulas pendientes
+     // Si no existen cedulas pendientes, genera un arreglo vacio
+      $pendientes = array_diff($arregloA,$arregloB);
+
+      // Consultamos la tabla de titulos para obtener todas las fechas de emision de Titulos
+      $sybase        = " DISTINCT tit_fec_emision_tit ";
+      $sybasewhere   = " datepart(year,  tit_fec_emision_tit) = ".$anio." AND";
+      $sybasewhere  .= " datepart(month, tit_fec_emision_tit) = ".$mes." ";
+      $fechasAmes    = DB::connection('sybase')
+                        ->table('Titulos')
+                        ->select(DB::raw($sybase))
+                        ->whereRaw($sybasewhere)
+                        ->orderBy('tit_fec_emision_tit')
+                        ->get();
+     // Armamos los numeros de cuenta como una condicion para limitar los resultados de la tab la titulos
+     // Si no existen pendientes, no se agrega las cuentas no agregadas a la condicion where
+      $inCtas = '';
+      foreach ($pendientes as $key => $value) {
+         $item   = "'$value'";
+         $inCtas .= $item.',';
+      }
+      $inCtas = ($pendientes==[])? "('')" : '('.substr($inCtas,0,strlen($inCtas)-1).')';
+      // Cédulas en titulos con su fecha de emisión
+      $sybase        = " DISTINCT tit_fec_emision_tit, tit_ncta+tit_dig_ver as cuenta  ";
+      $sybasewhere   = " tit_fec_emision_tit in $in ";
+      $sybasewhere  .= " AND tit_ncta+tit_dig_ver in $inCtas ";
+      $sybaseData    = DB::connection('sybase')
+                        ->table('Titulos')
+                        ->select(DB::raw($sybase))
+                        ->whereRaw($sybasewhere)
+                        ->orderBy('tit_fec_emision_tit')
+                        ->get();
+      $fechasCargadas = array();
+      foreach ($sybaseData as $key => $value) {
+         array_push($fechasCargadas, $value->tit_fec_emision_tit);
+      }
+      // Integramos cuentas y fechas
+      $fechasyCedulas = array();
+      // Recorremos las fechas del mes y le agregamos los numeros de cuenta existentes
+      $integra = array();
+      foreach ($fechasAmes as $key1 => $value1) {
+         $cuentas = array();
+         foreach ($sybaseData as $key2 => $value2) {
+            if ($value1->tit_fec_emision_tit == $value2->tit_fec_emision_tit) {
+               if ($value2->cuenta!='') {
+                  array_push($cuentas,$value2->cuenta);
+               }
+            } else {
+               // Si la fecha no ha sido cargada, mensaje 'sin carga', si la fecha ya se cargo, entonces vacio
+               if (in_array($value1->tit_fec_emision_tit,$arrayIn)) {
+                  array_push($cuentas,'');
+               } else {
+                  array_push($cuentas,'sin carga');
+               }
+            }
+         }
+         $integra[$value1->tit_fec_emision_tit] = $cuentas;
+      }
+      return $integra;
+   }
 
     public function cedulasAnio()
     {

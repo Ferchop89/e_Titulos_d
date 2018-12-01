@@ -224,7 +224,7 @@ class AlumnosLotesController extends Controller
 
     $motivos = $this->motivosCancelacion();
 
-    return view('/menus/proceso_alumno', compact('title', 'nombre', 'num_cta', 'motivos', 'carrera', 'nivel', 'info'));
+    return view('/menus/proceso_alumno', compact('title', 'nombre', 'num_cta', 'motivos', 'carrera', 'nivel', 'info', 'lote'));
   }
 
   public function cancelaProcesoAlumno(Request $request){
@@ -275,7 +275,7 @@ class AlumnosLotesController extends Controller
       $fecha = explode("-", $fecha);
       $datepicker = $fecha[0]."%2F".$fecha[1]."%2F".$fecha[2];
       $fechaLote = Carbon::parse($_GET['fechaLote'])->format("d-m-Y H:i:s");
-      $title = "Lote (".$total." cédulas): ".$fechaLote;
+      $title = "Lote: ".$lote[0]->fecha_lote_id."; &nbsp; fecha: ".$fechaLote."; &nbsp; cédula(s): ".$total;
       return view('/menus/detalleLote', compact('title', 'fechaLote', 'list', 'datepicker'));
    }
    public function armadoDetalleLote($lote){
@@ -293,8 +293,10 @@ class AlumnosLotesController extends Controller
       $composite .=        "</tr>";
       $composite .=     "</thead>";
       $composite .=     "<tbody>";
-      foreach ( $lote as $key => $alumno) {
-         $composite .=     "<tr>";
+
+      //
+      foreach ($lote as $key => $alumno) {
+         $composite .=     "<tr class='".$alumno->num_cta."'>";
          $composite .=        "<th scope='row'>".$alumno->id."</th>";
          $composite .=           "<td>".$alumno->num_cta."</td>";
          $composite .=           "<td>".$alumno->nombre_completo."</td>";
@@ -308,6 +310,19 @@ class AlumnosLotesController extends Controller
       $composite .=  "</table>";
       $composite .= "</div>";
       return $composite;
+   }
+
+   public function showDetalleCuenta(){
+     $fechaLote = $_GET['fechaLote'];
+     $lote = SolicitudSep::where('fecha_lote', $fechaLote)->get();
+     $list = $this->armadoDetalleLote($lote);
+     $total = $lote->count();
+     $fecha = Carbon::parse($_GET['fechaLote'])->format("d-m-Y");
+     $fecha = explode("-", $fecha);
+     $datepicker = $fecha[0]."%2F".$fecha[1]."%2F".$fecha[2];
+     $fechaLote = Carbon::parse($_GET['fechaLote'])->format("d-m-Y H:i:s");
+     $title = "Lote: ".$lote[0]->fecha_lote_id."; &nbsp; fecha: ".$fechaLote."; &nbsp; cédula(s): ".$total;
+     return view('/menus/detalleLoteCuenta', compact('title', 'fechaLote', 'list', 'datepicker'));
    }
 
    /* ///////////////////////// PASAR A FIRMASCEDULACONTROLLER ///////////////////////// */
@@ -362,6 +377,13 @@ class AlumnosLotesController extends Controller
      $verif = substr($num_cta, 8, 1);
      $foto = $this->consultaFotos($cuenta);
      $info = $this->solicitud($num_cta);
+     if($info == null){
+       $msj = "No se encuentran registros con el número de cuenta ".$num_cta;
+       Session::flash('error', $msj);
+     }elseif($info[0]->status != '7' || $info[0]->status != '8'){
+       $msj = "El alumno no cuenta con el proceso requerido para esta cancelación.";
+       Session::flash('info', $msj);
+     }
      $motivos = $this->motivosCancelacion();
      return view('/menus/cedulas_canceladas', ['foto' => $foto, 'info' => $info, 'motivos' => $motivos]);
    }

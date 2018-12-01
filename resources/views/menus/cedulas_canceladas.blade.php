@@ -28,7 +28,10 @@
             </div>
       </div>
    </td><td class="datos-escolares">
+     {!! Form::open(['class'=>'form','method'=>'POST','id'=>'cancelaC', 'route'=>'cancelaC']) !!}
          <div class="info-trayectorias">
+           @include('errors/flash-message')
+           <input type="hidden" name="num_cta" value="{{$info[0]->num_cta}}">
                <table class="table table-bordered" style="width: 100%;">
                   <thead class="thead-dark bg-primary">
                      <th class="center" scope="col">Nº</th>
@@ -49,16 +52,19 @@
               			  </select></td>
                       <td>
                         @if($info[0]->status == '7' || $info[0]->status == '8')
-                        <a href="" class="btn btn-danger">Cancelar</a>
+                          <button id = "cancelaC" type="submit" class="btn btn-danger">Cancelar</button>
                         @else
-                        NA
+                          NA
                         @endif
                       </td>
                     @endforeach
                   </tbody>
               </table>
       </div>
+      {{ Form::close() }}
    </td></tr></table>
+   @else
+    @include('errors/flash-message')
    @endif
    </div><br>
 @endsection

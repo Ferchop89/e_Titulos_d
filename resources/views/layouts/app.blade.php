@@ -232,7 +232,7 @@
         <link href="{{asset('css/select2.css')}}" rel="stylesheet" />
         <script src="{{asset('js/select2.js')}}"></script>
 
-        {{-- <script src="{{asset('js/pantalla.js')}}"></script> --}}
+        <script src="{{asset('js/pantalla.js')}}"></script>
         @yield('animaciones')
     </body>
 </html>

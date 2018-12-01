@@ -552,7 +552,6 @@ trait XmlCadenaErrores {
       $query2 .= 'correo AS _20_correoElectronico, ';
       $query2 .= 'autoriza ' ;
       $query2 .= 'FROM alumnos ';
-      // $query2 .= "where num_cta = '".$cuenta.$digito."'";
       $query2 .= "where num_cta = '".$cuenta.$digito."' and ";
       $query2 .= "autoriza = 1 ";
 
@@ -564,67 +563,15 @@ trait XmlCadenaErrores {
       // Consultamos si el usuario y actualizo los datos
       if ($info_mysql==[]) {
          // El usuario aun no ha actualizado los datos
-         // entonces los buscamos en el Web_Service
-         $ws_SIAE = Web_Service::find(2);
-         $identidad = new WSController();
-         $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, $cuenta.$digito, $ws_SIAE->key);
-
-               if (!empty($identidad)) {
-                  if (isset($identidad->curp)) {
-                     if ($identidad->curp!='') {
-                        $datos['_16_curp'] = $identidad->curp;
-                     } else {
-                        $datos['_16_curp'] = '----';
-                        $errores['_16_curp'] = 'Sin informacion en WS';
-                     }
-                  }else {
-                     $datos['_16_curp'] = '----';
-                     $errores['_16_curp'] = 'Sin informacion en WS';
-                  }
-                  if (isset($identidad->correo1)) {
-                     if ($identidad->correo1!='') {
-                        $datos['_20_correoElectronico'] =  $identidad->correo1;
-                     } else {
-                        $datos['_20_correoElectronico'] = '----';
-                        $errores['_16_curp'] = 'Sin informacion en WS';
-                     }
-                  } else {
-                     $datos['_20_correoElectronico'] = '----';
-                     $errores['_16_curp'] = 'Sin informacion en WS';
-                  }
-                  if (isset($identidad->nombres)) {
-                     $datos['_17_nombre'] =  utf8_encode($identidad->nombres);
-                  } else {
-                     $errores['_16_curp'] = 'Sin informacion en WS';
-                     $datos['_17_nombre'] = '----';
-                  }
-                  if (isset($identidad->apellido1)) {
-                     $datos['_18_primerApellido'] =  utf8_encode($identidad->apellido1);
-                  } else {
-                     $errores['_16_curp'] = 'Sin informacion en WS';
-                     $datos['_18_primerApellido']  = '----';
-                  }
-                  if (isset($identidad->apellido2)) {
-                     $datos['_19_segundoApellido'] =  utf8_encode($identidad->apellido2);
-                  } else {
-                     $errores['_16_curp'] = 'Sin informacion en WS';
-                     $datos['_19_segundoApellido'] = '----';
-                  }
-                  // La actualizacion es via ati_pdf
-                  $datos['fuente'] = '3'; // WS
-               } else {
-                  // NO se encontro la informacion en el WS
-                  $datos['_16_curp'] = '----';
-                  $datos['_17_nombre']          = '----';
-                  $datos['_18_primerApellido']  = '----';
-                  $datos['_19_segundoApellido'] = '----';
-                  $datos['_20_correoElectronico'] = '----';
-                  // La actulizacion es via ati_pdf
-                  $datos['fuente'] = '2'; // No lo encontro en WS
-                  // En un solo campo se coloca el error para los campos 16, 17, 18, 19, 20
-                  $errores['_16_curp'] = 'Sin autorización';
-               }
-
+         $datos['_16_curp'] = '----';
+         $datos['_17_nombre']          = '----';
+         $datos['_18_primerApellido']  = '----';
+         $datos['_19_segundoApellido'] = '----';
+         $datos['_20_correoElectronico'] = '----';
+         // La actulizacion es via ati_pdf
+         $datos['fuente'] = '0'; // No lo encontro en WS
+         // En un solo campo se coloca el error para los campos 16, 17, 18, 19, 20
+         $errores['_16_curp'] = 'Sin autorización alumno';
       } else
       {
          // El usuario si ha registrado los datos
@@ -641,6 +588,7 @@ trait XmlCadenaErrores {
       }
       return $datos;
    }
+
    public function titulosExamenes($cuenta, $carrera)
    {
       $query = 'SELECT  ';
@@ -737,6 +685,7 @@ trait XmlCadenaErrores {
 
       return $datos;
    }
+
    public function antecedente($cuenta,$nivel)
    {
       // ante periodo se divide en 2 fechas y se omite de la salida
@@ -978,8 +927,8 @@ trait XmlCadenaErrores {
          case 'Jtit':
             $nombre='DIANA';$apellidoPat='GONZALEZ';$apeMat='NIETO';
             // $curp='UIES180831HDFSEP03';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
-            // $curp='UIES180831S04';$idCarg='5';$cargo='JEFA DEL DEPARTAMENTO DE TITULOS';$titulo='LIC.';
-            $curp='GOND701217HP2';$idCarg='5';$cargo='JEFA DEL DEPARTAMENTO DE TITULOS';$titulo='LIC.';
+            $curp='UIES180831S04';$idCarg='5';$cargo='JEFA DEL DEPARTAMENTO DE TITULOS';$titulo='LIC.';
+            // $curp='GOND701217HP2';$idCarg='5';$cargo='JEFA DEL DEPARTAMENTO DE TITULOS';$titulo='LIC.';
             $certR = 'CertificadoResponsable'; $noCertR='874796688606327447';
             $componentes['FirmaResponsable0'] = $this->firmaResp_AttrUnam(
                         $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo);
@@ -987,24 +936,24 @@ trait XmlCadenaErrores {
          case 'Director':
             $nombre='IVONNE';$apellidoPat='RAMIREZ';$apeMat='WENCE';
             // $curp='UIES180831HDFSEP03';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
-            // $curp='UIES180831S03';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
-            $curp='RAWI6005073U0';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
+            $curp='UIES180831S03';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
+            // $curp='RAWI6005073U0';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
             $certR = 'CertificadoResponsable'; $noCertR='1682280437054458477';
             $componentes['FirmaResponsable1'] = $this->firmaResp_AttrUnam(
                         $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo);
             break;
          case 'SecGral':
             $nombre='LEONARDO';$apellidoPat='LOMELI';$apeMat='VANEGAS';
-            // $curp='UIES180831S02';$idCarg='6';$cargo='SECRETARIO GENERAL';$titulo='DR.';
-            $curp='LOVL7004289W7';$idCarg='6';$cargo='SECRETARIO GENERAL';$titulo='DR.';
+            $curp='UIES180831S02';$idCarg='6';$cargo='SECRETARIO GENERAL';$titulo='DR.';
+            // $curp='LOVL7004289W7';$idCarg='6';$cargo='SECRETARIO GENERAL';$titulo='DR.';
             $certR = 'CertificadoResponsable'; $noCertR='3121493390511228062';
             $componentes['FirmaResponsable2'] = $this->firmaResp_AttrUnam(
                         $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo);
             break;
          case 'Rector':
             $nombre='ENRIQUE LUIS';$apellidoPat='GRAUE';$apeMat='WIECHERS';
-            // $curp='UIES180831S01';$idCarg='3';$cargo='RECTOR';$titulo='DR.';
-            $curp='GAWE510109C14';$idCarg='3';$cargo='RECTOR';$titulo='DR.';
+            $curp='UIES180831S01';$idCarg='3';$cargo='RECTOR';$titulo='DR.';
+            // $curp='GAWE510109C14';$idCarg='3';$cargo='RECTOR';$titulo='DR.';
             $certR = 'CertificadoResponsable'; $noCertR='7608878899635960696 ';
             $componentes['FirmaResponsable3'] = $this->firmaResp_AttrUnam(
                         $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo);
@@ -1066,6 +1015,7 @@ trait XmlCadenaErrores {
       $idTipoE=$datos['_32_idTipoEstudioAntecedente'];
       $tipoE=$datos['_33_tipoEstudioAntecedente'];
       $idEntFed=$datos['_34_idEntidadFederativa'];
+
       $entFed=$datos['_35_entidadFederativa'];
       $fechaI=$datos['_36_fechaInicio'];
       $fechaT=$datos['_37_fechaTerminacion'];
@@ -1437,4 +1387,57 @@ trait XmlCadenaErrores {
       // $title = 'Solicitudes para Envio de Firma';
       // return view('menus/lista_solicitudes', compact('title','lists', 'total'));
    }
+
+  // XML para Cancelación de Títulos Electrónicos
+  public function cancelaTituloXml($nodos){
+     $tituloXML = new FluidXml('CancelaTituloElectronico');
+     foreach ($nodos['CancelaTituloElectronico'] as $key => $value) {
+       $tituloXML->setAttribute($key, $value);
+     }
+     $tituloXML->addChild('FolioControl','', $nodos['FolioControl']);
+     $tituloXML->addChild('MotCancelacion',  $nodos['MotCancelacion']);
+     $tituloXML->addChild('Autenticacion',   $nodos['Autenticacion']);
+
+     return $tituloXML;
+  }
+
+  public function attrCancelaTE(){
+    // Consulta de la Información
+    $datos = array();
+    $datos['xmlns'] = "https://www.sige.sep.gob.mx/titulos/";
+    $datos['xmlns:xsi'] = "http://www.w3.oft/2001/XMLSchema-instace";
+    $datos['version'] = '1.0';
+    $datos['xsi:schemalocation'] = "https//www.siged.sep.gob.mx/titulos/ schema.xsd";
+    return $datos;
+  }
+
+  public function attrFolio($folio){
+    $data = array();
+    $data['folio'] = $folio;
+    return $data;
+  }
+
+  public function attrMotivo($motivo){
+    $data = array();
+    $data['cveMotivo'] = $motivo;
+    return $data;
+  }
+
+  public function attrAutenticacion($user, $password){
+    $data = array();
+    $data['usuario'] = $user;
+    $data['password'] = $password;
+    return $data;
+  }
+
+  public function integraNodosC($folio, $motivo, $user, $password){
+    // Integra todos los arreglos de atributos en un arreglos general
+    $componentes = array();
+    $componentes['CancelaTituloElectronico'] = $this->attrCancelaTE();
+    $componentes['FolioControl'] = $this->attrFolio($folio);
+    $componentes['MotCancelacion'] = $this->attrMotivo($motivo);
+    $componentes['Autenticacion'] = $this->attrAutenticacion($user,$password);
+    return $componentes;
+  }
+
 }

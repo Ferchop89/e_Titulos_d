@@ -178,4 +178,30 @@ class WSController extends Controller
         }
         return $response;
     }
+    public function ws_DGIRE2($num_cta)
+    {
+        try {
+            $wsdl = 'https://extranet.dgire.unam.mx/ws/dgae/dgaeAlum.php?wsdl';
+            $opts = array(
+                'proxy_host' => "132.248.205.1",
+                'proxy_port' => 8080,
+                'location'=> 'https://extranet.dgire.unam.mx:443/ws/dgae/dgaeAlum.php',
+                'connection_timeout' => 30 ,
+                'encoding' => 'ISO-8859-1',
+                'trace' => 1,
+                'exceptions' => 1
+             );
+            $client = new SOAPClient($wsdl, $opts);
+            // dd($client->__getFunctions());
+            // dd($client->__getTypes  ());
+            $response = $client->getAlumno($num_cta);
+        }
+        catch (SoapFault $exception) {
+
+            echo "<pre>SoapFault: ".print_r($exception, true)."</pre>\n";
+            echo "<pre>faultcode: '".$exception->faultcode."'</pre>";
+            echo "<pre>faultstring: '".$exception->getMessage()."'</pre>";
+        }
+        return $response;
+    }
 }

@@ -190,6 +190,14 @@ class MenuSeeder extends Seeder
                'order' => 0,
                'is_structure' => 0
            ]);
+           factory(Menu::class)->create([
+               'name' => 'Cancelación de cédulas DGP',
+               'slug' => 'opcion-4.1.2',
+               'parent' => $m500->id,
+               'ruta' => 'registroTitulos/cedulas_canceladas',
+               'order' => 1,
+               'is_structure' => 0
+           ]);
            //Departamento de Títulos consultas
            $m5 = factory(Menu::class)->create([
                'name' => 'Tablero de control',

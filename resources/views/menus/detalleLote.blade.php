@@ -15,7 +15,7 @@
    <link href="{{ asset('css/loading.css') }}" rel="stylesheet">
 @endsection
 @section('content')
-<div class="container detalle-lote">
+<div class="detalle-lote">
     <div class="d-flex justify-content-between align-items-end mb-3">
       <br>
         <h2 id="titulo">{{$title}}</h2>

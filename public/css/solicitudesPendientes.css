@@ -128,15 +128,15 @@ select[multiple], select[size] {
 }
 .Cell.date {
    width: 10%;
-   min-width: 102px;
+   min-width: 95px;
 }
 .Cell.book {
    width: 10%;
-   min-width: 150px;
+   min-width: 135px;
 }
 .Cell.level {
    width: 10%;
-   min-width: 58px;
+   min-width: 104px;
 }
 .Cell.cve {
    width: 10%;

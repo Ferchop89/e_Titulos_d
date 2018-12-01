@@ -150,38 +150,86 @@ class PruebasController extends Controller
 // '0105148',
 // '0755102',
 // ];
+// $carreras = [
+//    '70321',
+//    '70322',
+//    '71024',
+//    '20412',
+//    '0093105',
+//    '0093003',
+//    '0104120',
+//    '0144095',
+//    '6204102',
+//    '0754102',
+//    '0064192',
+//    '0134133',
+//    '0014198',
+//    '0905104',
+//    '0695160',
+//    '0145095',
+//    '0015111',
+//    '0795123',
+//    '0105089',
+//    '0645142',
+//    '0595143',
+//    '0025139',
+//    '1005071',
+//    '0105091',
+//    '0755102',
+//    '0655085',
+//    '0035085',
+//    '0125085',
+//    '0785143',
+//    '0695085',
+//    '3005085',
+// ];
 $carreras = [
-   '70321',
-'70322',
-'71024',
-'20412',
-'0093105',
-'0093003',
-'0104120',
-'0144095',
-'6204102',
-'0754102',
-'0064192',
-'0134133',
-'0014198',
-'0905104',
-'0695160',
-'0145095',
-'0015111',
-'0795123',
-'0105089',
-'0645142',
-'0595143',
-'0025139',
-'1005071',
-'0105091',
-'0755102',
-'0655085',
-'0035085',
-'0125085',
-'0785143',
-'0695085',
-'3005085',
+   '00229',
+   '00251',
+   '00252',
+   '01058',
+   '01219',
+   '0083221',
+   '0093003',
+   '0093105',
+   '0123371',
+   '0014181',
+   '0024138',
+   '0054107',
+   '0054184',
+   '0054189',
+   '0104166',
+   '0114105',
+   '0124097',
+   '0144095',
+   '0694085',
+   '0754102',
+   '0784085',
+   '1004170',
+   '2004187',
+   '3004173',
+   '5004085',
+   '6204102',
+   '7004061',
+   '0025139',
+   '0055107',
+   '0065119',
+   '0105084',
+   '0105120',
+   '0105122',
+   '0105161',
+   '0115103',
+   '0125097',
+   '0555143',
+   '0595143',
+   '0645142',
+   '0665109',
+   '0755102',
+   '0785143',
+   '0905104',
+   '0985142',
+   '5005085',
+   '6075088',
 ];
    foreach ($carreras as $key => $value) {
          $nombreCarrera = $this->nombreCarrera($value);
@@ -302,9 +350,103 @@ $carreras = [
       $composite .=  "</a>";
       $composite .= "</div>";
       $composite .= "<div class='Cell btns'>";
-      $url = "https://condoc.dgae.unam.mx/registroTitulos/response/firma?lote=".$data[$i]->fecha_lote."&cuentas=".$cuentas;
+      $url = "https://132.248.205.117/registroTitulos/response/firma?lote=".$data[$i]->fecha_lote."&cuentas=".$cuentas;
+      // $composite .=  "<form action='componenteFirma' method = 'POST'>";
+      $composite .=  "<form action='https://enigma.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
+      // $composite .=  "<form action='https://kryptos.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
+
+      $composite .=     "<input type='hidden' name='_token' value='".csrf_token()."'>";
+      // $composite .=     "<input type='hidden' name='datos' value="."'".$this->loteCadena($data[$i]->fecha_lote, Auth::user()->roles()->first()->nombre)."'".">";
+      $manejoTilde = $this->loteCadena($data[$i]->fecha_lote, Auth::user()->roles()->first()->nombre);
+      $composite .=     "<input type='hidden' name='datos' value=\"".htmlspecialchars($manejoTilde)."\">";
+      $composite .=     "<input type='hidden' name='URL' value='".$url."'>";
+      $composite .=     "<input type='hidden' name='curp' value='".$curp."'>";
+      $composite .=     "<input type='submit' value='Firmar con FEU' id='btnFirma' class='btn'/>";
+      $composite .=  "</form>";
+      /*Para firmar con el SAT*/
+      $composite .=  "<form action='componenteFirma' method = 'POST'>";
       // $composite .=  "<form action='https://enigma.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
-      $composite .=  "<form action='https://kryptos.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
+      // $composite .=  "<form action='https://kryptos.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
+      $composite .=     "<input type='hidden' name='_token' value='".csrf_token()."'>";
+      $composite .=     "<input type='hidden' name='datos' value=\"".htmlspecialchars($manejoTilde)."\">";
+      $composite .=     "<input type='hidden' name='URL' value='".$url."'>";
+      $composite .=     "<input type='hidden' name='curp' value='".$curp."'>";
+      $composite .=     "<input type='submit' value='Firmar con SAT' id='btnFirma' class='btn'/>";
+      $composite .=  "</form>";
+      $composite .= "</div>";
+      $composite .=       "<div id='collapse".$x_list."' class='panel-collapse collapse'>";
+      $composite .=       "<div class='panel-body'>";
+      $composite .=        "<div class='table-responsive'>";
+      $composite .=         "<table class='table table-striped table-dark'>";
+      $composite .=           "<thead>";
+      $composite .=             "<tr>";
+      $composite .=               "<th scope='col'># solicitud</th>";
+      $composite .=               "<th scope='col'><strong>No. cuenta</strong></th>";
+      $composite .=               "<th scope='col'><strong>Nombre completo</strong></th>";
+      $composite .=               "<th scope='col'><strong>Clave carrera</strong></th>";
+      $composite .=               "<th scope='col'><strong>Nombre carrera</strong></th>";
+      $composite .=               "<th scope='col'><strong>Nivel</strong></th>";
+      $composite .=               "<th scope='col'><strong>Sistema</strong></th>";
+      $composite .=             "</tr>";
+      $composite .=           "</thead>";
+      $composite .=           "<tbody>";
+      $regis = 1;
+      foreach ( $alumnos as $key => $alumno) {
+        $composite .=           "<tr>";
+        $composite .=             "<th scope='row'>".$alumno->id."</th>";
+        $composite .=               "<td>".$alumno->num_cta."</td>";
+        $composite .=               "<td>".$alumno->nombre_completo."</td>";
+        $composite .=               "<td>".$alumno->cve_carrera."</td>";
+        // Mostrar el nombre de la carrera SEP.
+        $cveSep = unserialize($alumno->datos)['_09_cveCarrera'];
+        $nomCarrera = Carrera::where('CVE_INSTITUCION','090001')
+                              ->where('CVE_SEP',$cveSep)
+                              ->first();
+        $composite .=               "<td>".$nomCarrera->CARRERA."</td>";
+        // $composite .=               "<td>".$this->carreraNombre($alumno->cve_carrera)."</td>";
+        $composite .=               "<td>".$alumno->nivel."</td>";
+        $composite .=               "<td>".$alumno->sistema."</td>";
+        $composite .=           "</tr>";
+      }
+      $composite .=            "</tbody>";
+      $composite .=         "</table>";
+      $composite .=        "</div>"; // cierra el table responsive
+      $composite .=       "</div>"; // cierra el panel-body
+      $composite .=      "</div>"; // cierra el collapse
+  }
+    return $composite;
+   }
+   public function generaListasxLoteFEU($data){
+      // Elaboracion del acordion con listas.
+      $curp = $this->authCurp();
+      $composite = "<div class='firmas'>";
+      for ($i=0; $i < count($data) ; $i++) {
+      $x_list = $i + 1;
+      $alumnos = $this->detalleLote($data[$i]->fecha_lote);
+      // dd($alumnos[0]->num_cta);
+      $cuentas = "";
+      foreach ($alumnos as $key => $alumno) {
+         $cuentas .= $alumno->num_cta."*";
+      }
+      $composite .= "<div class='accordion-a'>";
+      $composite .=  "<a class = 'a-row' data-toggle='collapse' data-parent='#accordion' href='#collapse".$x_list."'>";
+      $composite .=     "<div class='Row'>";
+      $composite .=        "<div class='Cell id '>";
+      $composite .=           "<p> Lote: ".$data[$i]->id."</p>";
+      $composite .=        "</div>";
+      $composite .=        "<div class='Cell fechaLote'>";
+      $composite .=           "<p> Fecha de Lote: ".$data[$i]->fecha_lote."</p>";
+      $composite .=        "</div>";
+      $composite .=        "<div class='Cell numCedulaxLote'>";
+      $composite .=           "<p> Contiene: ".count($alumnos)." cédulas</p>";
+      $composite .=        "</div>";
+      $composite .=     "</div>";
+      $composite .=  "</a>";
+      $composite .= "</div>";
+      $composite .= "<div class='Cell btns'>";
+      $url = "https://132.248.205.117/registroTitulos/response/firma?lote=".$data[$i]->fecha_lote."&cuentas=".$cuentas;
+      $composite .=  "<form action='https://enigma.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
+      // $composite .=  "<form action='https://kryptos.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
       $composite .=     "<input type='hidden' name='_token' value='".csrf_token()."'>";
       $composite .=     "<input type='hidden' name='datos' value='".$this->loteCadena($data[$i]->fecha_lote, Auth::user()->roles()->first()->nombre)."'>";
       $composite .=     "<input type='hidden' name='URL' value='".$url."'>";
@@ -360,22 +502,20 @@ $carreras = [
       // $nombre = Auth::user()->username;
       switch ($rol) {
          case 'Jtit':
-            // $curp = "UIES180831S04";
-            $curp = "GOND701217HP2";
+            $curp = "UIES180831S04";
+            // $curp = "GOND701217HP2";
             break;
          case 'Director':
-            // $curp = "UIES180831S03";
-            $curp = "RAWI6005073U0";
-            // $curp = "UIES180831S02";
+            $curp = "UIES180831S03";
+            // $curp = "RAWI6005073U0";
             break;
          case 'SecGral':
-         // $curp = "UIES180831S02";
-         $curp = "LOVL7004289W7";
-         // $curp = "UIES180831S03";
+         $curp = "UIES180831S02";
+         // $curp = "LOVL7004289W7";
             break;
          case 'Rector':
-            // $curp = "UIES180831S01";
-            $curp = "GAWE510109C14";
+            $curp = "UIES180831S01";
+            // $curp = "GAWE510109C14";
             break;
       }
       return $curp;

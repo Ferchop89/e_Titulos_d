@@ -28,9 +28,9 @@ $(document).ready(function(){
   var fechas = new Array();
   var rango = new Array();
   var URLactual = window.location;
-
-  if (URLactual=="https://condoc.dgae.unam.mx/registroTitulos/firmas_busqueda/seleccion") {
-
+console.log('antes del if');
+  if (URLactual=="https://132.248.205.117/registroTitulos/firmas_busqueda/seleccion") {
+     console.log('URLactual https://132.248.205.117/registroTitulos/firmas_busqueda/seleccion');
      $.get('../lista-solicitudes/cedulasPen2', null, function( data)
      {
       $.each( data, function( key, val) {
@@ -41,6 +41,7 @@ $(document).ready(function(){
      });
   }
   else {
+     console.log('hola');
      $.get('cedulasPen2', null, function( data)
      {
       $.each( data, function( key, val) {
@@ -51,14 +52,14 @@ $(document).ready(function(){
      });
   }
 
-  $.get('cedulasPen2', null, function( data)
-  {
-    $.each( data, function( key, val) {
-        fechas.push({ fecha: key, total: [val[0], val[1] ]});
-     });
-     // establecemos los valores limites del arreglo.
-     limites(fechas);
-  });
+  // $.get('cedulasPen2', null, function( data)
+  // {
+  //   $.each( data, function( key, val) {
+  //       fechas.push({ fecha: key, total: [val[0], val[1] ]});
+  //    });
+  //    // establecemos los valores limites del arreglo.
+  //    limites(fechas);
+  // });
 
   function inArray(item, arreglo)
   {
@@ -100,6 +101,7 @@ $(document).ready(function(){
     rango.push(Math.min.apply(null, noEnv));
     rango.push(Math.max.apply(null, noEnv));
   }
+
   $('#datepicker').datepicker(
   {
       /*Boton para eliminar fecha*/

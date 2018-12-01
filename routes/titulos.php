@@ -66,6 +66,7 @@ Route::post('/buscar/fecha', [
 
 Route::post('/firma', [
    'uses'=> 'SolicitudTituloeController@nameButton',
+   'as' => 'postEnviaFirma',
    'middleware' => 'roles',
    'roles' => ['Admin', 'Jtit']
 ]);
@@ -99,11 +100,11 @@ Route::get('/firmas_progreso', [
    'middleware' => 'roles',
    'roles' => ['Admin', 'Jtit']
 ]);
-Route::post('/firmas_progreso', [
-   'uses' => 'FirmasCedulaController@postProgreso',
-   'middleware' => 'roles',
-   'roles' => ['Admin', 'Jtit']
-]);
+// Route::post('/firmas_progreso', [
+//    'uses' => 'FirmasCedulaController@postProgreso',
+//    'middleware' => 'roles',
+//    'roles' => ['Admin', 'Jtit']
+// ]);
 Route::get('/firmadas', [
   'uses' => 'FirmasCedulaController@showFirmadas',
   'as' => 'registroTitulos/firmadas',
@@ -133,7 +134,7 @@ Route::post('create/session',[
   'uses' => 'FirmasCedulaController@lote_Session',
   'as' => 'ALGO',
   'middleware' => 'roles',
-  'roles' => ['Admin', 'Director', 'SecGral', 'Rector'] //DIRECTORA, SECRETARIO Y RECTOR
+  'roles' => ['Admin', 'Director', 'SecGral', 'Rector']
 ]);
 Route::get('algo', function(){
    dd($_POST);
@@ -226,12 +227,15 @@ Route::get('/lista-solicitudes/cedulasPen', function(){
          $query  = "SELECT DATE_FORMAT(fecha_lote,'%Y%m%d%H%i%s') as lote,num_cta, nombre_completo, cve_carrera, datos ";
          $query .= " from solicitudes_sep ";
          $query .= " WHERE (";
+         $query .= "fec_emision_tit='2018-11-29 00:00:00' OR ";
+         $query .= "fec_emision_tit='2018-11-22 00:00:00' OR ";
+         $query .= "fec_emision_tit='2018-11-15 00:00:00' OR ";
          $query .= "fec_emision_tit='2018-11-08 00:00:00' OR ";
          $query .= "fec_emision_tit='2018-10-25 00:00:00' OR ";
          $query .= "fec_emision_tit='2018-10-18 00:00:00' OR ";
          $query .= "fec_emision_tit='2018-10-11 00:00:00' OR ";
          $query .= "fec_emision_tit='2018-10-04 00:00:00' ";
-         $query .= ") AND errores like '%sin errores%' AND status=7 ";
+         $query .= ") AND errores like '%sin errores%' AND status>1 ";
          $query .= "ORDER BY lote asc";
          $datos = DB::select($query);
          $cuenta = 0;
@@ -274,6 +278,12 @@ Route::get('/lista-solicitudes/cedulasPen', function(){
       // $respuesta = $ws->ws_DGIRE('503459419');
       $respuesta = $ws->ws_DGIRE('517493614');
       dd($respuesta->respuesta);
+   });
+   Route::get('/DGIRE2', function(){
+      $ws = new WSController();
+      // $respuesta = $ws->ws_DGIRE('503459419');
+      $respuesta = $ws->ws_DGIRE2('306573396');
+      dd($respuesta);
    });
 
    Route::get('/analisis', function(){
@@ -358,6 +368,7 @@ Route::post('/cedulas_DGP',[
   //   });
 Route::get('/emisionTitulos/CONDOC', 'SolicitudTituloeController@verTitulos');
 Route::get('/informacionDetallada/lote','AlumnosLotesController@showDetalleLote')->name('detalleLote');
+Route::get('/informacionDetallada/cuenta/lote','AlumnosLotesController@showDetalleCuenta')->name('detalleCuenta');
 /*Graficas */
 Route::get('/cedulasG' ,[
     'uses'=> 'GrafiController@cedulas',
@@ -383,6 +394,7 @@ Route::get('/solicitudes_canceladas/{num_cta}', [
    'middleware' => 'roles',
    'roles' => ['Admin', 'Jtit']
 ])->where('num_cta','[0-9]+');
+
 /* Cédulas que van a cancelarse */
 Route::get('/cedulas_canceladas', [
   'uses'=> 'AlumnosLotesController@showCancelarC', //Cambiar a FirmasCedulaController
@@ -401,3 +413,17 @@ Route::get('/cedulas_canceladas/{num_cta}', [
    'middleware' => 'roles',
    'roles' => ['Admin', 'Jtit']
 ])->where('num_cta','[0-9]+');
+Route::post('/cancelaC', [
+   'uses' => 'EnvioSep@showCancelaAccion',
+   'as' => 'cancelaC',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit']
+])->where('num_cta','[0-9]+')
+  ->where('carrera','[0-9]+');
+/* */
+Route::post('/response/componenteFirma', [
+   'uses' => 'SelloController@generaSello',
+   'as' => 'componenteFirma',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit', 'Director', 'SecGral', 'Rector']
+]);

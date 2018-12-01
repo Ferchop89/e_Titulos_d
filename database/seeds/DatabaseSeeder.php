@@ -22,12 +22,12 @@ class DatabaseSeeder extends Seeder
           '_cancelacionesSep',
           '_entidades',
           '_carreras',
+          'solicitudes_sep',
           '_estudios',
           '_firmas',
           '_legales',
           '_modos',
           'lotes_unam',
-          'solicitudes_sep',
           '_status_cedula',
           '_codigos_error_feu'
       ]);

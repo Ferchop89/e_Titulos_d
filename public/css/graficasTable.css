@@ -46,6 +46,9 @@
 #collapse1 .divTableRow {
     background-color: #ececae;
 }
+#collapse2 .divTableRow {
+    background-color: #bcfea8;
+}
 .divTableRow.header {
     background-color: #89b777 !important;
 }

@@ -16,7 +16,7 @@
    <link href="{{ asset('css/solicitudesPendientes.css') }}" rel="stylesheet">
 @endsection
 @section('content')
-<div class="container solicitudes proceso_t">
+<div class="solicitudes proceso_t">
   <form class="form-group solicitud_f" method="POST" action="{{ route( 'cancelaProcesoAlumno' ) }}">
       {!! csrf_field() !!}
   <div class="d-flex justify-content-between align-items-end mb-3">
@@ -42,8 +42,8 @@
       </td>
       @if($info['solicitud'] != false)
       <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
-      <td align="center"><span><a>{{ $info['fecha_sol'] }}</a></span></td>
-      <td align="center"><span><a href=''>{{ $info['tiempo_sol'] }}</a></span></td>
+      <td align="center"><span>{{ $info['fecha_sol'] }}</span></td>
+      <td align="center"><span>{{ $info['tiempo_sol'] }}</span></td>
       @else
       <td align="center"><span class='fa fa-clock-o f_rec'/></td>
       <td></td>
@@ -53,8 +53,8 @@
       <td>Autorizado por el depto. de Títulos <input type="hidden" name="nombre" value="{{$nombre}}"></td>
       @if($info['autorizacion'] != false)
       <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
-      <td align="center"><span><a href=''>{{ $info['fecha_aut'] }}</a></span></td>
-      <td align="center"><span><a href=''>{{ $info['tiempo_aut'] }}</a></span></td>
+      <td align="center"><span><a href=".../../informacionDetallada/lote?fechaLote={{$lote}}">{{ $info['fecha_aut'] }}</a></span></td>
+      <td align="center"><span>{{ $info['tiempo_aut'] }}</span></td>
       @else
       <td align="center"><span class='fa fa-clock-o f_rec'/></td>
       <td></td>
@@ -65,7 +65,7 @@
       <td>Firmado por el depto. de Títulos <input type="hidden" name="carrera" value="{{$carrera}}"></td>
       @if($info['firma_tit'] != false)
       <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
-      <td align="center"><span><a href=''>{{ $info['fecha_tit'] }}</a></span></td>
+      <td align="center"><span><a href="{{route('detalleLote')}}">{{ $info['fecha_tit'] }}</a></span></td>
       <td align="center"><span><a href=''>{{ $info['tiempo_tit'] }}</a></span></td>
       @else
       <td align="center"><span class='fa fa-clock-o f_rec'/></td>

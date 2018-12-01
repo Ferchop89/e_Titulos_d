@@ -15,8 +15,9 @@ trait TitulosFechas {
      $query .= "INNER JOIN Carrprog ON Datos.dat_car_actual = Carrprog.carrp_cve ";
      $query .= "INNER JOIN Planteles ON plan_cve = carrp_plan ";
      //Números de cuenta problematicos
-     $query .= "WHERE (tit_ncta+tit_dig_ver)<>'503459419' AND ";
-     $query .= "(tit_ncta+tit_dig_ver)<>'503006594' AND ";
+     $query .= "WHERE ";
+     // $query .= "(tit_ncta+tit_dig_ver)<>'503459419' AND ";
+     // $query .= "(tit_ncta+tit_dig_ver)<>'503006594' AND ";
      $query .=       "(datepart(year,  tit_fec_emision_tit) = ".$fechaPartes[0]." AND ";
      $query .=       "datepart(month,  tit_fec_emision_tit) = ".$fechaPartes[1]." AND ";
      $query .=       "datepart(day,  tit_fec_emision_tit) = ".$fechaPartes[2].")";
@@ -304,7 +305,7 @@ trait TitulosFechas {
      return $mot;
    }
 
-   //Devuelve las solicitudes con staus 7 u 8 del alumno seleccionado
+   //Devuelve las solicitudes del alumno seleccionado
    public function solicitud($num_cta){
      $sql = DB::connection('condoc_eti')->select("select * from solicitudes_sep where num_cta = '".$num_cta."'");
      return $sql;

@@ -13,9 +13,8 @@ trait LotesFirma {
    {
       $errores = array();
       $errores = $this->verificarErrores($ids, $date);
-
       $sinErrores = array_diff($ids, $errores);
-      if(!empty($sinErrores))
+      if(!empty($sinErrores)) // $sinErrores contiene id's de cédulas sin errores
       {
          $msj = "";
          $idSol = "";
@@ -29,12 +28,16 @@ trait LotesFirma {
                $solicitud = SolicitudSep::find($id);
                if($solicitud->status == 1)
                {
+                  // Primero Se crea el lote para recabar firmas
+                  $this->createLote($date);
+                  //Se busca y añade id del lote
+                  $id_fecha_lote = DB::table('lotes_unam')->where('fecha_lote', $date)->first();
+                  // Segundo, se actualiza la solicitud y se le asigna el ID del Lote
                   $solicitud->status = 2;
                   $solicitud->fecha_lote = $date;
+                  $solicitud->fecha_lote_id = $id_fecha_lote->id;
                   $solicitud->save();
                   $pasoAfirma++;
-                  // Se crea el lote para recabar firmas
-                  $this->createLote($date);
                   $msj = "Se enviaron ".$pasoAfirma." registro(s) a proceso de firma.";
                   Session::flash('info', $msj);
                }

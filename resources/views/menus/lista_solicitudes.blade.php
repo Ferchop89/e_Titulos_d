@@ -63,7 +63,7 @@
       @include('errors/flash-message')
    {{-- Desplegado el acordion de solicitudes filtradas --}}
    <div align="right">
-      <form action='/registroTitulos/firma' method='post'>
+      <form action="{{route('postEnviaFirma')}}" method='post'>
          {!! csrf_field() !!}
          <div class="pre-accordion">
             <div class="div-accordion">

@@ -35,6 +35,7 @@ class CreateSolicitudesSepTable extends Migration
             $table->text('firma1')->default('');
             $table->text('firma2')->default('');
             $table->text('firma3')->default('');
+            $table->DateTime('tit_fec_DGP')->nullable();
             $table->char('sistema')->nullable();
             $table->unsignedInteger('user_id');
             $table->unsignedInteger('ws_ati'); //0 no esta en ATI, 1 para ATI, 2 no esta en WS, 3 WS
@@ -43,6 +44,7 @@ class CreateSolicitudesSepTable extends Migration
             $table->foreign('user_id')->references('id')->on('users');
             $table->foreign('status')->references('id')->on('_status_cedula');
             $table->foreign('fecha_lote_id')->references('id')->on('lotes_unam');
+            // $table->foreign('nivel')->references('cat_subcve')->on('_estudios');
         });
     }
 

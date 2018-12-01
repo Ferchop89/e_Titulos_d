@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Traits\Consultas\XmlCadenaErrores;
 use App\Models\SolicitudSep;
 use Carbon\Carbon;
+use Session;
 use Zipper;
 use DB;
 
@@ -131,12 +133,48 @@ class EnvioSep extends Controller
       //  regresamos el sello a partir de la f
       return $sello;
    }
+
    public function statusXmlZip($fechaLote)
    {
-      // Actualizamos el status de 05 (firma rector) a 06 generación del archivo xml o Zip
+      //Se obtiene fecha y hora actual
+      $hoy = new DateTime();
+      $hoyf = $hoy->format("Y-m-d H:i:s");
+      // Actualizamos el status de 06 (firma rector) a 07 generación del archivo xml o Zip (enviado DGP) y la fecha
       DB::table('solicitudes_sep')
                  ->where('fecha_lote', $fechaLote)
                  ->where('status',6)
-                 ->update(['status' => 7]);
+                 ->update(['status' => 7])
+                 ->update(['tit_fec_DGP' => $hoyf]);
+
+      //Se actualiza la misma información en las bases de datos requeridas
+      $n_cuentas = DB::connection('condoc_eti')->select('select num_cta from solicitudes_sep WHERE fecha_lote = '.$fechaLote);
+      foreach($n_cuentas as $c){
+        $num_cta = substr($c->num_cta, 0, 8);
+        $sql = DB::connection('sybase')->update('update Titulos set tit_fec_DGP = '.$hoyf.' where tit_ncta = '.$num_cta);
+      }
    }
+
+   //Cancelación de Título Electrónico
+   public function showCancelaAccion(Request $request)
+   {
+     $num_cta = $_POST['num_cta'];
+     $folioControl = "CBGE17028750"; //Especifico
+     $motivo = $_POST['motivo'];
+     $motivoCancela = DB::connection('condoc_eti')->select('select ID_MOTIVO_CAN from _cancelacionesSep WHERE id = '.$motivo);
+     $user = Auth::user();
+
+     $nodos = $this->integraNodosC($folioControl,$motivoCancela[0]->ID_MOTIVO_CAN,$user->name,$user->password);
+     $cedula = $this->cancelaTituloXml($nodos);
+     $nombreArchivo = 'xmlC/'.$folioControl.'-'.$num_cta.'.xml';
+     $cedula->save($nombreArchivo);
+
+     //----------------- ELIMINAR/ACTUALIZAR BASES DE DATOS CORRESPONDIENTES ----------------------
+
+     $msj = "Se solicitó cancelación de Título Electrónico con n° de cuenta ".$num_cta;
+     Session::flash('success', $msj);
+
+     //return view('menus/accion_cancelacion', ['num_cta' => $num_cta, 'motivo' => $motivoCancela[0]->ID_MOTIVO_CAN]);
+     return redirect()->route('cedula_cancelada', ['num_cta' => $num_cta]);
+   }
+
 }
