@@ -168,7 +168,7 @@ return [
         Barryvdh\DomPDF\ServiceProvider::class,
         Chumper\Zipper\ZipperServiceProvider::class,
         'Collective\Html\HtmlServiceProvider',
-
+        Maatwebsite\Excel\ExcelServiceProvider::class,
 
         // chartjs
         Fx3costa\LaravelChartJs\Providers\ChartjsServiceProvider::class,
@@ -239,6 +239,7 @@ return [
         'Html' => 'Collective\Html\HtmlFacade',
         'PDF' => Barryvdh\DomPDF\Facade::class,
         'Zipper' => Chumper\Zipper\Zipper::class,
+        'Excel' => Maatwebsite\Excel\Facades\Excel::class,
     ],
 
 ];

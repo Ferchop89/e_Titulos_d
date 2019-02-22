@@ -47,8 +47,8 @@ Route::post('alumnos/logout', 'Alumno\LoginController@logout')->name('alumno.log
 Route::get('/test', function(){
    $ws=new WSController();
    // $ws->ws_RENAPO('MIVL840216HMSRZR09');
-   $ws->ws_RENAPO('PAEF890101HDFCSR07');
-
+   $res = $ws->ws_RENAPO('HUGR960616MDFRNC02');
+   dd($res);
 });
 
 
@@ -195,24 +195,20 @@ foreach ($alumnos as $key => $value) {
 /*Fin de procedimientos de graficas*/
 Route::get('/nombreCarrera', 'PruebasController@carreras');
 
-Route::get('/prueba', function(){
-   $key = "7e68f8f946faf1a588b15dbfd6bc6cd09486bb78";
-   $nip = "1111111111";
-   $nip = "0000000000";
-   $nip = sha1($key);
-error_reporting(E_ALL);
+Route::get('/prueba1', function(){
+   // $key = "7e68f8f946faf1a588b15dbfd6bc6cd09486bb78";
+   $key = "9c1335b2f05e6e6075c7f25d064edf9dfc4c7222";
+   $nip = 'ivanpeña';
+   // dd($nip);
+   error_reporting(E_ALL);
 
-$postData = array(
-									// "ncta" => "414016518",
-									// "nip" => "072ce57910eec22f5538d8bc128044b1",
-									// "key"  => $key
-                           // "ncta" => "414016518",
-									// "nip" => "072ce57910eec22f5538d8bc128044b1",
-                           // "ncta" => "305016614",
-                           "ncta" => "305035929",
-                           "nip" => $nip,
-									"key"  => $key
-									);
+   $postData = array(
+   									// "ncta" => "414016518",//18
+                              "ncta" => "305117625",
+   									// "nip" => "072ce57910eec22f5538d8bc128044b1",
+                              "nip" => $nip,
+   									"key"  => $key
+   									);
 
    $ch = curl_init();
    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -222,8 +218,57 @@ $postData = array(
    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
    $data = curl_exec($ch);
-   // dd($data, $_POST, $ch, http_build_query($postData), $_GET, $_POST);
    print_r($data);
-   print_r($ch);
    curl_close($ch);
+   });
+
+
+Route::get('/prueba', function(){
+  // $key = "7e68f8f946faf1a588b15dbfd6bc6cd09486bb77"; // llave invalida
+  $key = "9c1335b2f05e6e6075c7f25d064edf9dfc4c7222"; // llave valida
+  //$nip = "11101988"; // nip valido:
+  //$nip = md5($nip_s);
+  //$cta_s = "305548337";  // cta valido:
+  $cta_s = "968602597";
+  $nip = "08081974";
+  // $cta = md5($cta_s);
+  //$nip = "072ce57910eec22f5538d8bc128044b1";
+  error_reporting(E_ALL);
+
+  $postData = array(
+                   "ncta" => $cta_s,
+                   "nip" => $nip,
+                   "key"  => $key
+                   );
+
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  curl_setopt($ch, CURLOPT_URL, "https://tramites.dgae.unam.mx/ws/soap/loginws.php");
+  curl_setopt($ch, CURLOPT_HEADER, false);
+  curl_setopt($ch, CURLOPT_POST, true);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
+  ob_start();
+  $data = curl_exec($ch);
+  ob_end_clean();
+  print_r($data);
+  print_r($data);
+  //$json = json_decode($data);
+  //print_r($json->response);
+  curl_close($ch);
 });
+
+/********* Respuestas xls, xlsx *************/
+// Llamado desde el Navegador http://132.248.205.117/e_titulos/public/hojasSep
+Route::get('/hojasSep', 'HojasCalculo@respuestaSep');
+/********************************************/
+Route::get('/RenapoError', function () {
+    return view('Exceptions/Renapo');
+});
+/***************************/
+Route::get('/enviosPDF_DGP',[
+    'uses' => 'Dashboard@usuarios',
+    'as' => 'admin/usuarios',
+    'roles' => ['Admin']
+]);//->name('users');
+/***************************/

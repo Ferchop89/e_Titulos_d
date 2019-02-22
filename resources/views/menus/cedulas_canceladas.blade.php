@@ -44,14 +44,15 @@
                     @foreach ($info as $key => $value)
                       <th class="center">{{$key+1}}</th>
                       <td>{!! $info[$key]->nivel !!}</td>
-                      <td>{!! $info[$key]->cve_carrera !!}</td>
+                      <input type="hidden" name="cve_carrera" value="{{$info[$key]->cve_carrera}}">
+                      <td>{!! $info[$key]->cve_carrera !!}  </td>
                       <td><select id="motivo" name="motivo" style="width:70%;">
               			     @foreach($motivos as $key=>$value)
                               <option value="{{ $value['id'] }}">{!! $value['DESCRIPCION_CANCELACION'] !!}</option>
               			     @endforeach
               			  </select></td>
                       <td>
-                        @if($info[0]->status == '7' || $info[0]->status == '8')
+                        @if($info[0]->status == 7)
                           <button id = "cancelaC" type="submit" class="btn btn-danger">Cancelar</button>
                         @else
                           NA

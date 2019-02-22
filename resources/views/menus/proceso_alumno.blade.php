@@ -22,9 +22,11 @@
   <div class="d-flex justify-content-between align-items-end mb-3">
     <br>
     {{-- <h2 id="titulo">{{"Proceso de Titulos : ".$nombre." - ".$num_cta}}</h2> --}}
-    <h2 id="titulo">{{$title}} <h3>{{$nombre." - ".$num_cta}}</h3></h2>
-
-    <br>
+    <h2 id="titulo">{{$title}}</h2>
+    <table style="width: 90%;" align="center">
+      <td align="center">{!! $foto !!}</td>
+      <td align="left"><h3>{{$nombre." - ".$num_cta}}</h3><h5>Nivel: [{!! $nivel !!}] {!! $n_nivel !!} | Carrera: [{!! $carrera !!}] {!! $n_carrera !!}</h5></td>
+    </table>
   </div>
   <br>
   <table style="width: 90%;" align="center" class="proceso_alumno">
@@ -53,7 +55,7 @@
       <td>Autorizado por el depto. de Títulos <input type="hidden" name="nombre" value="{{$nombre}}"></td>
       @if($info['autorizacion'] != false)
       <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
-      <td align="center"><span><a href=".../../informacionDetallada/lote?fechaLote={{$lote}}">{{ $info['fecha_aut'] }}</a></span></td>
+      <td align="center"><span>{{ $info['fecha_aut'] }}</span></td>
       <td align="center"><span>{{ $info['tiempo_aut'] }}</span></td>
       @else
       <td align="center"><span class='fa fa-clock-o f_rec'/></td>
@@ -65,8 +67,8 @@
       <td>Firmado por el depto. de Títulos <input type="hidden" name="carrera" value="{{$carrera}}"></td>
       @if($info['firma_tit'] != false)
       <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
-      <td align="center"><span><a href="{{route('detalleLote')}}">{{ $info['fecha_tit'] }}</a></span></td>
-      <td align="center"><span><a href=''>{{ $info['tiempo_tit'] }}</a></span></td>
+      <td align="center"><span><a href=".../../informacionDetallada/cuenta/lote?fechaLote={{$lote}}&num_cta={{$num_cta}}&carrera={{$carrera}}">{{ $info['fecha_tit'] }}</a></span></td>
+      <td align="center"><span>{{ $info['tiempo_tit'] }}</span></td>
       @else
       <td align="center"><span class='fa fa-clock-o f_rec'/></td>
       <td></td>
@@ -77,8 +79,8 @@
       <td>Firmado por la Directora DGAE</td>
       @if($info['firma_dgae'] != false)
       <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
-      <td align="center"><span><a href=''>{{ $info['fecha_dgae'] }}</a></span></td>
-      <td align="center"><span><a href=''>{{ $info['tiempo_dgae'] }}</a></span></td>
+      <td align="center"><span><a href=".../../informacionDetallada/cuenta/lote?fechaLote={{$lote}}&num_cta={{$num_cta}}&carrera={{$carrera}}">{{ $info['fecha_dgae'] }}</a></span></td>
+      <td align="center"><span>{{ $info['tiempo_dgae'] }}</span></td>
       @else
       <td align="center"><span class='fa fa-clock-o f_rec'/></td>
       <td></td>
@@ -89,8 +91,8 @@
       <td>Firmado por el Secretario General</td>
       @if($info['firma_sec'] != false)
       <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
-      <td align="center"><span><a href=''>{{ $info['fecha_sec'] }}</a></span></td>
-      <td align="center"><span><a href=''>{{ $info['tiempo_sec'] }}</a></span></td>
+      <td align="center"><span><a href=".../../informacionDetallada/cuenta/lote?fechaLote={{$lote}}&num_cta={{$num_cta}}&carrera={{$carrera}}">{{ $info['fecha_sec'] }}</a></span></td>
+      <td align="center"><span>{{ $info['tiempo_sec'] }}</span></td>
       @else
       <td align="center"><span class='fa fa-clock-o f_rec'/></td>
       <td></td>
@@ -101,8 +103,8 @@
       <td>Firmado por el Rector</td>
       @if($info['firma_rec'] != false)
       <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
-      <td align="center"><span><a href=''>{{ $info['fecha_rec'] }}</a></span></td>
-      <td align="center"><span><a href=''>{{ $info['tiempo_rec'] }}</a></span></td>
+      <td align="center"><span><a href=".../../informacionDetallada/cuenta/lote?fechaLote={{$lote}}&num_cta={{$num_cta}}&carrera={{$carrera}}">{{ $info['fecha_rec'] }}</a></span></td>
+      <td align="center"><span>{{ $info['tiempo_rec'] }}</span></td>
       @else
       <td align="center"><span class='fa fa-clock-o f_rec'/></td>
       <td></td>

@@ -19,13 +19,12 @@
                           {{ csrf_field() }}
 
                           <div class="login-form form-group{{ $errors->has('num_cta') ? ' has-error' : '' }}">
-                              {{-- <label for="num_cta" class="col-md-4 control-label">Número de Cuenta</label> --}}
                               <div class="input-group input-group-custom">
                 						<div class="input-group-addon input-group-addon-custom">
                                     <div class="icon-uno user"></div>
                 						</div>
-                						<input id="num_cta" type="num_cta" class="form-control" name="num_cta" value="{{ old('num_cta') }}" placeholder="Número de Cuenta" maxlength="9" required autofocus>
-                				   </div>
+                						<input id="num_cta" type="num_cta" style="width:90%;" class="form-control" name="num_cta" value="{{ old('num_cta') }}" placeholder="Número de Cuenta" maxlength="9" required autofocus>
+                           </div>
                               @if ($errors->has('num_cta'))
                                   <span class="help-block">
                                       <strong>{{ $errors->first('num_cta') }}</strong>
@@ -39,8 +38,15 @@
                 							<div class="input-group-addon input-group-addon-custom">
                                       <div class="icon-dos lock" aria-hidden="true"></div>
                 							</div>
-                                  <input id="password" type="password" class="form-control" name="password" placeholder="Contraseña ddmmaaaa" maxlength="8" required autofocus>
-                				   </div>
+                              <input id="password" type="password" style="width:90%;" class="form-control" name="password" placeholder="Contraseña" maxlength="10" required autofocus>
+                              <div class="tooltip">
+                                <span> <i class="fa fa-question-circle"></i> </span>
+                                <!-- <span class="tooltiptext">Corresponde a la contraseña que usas para SIAE.
+                                    <br><br>
+                                    En caso de ser alumno de una escuela incorporada, corresponderá a tu fecha de nacimiento con formato <i>ddmmaaaa.</i>
+                                </span> -->
+                              </div>
+                           </div>
                               @if ($errors->has('password'))
                                   <span class="help-block">
                                       <strong>{{ $errors->first('password') }}</strong>
@@ -51,21 +57,27 @@
                               <div class="alert alert-danger">{{ Session::get('message') }}</div>
                            @endif
                           <div class="form-group">
-                              <div class="center">
-                                  <button type="submit" class="btn btn-primary">
-                                      Acceder
-                                  </button>
-
-                                  {{-- <a class="btn btn-link" href="{{ route('alumno.forgot') }}">
-                                      Haz olvidado tu contraseña?
-                                  </a> --}}
-                              </div>
+                            <div class="center">
+                              <br>
+                              <button type="submit" class="btn btn-primary">
+                                Acceder
+                              </button>
+                            </div>
                           </div>
                       </form>
                   </div>
+              </div>
+              <div class="aclaracion">
+                <br><br>
+                <i class="fa fa-question-circle"></i><b>:</b>
+                <span> <b>Corresponde a la contraseña que usas para SIAE, o bien, para Posgrado.</b>
+                  En caso de ser alumno de una escuela incorporada, corresponderá a tu fecha de nacimiento con formato <i>ddmmaaaa.</i>
+                </span>
               </div>
           {{-- </div> --}}
       </div>
     </div>
 {{-- </div> --}}
+@endsection
+@section('animaciones')
 @endsection

@@ -26,7 +26,7 @@
                <td>
                   <div align="left">
                      <label for="fecha"> Selecciona una fecha: </label>
-                     <input id="fecha" type="date" name="fecha">
+                     <input name = "fecha" type="text" id="datepicker" value ={{$fecha_formato}}>
                      <span>
                         <input type="submit" class="btn btn-primary waves-effect waves-light" name="consultar_fecha" value="Solicitar"/>
                      </span>
@@ -49,6 +49,9 @@
   @if(count($lote)>0)
  {!! csrf_field() !!}
  {!! $acordeon !!}
+ <div class="paginador">
+     {{ $lote->links()}}
+ </div>
 </form>
 
   @else
@@ -63,4 +66,5 @@
 @endsection
 @section('animaciones')
    <script src="{{asset('js/check.js')}}"></script>
+   <script  src="{{ asset('js/datepickerFirmas.js') }}" ></script>
 @endsection

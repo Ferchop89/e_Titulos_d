@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="ISO-8859-1"?>
+<definitions
+	xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+	xmlns:tns="urn:return_identidad"
+	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+	xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="urn:return_identidad">
+	<types>
+		<xsd:schema targetNamespace="urn:return_identidad"
+>
+			<xsd:import namespace="http://schemas.xmlsoap.org/soap/encoding/" />
+			<xsd:import namespace="http://schemas.xmlsoap.org/wsdl/" />
+			<xsd:complexType name="Alumno">
+				<xsd:all>
+					<xsd:element name="key" type="xsd:string"/>
+					<xsd:element name="cta" type="xsd:string"/>
+				</xsd:all>
+			</xsd:complexType>
+			<xsd:complexType name="Datos">
+				<xsd:all>
+					<xsd:element name="cuenta" type="xsd:string"/>
+					<!-- <xsd:element name="curp" type="xsd:string"/>
+					<xsd:element name="curp-validada" type="xsd:int"/>
+					<xsd:element name="apellido1" type="xsd:string"/>
+					<xsd:element name="apellido2" type="xsd:string"/>
+					<xsd:element name="nombres" type="xsd:string"/>
+					<xsd:element name="nacimiento" type="xsd:string"/>
+					<xsd:element name="sexo" type="xsd:string"/>
+					<xsd:element name="nacionalidad" type="xsd:int"/>
+					<xsd:element name="entidad-nacimiento" type="xsd:string"/>
+					<xsd:element name="correo1" type="xsd:string"/>
+					<xsd:element name="correo2" type="xsd:string"/>
+					<xsd:element name="telefono-casa" type="xsd:string"/>
+					<xsd:element name="telefono-oficina" type="xsd:string"/>
+					<xsd:element name="extension" type="xsd:string"/>
+					<xsd:element name="telefono-celular" type="xsd:string"/>
+					<xsd:element name="telefono-extranjero" type="xsd:string"/>
+					<xsd:element name="calle" type="xsd:string"/>
+					<xsd:element name="colonia" type="xsd:string"/>
+					<xsd:element name="codigo-postal" type="xsd:int"/>
+					<xsd:element name="delegacion-municipio" type="xsd:string"/>
+					<xsd:element name="entidad-federativa" type="xsd:int"/>
+					<xsd:element name="actualizacion-domicilio" type="xsd:dateTime"/>
+					<xsd:element name="mensaje" type="xsd:string"/> -->
+				</xsd:all>
+			</xsd:complexType>
+		</xsd:schema>
+	</types>
+	<message name="return_identidadRequest">
+		<part name="alumno" type="tns:Alumno" />
+	</message>
+	<message name="return_identidadResponse">
+		<part name="return" type="tns:Datos" />
+	</message>
+	<portType name="ssre_idn_srvPortType">
+		<operation name="return_identidad">
+			<documentation>Servicio de consulta de identidad</documentation>
+			<input message="tns:return_identidadRequest"/>
+			<output message="tns:return_identidadResponse"/>
+		</operation>
+	</portType>
+	<binding name="ssre_idn_srvBinding" type="tns:ssre_idn_srvPortType">
+		<soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<operation name="return_identidad">
+			<soap:operation soapAction="urn:SOAP_return_identidad#return_identidad" style="rpc"/>
+			<input>
+				<soap:body use="encoded" namespace="urn:SOAP_return_identidad" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+			</input>
+			<output>
+				<soap:body use="encoded" namespace="urn:SOAP_return_identidad" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
+			</output>
+		</operation>
+	</binding>
+	<service name="ssre_idn_srv">
+		<port name="ssre_idn_srvPort" binding="tns:ssre_idn_srvBinding">
+			<soap:address location="https://www.dgae-siae.unam.mx:443/ws/soap/dgae_idn_srv.php"/>
+		</port>
+	</service>
+</definitions>

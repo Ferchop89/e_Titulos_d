@@ -19,7 +19,7 @@ use App\Http\Controllers\Admin\WSController;
 
 trait XmlCadenaErrores {
 
-   public function integraConsulta($cuenta, $digito, $carrera)
+   public function integraConsulta($cuenta, $digito, $carrera, $consulta_datos)
    {
       // Integra toda la informacion que previamente ha sido segmentada por temas correspondientes a cada nodos
       // genera una arreglo con 3 arreglos, datos: arreglo con todos los items a enviar a sep; errores: arreglo
@@ -82,7 +82,8 @@ trait XmlCadenaErrores {
       }
       $items = array_merge($items,$consulta);
       // Quinta consultaDatos
-      $consulta = $this->titulosDatos($cuenta,$digito,$carrera);
+      //$consulta = $this->titulosDatos($cuenta,$digito,$carrera); //Lo pasamos como parámetro para evitar reétir mucho código
+      $consulta = $consulta_datos;
       if (isset($consulta['errores'])!=null) {
          $errores = array_merge($errores,$consulta['errores']);
          unset($consulta['errores']);
@@ -434,30 +435,30 @@ trait XmlCadenaErrores {
    }
    public function titulosDatosWs($cuenta,$digito,$carrera)
    {
-      // El nombre viene conbinado, se consulta, se divide en nombre y apellidos; y se omite del arreglo
+      // El nombre viene combinado, se consulta, se divide en nombre y apellidos; y se omite del arreglo
       $query1 = 'SELECT DISTINCT ';
       $query1 .= "dat_nombre AS _17_nombre ";
       $query1 .= "FROM Titulos ";
       $query1 .= "JOIN Datos ON dat_ncta = tit_ncta  AND dat_car_actual = tit_plancarr AND dat_nivel = tit_nivel ";
       $query1 .= "where dat_ncta = '".$cuenta."' and dat_dig_ver = '".$digito."' and tit_plancarr='".$carrera."'";
 
-      $query2  = 'SELECT DISTINCT ';
-      $query2 .= 'apellido1,apellido2,nombres, ';
-      $query2 .= 'curp AS _16_curp, ';
-      $query2 .= 'correo AS _20_correoElectronico, ';
-      $query2 .= 'autoriza ' ;
-      $query2 .= 'FROM alumnos ';
-      // $query2 .= "where num_cta = '".$cuenta.$digito."'";
-      $query2 .= "where num_cta = '".$cuenta.$digito."' and ";
-      $query2 .= "autoriza = 1 ";
+      // $query2  = 'SELECT DISTINCT ';
+      // $query2 .= 'apellido1,apellido2,nombres, ';
+      // $query2 .= 'curp AS _16_curp, ';
+      // $query2 .= 'correo AS _20_correoElectronico, ';
+      // $query2 .= 'autoriza ' ;
+      // $query2 .= 'FROM alumnos ';
+      // // $query2 .= "where num_cta = '".$cuenta.$digito."'";
+      // $query2 .= "where num_cta = '".$cuenta.$digito."' and ";
+      // $query2 .= "autoriza = 1 ";
 
       // Traemos los datos desde la bdd que los alumnos actualizan y del condoc
       $info_sybase = (array)DB::connection('sybase')->select($query1);
-      $info_mysql = DB::connection('condoc_ati')->select($query2);
+      //$info_mysql = DB::connection('condoc_ati')->select($query2); DEJAMOS DE REVISAR EN ATI, SOLO CONSULTAMOS EN WS.
 
       $datos = $errores = array();
       // Consultamos si el usuario y actualizo los datos
-      if ($info_mysql==[]) {
+      // if ($info_mysql==[]) {
          // El usuario aun no ha actualizado los datos
          // entonces los buscamos en el Web_Service
          $ws_SIAE = Web_Service::find(2);
@@ -520,17 +521,17 @@ trait XmlCadenaErrores {
                   $errores['_16_curp'] = 'Sin autorización';
                }
 
-      } else
-      {
-         // El usuario si ha registrado los datos
-         $datos['_16_curp']               = $info_mysql[0]->_16_curp;
-         $datos['_17_nombre']             = $info_mysql[0]->nombres;
-         $datos['_18_primerApellido']     = $info_mysql[0]->apellido1;
-         $datos['_19_segundoApellido']    = $info_mysql[0]->apellido2;
-         $datos['_20_correoElectronico']  = $info_mysql[0]->_20_correoElectronico;
-         // La actulizacion es via ati
-         $datos['fuente'] = '1'; // ati
-      }
+      // } else
+      // {
+      //    // El usuario si ha registrado los datos
+      //    $datos['_16_curp']               = $info_mysql[0]->_16_curp;
+      //    $datos['_17_nombre']             = $info_mysql[0]->nombres;
+      //    $datos['_18_primerApellido']     = $info_mysql[0]->apellido1;
+      //    $datos['_19_segundoApellido']    = $info_mysql[0]->apellido2;
+      //    $datos['_20_correoElectronico']  = $info_mysql[0]->_20_correoElectronico;
+      //    // La actulizacion es via ati
+      //    $datos['fuente'] = '1'; // ati
+      // }
       if ($errores!=[]) {
          $datos['errores'] = $errores;
       }
@@ -897,6 +898,14 @@ trait XmlCadenaErrores {
     // Generación del XML del Titulo Electrónico,
    public function tituloXml($nodos)
    {
+      // Crea el XML a partir de una arreglos
+      // Elimina los atributos de numeroRvoe y noCedula en caso de que no tenga el dato..
+      if ($nodos['Carrera']['numeroRvoe']=='----') {
+            unset($nodos['Carrera']['numeroRvoe']);
+      }
+      if ($nodos['Antecedente']['noCedula']=='----') {
+            unset($nodos['Antecedente']['noCedula']);
+      }
       $tituloXML = new FluidXml('TituloElectronico');
       foreach ($nodos['TituloElectronico'] as $key => $value) {
         $tituloXML->setAttribute($key, $value);
@@ -1275,7 +1284,8 @@ trait XmlCadenaErrores {
       // Busca en Condoc, los datos y errores del actual numero de cuenta y carrera
       $listaErrores = array();
       // Consulta el conjunto con destino al campo "datos" de solicitudes_sep (contiene datos y errores)
-      $datosyerrores = $this->integraConsulta($cuenta8,$digito,$carrera);
+      $consulta_datos = $this->titulosDatos($cuenta8,$digito,$carrera);
+      $datosyerrores = $this->integraConsulta($cuenta8,$digito,$carrera, $consulta_datos);
       // actualizamos datos y errores, fecha_emision_tit, libro, foja y folio.
       if(count($infoFLFF)!==0)
       {
@@ -1299,6 +1309,47 @@ trait XmlCadenaErrores {
          $this->actualizaFLFF($dato->num_cta, $dato->cve_carrera);
       }
    }
+   public function actualizarXWS($ids){
+     foreach ($ids as $value) {
+        $dato = SolicitudSep::find($value);
+        $this->actualizaWS($dato->num_cta, $dato->cve_carrera);
+     }
+   }
+   public function actualizaWS($cuenta9,$carrera){
+     // Actualiza la información de una solicitud sep.
+     $digito = substr($cuenta9,8,1);
+     $cuenta8 = substr($cuenta9,0,8);
+     // localizamos el registro en la tabla soslicitudes-sep (el noCta de tener 9 char)
+     $dato = SolicitudSep::where('num_cta',$cuenta9)->
+                           where('cve_carrera',$carrera)->first();
+     // Busca en  Solicitudes-Sep la fecha de emsión del titulo, el folio y la fecha proveniente de Condoc
+     $query  = 'SELECT  ';
+     $query .= 'tit_fec_emision_tit AS fechaE, ';
+     $query .= 'tit_libro, tit_folio, tit_foja ';
+     $query .= 'FROM Titulos ';
+     $query .= "where tit_ncta = '".$cuenta8."' and tit_plancarr='".$carrera."'";
+     $infoFLFF = (array)DB::connection('sybase')->select($query);
+     $fechaE = Carbon::parse($infoFLFF[0]->fechaE);
+     // Busca en Condoc, los datos y errores del actual numero de cuenta y carrera
+     $listaErrores = array();
+     // Consulta el conjunto con destino al campo "datos" de solicitudes_sep (contiene datos y errores)
+     $consulta_datos = $this->titulosDatosWs($cuenta8,$digito,$carrera);
+     $datosyerrores = $this->integraConsulta($cuenta8,$digito,$carrera, $consulta_datos);
+     // actualizamos datos y errores, fecha_emision_tit, libro, foja y folio.
+     if(count($infoFLFF)!==0)
+     {
+        // Actualizamos los 4 campos en Solicitudes Sep.
+        DB::table('solicitudes_sep')
+                   ->where('id', $dato->id)
+                   ->update(['fec_emision_tit' => $fechaE,
+                             'libro'   => trim($infoFLFF[0]->tit_libro),
+                             'foja'    => trim($infoFLFF[0]->tit_foja),
+                             'folio'   => trim($infoFLFF[0]->tit_folio),
+                             'datos'   => serialize($datosyerrores[0]),
+                             'errores' => serialize($datosyerrores[1])
+                    ]);
+     }
+   }
    public function actualiza()
    {
       $lists = SolicitudSep::all();
@@ -1310,7 +1361,8 @@ trait XmlCadenaErrores {
          $cuenta = substr($elemento->num_cta,0,8);
          $carrera = $elemento->cve_carrera;
          // $cuenta = '08140248';$carrera = '0025139'; $digito = '9';
-         $datos = $this->integraConsulta($cuenta,$digito,$carrera);
+         $consulta_datos = $this->titulosDatos($cuenta,$digito,$carrera);
+         $datos = $this->integraConsulta($cuenta,$digito,$carrera, $consulta_datos);
          // En esta seccion se consultan los sellos del registro de usuario.
          $sello1 = 'Sello 1'; $sello2 = 'Sello2'; $sello3 = 'Sello3';
          $nodos = $this->IntegraNodos($datos[0],$sello1,$sello2,$sello3);
@@ -1357,7 +1409,8 @@ trait XmlCadenaErrores {
          $digito = substr($elemento->num_cta,8,1);
          $cuenta = substr($elemento->num_cta,0,8);
          $carrera = $elemento->cve_carrera;
-         $datos = $this->integraConsulta($cuenta,$digito,$carrera);
+         $consulta_datos = $this->titulosDatos($cuenta,$digito,$carrera);
+         $datos = $this->integraConsulta($cuenta,$digito,$carrera, $consulta_datos);
          dd('actualiza por fecha');
          if (isset($datos[1])==null) {
             $errores = 'Sin errores';

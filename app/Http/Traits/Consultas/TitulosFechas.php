@@ -9,11 +9,12 @@ trait TitulosFechas {
 
   public function consultaTitulosDate($fecha)
   {
+     // incorporacion de solicitudes por fecha de emision de título9
      $fechaPartes = explode("-", $fecha);
      $query = "SELECT tit_ncta+tit_dig_ver AS num_cta, dat_nombre, dat_sistema, tit_plancarr, tit_nivel, carrp_nombre, carrp_plan, plan_nombre, tit_fec_emision_tit, tit_libro, tit_foja, tit_folio FROM Titulos ";
      $query .= "INNER JOIN Datos ON Titulos.tit_ncta = Datos.dat_ncta AND Titulos.tit_plancarr = Datos.dat_car_actual ";
      $query .= "INNER JOIN Carrprog ON Datos.dat_car_actual = Carrprog.carrp_cve ";
-     $query .= "INNER JOIN Planteles ON plan_cve = carrp_plan ";
+     $query .= "LEFT JOIN Planteles ON plan_cve = carrp_plan ";
      //Números de cuenta problematicos
      $query .= "WHERE ";
      // $query .= "(tit_ncta+tit_dig_ver)<>'503459419' AND ";
@@ -23,17 +24,6 @@ trait TitulosFechas {
      $query .=       "datepart(day,  tit_fec_emision_tit) = ".$fechaPartes[2].")";
      // consulta
      $datos = DB::connection('sybase')->select($query);
-     // $cuenta = 1;
-     // foreach ($datos as $key => $value) {
-     //    // // if ($value->num_cta=='503459419') {
-     //    // //
-     //    // // }
-     //    echo "<p>";
-     //    // echo "orden ".$cuenta++.' cuenta: '.$value->num_cta.'   carrera:'.$value->tit_plancarr;
-     //    echo $cuenta++.','.$value->num_cta.','.$value->tit_plancarr;
-     //    echo "</p>";
-     // }
-     // dd("fin");
      return $datos;
   }
   public function consultaFotos($num_cta){
@@ -51,12 +41,36 @@ trait TitulosFechas {
      }
      return $info;
   }
+  public function consultaFotosMin($num_cta){
+     $info = DB::connection('sybase_fotos')->table('Fotos')->where('foto_ncta', $num_cta)->get();
+     // $info = '';
+     if($info->isEmpty())
+     // if($info == '')
+     {
+        $info = "<img src ='/images/sin_imagen.png' />";
+     }
+     else {
+        if(count($info) >=1)
+           $info = $info[count($info)-1];
+        $info = '<img src="data:image/jpeg;base64,'.base64_encode( $info->foto_foto ).'" width="96" height="125" />';
+     }
+     return $info;
+  }
   public function consultaDatos($cuenta, $verif){
-     $info = DB::connection('sybase')->table('Datos')->select('dat_curp', 'dat_nombre')->where('dat_ncta', $cuenta)->where('dat_dig_ver', $verif)->orderBy('dat_fecha_alta', 'desc')->first();
+     $info = array();
+     $sql = DB::connection('condoc_ati')->table('alumnos')->select('curp', 'apellido1', 'apellido2', 'nombres')->where('num_cta', $cuenta.$verif)->first();
+     if(isset($sql)){
+       $info['dat_curp'] = $sql->curp;
+       $info['dat_nombre'] = $sql->apellido1."*".$sql->apellido2."*".$sql->nombres;
+       $info = (Object) $info;
+     }else{
+       $info = DB::connection('sybase')->table('Datos')->select('dat_curp', 'dat_nombre')->where('dat_ncta', $cuenta)->where('dat_dig_ver', $verif)->orderBy('dat_fecha_alta', 'desc')->first();
+     }
      return $info;
   }
   public function consultaTitulos($cuenta, $verif){
      // 307255482
+     // Incorporacion de solicitudes por numero de cuenta.
      $query = "SELECT tit_plancarr, tit_nivel, carrp_nombre, carrp_plan, plan_nombre, tit_fec_emision_tit, tit_libro, tit_foja, tit_folio FROM Titulos ";
      // $query = "SELECT tit_plancarr, tit_nivel, carrp_nombre FROM Titulos ";
      $query .= "INNER JOIN Datos ON Titulos.tit_ncta = Datos.dat_ncta AND Titulos.tit_plancarr = Datos.dat_car_actual ";
@@ -97,7 +111,8 @@ trait TitulosFechas {
       $dato = SolicitudSep::where('num_cta',$num_cta)->
                             where('cve_carrera',$cve_carrera)->first();
       // Realizamos la consulta que contiene datos y (si tiene) errores;
-      $datosyerrores = $this->integraConsulta(substr($num_cta,0,8),substr($num_cta,8,1),$cve_carrera);
+      $consulta_datos = $this->titulosDatos(substr($num_cta,0,8),substr($num_cta,8,1),$cve_carrera);
+      $datosyerrores = $this->integraConsulta(substr($num_cta,0,8),substr($num_cta,8,1),$cve_carrera,$consulta_datos);
       if (!count($dato))
       {
          if($sistema == 2){
@@ -152,12 +167,13 @@ trait TitulosFechas {
       $usuario = new Alumno();
       $usuario->num_cta = $num_cta;
       $usuario->password = bcrypt($pass);
-      $usuario->apellido1 = $apellido1;
-      $usuario->apellido2 = $apellido2;
-      $usuario->nombres = $nombres;
+      $usuario->apellido1 = utf8_encode($apellido1);
+      $usuario->apellido2 = utf8_encode($apellido2);
+      $usuario->nombres = utf8_encode($nombres);
       $usuario->curp = $curp;
       $usuario->correo = $correo;
       $usuario->save();
+      return $usuario;
    }
    public function consultaFechaNac($cuenta, $verif){
       $fecha_nac = DB::connection('sybase')->table('Datos')->select('dat_fec_nac')->where('dat_ncta', $cuenta)->where('dat_dig_ver', $verif)->orderBy('dat_fecha_alta', 'desc')->first();
@@ -200,21 +216,26 @@ trait TitulosFechas {
       // $curp = null;carreraNombre
       if($curp == null)
       {
-        $ws_SIAE = Web_Service::find(2);
-        $identidad = new WSController();
-        $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, $cuenta.$verif, $ws_SIAE->key);
-
-        //Verificamos si el alumno se encuentra en SIAE
-        if(isset($identidad) && (isset($identidad->mensaje) && $identidad->mensaje == "El Alumno existe"))
-        {
-           //Obtenemos el curp - SIAE
-          $curp = $identidad->curp;
-        }
-        else{ //Si no, obtenemos curp de DGIRE
-          $ws_DGIRE = new WSController();
-          $ws_DGIRE = $ws_DGIRE->ws_DGIRE($cuenta.$verif);
-          $info = $ws_DGIRE->respuesta->datosAlumnos->datosAlumno;
+        $info = DB::connection('condoc_ati')->table('alumnos')->select('curp')->where('num_cta', $cuenta.$verif)->first();
+        if(isset($info)){
           $curp = $info->curp;
+        }else{
+          $ws_SIAE = Web_Service::find(2);
+          $identidad = new WSController();
+          $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, $cuenta.$verif, $ws_SIAE->key);
+
+          //Verificamos si el alumno se encuentra en SIAE
+          if(isset($identidad) && (isset($identidad->mensaje) && $identidad->mensaje == "El Alumno existe"))
+          {
+             //Obtenemos el curp - SIAE
+            $curp = $identidad->curp;
+          }
+          else{ //Si no, obtenemos curp de DGIRE
+            $ws_DGIRE = new WSController();
+            $ws_DGIRE = $ws_DGIRE->ws_DGIRE($cuenta.$verif);
+            $info = $ws_DGIRE->respuesta->datosAlumnos->datosAlumno;
+            $curp = $info->curp;
+          }
         }
 
       }

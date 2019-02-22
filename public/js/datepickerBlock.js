@@ -28,9 +28,9 @@ $(document).ready(function(){
   var fechas = new Array();
   var rango = new Array();
   var URLactual = window.location;
-console.log('antes del if');
-  if (URLactual=="https://132.248.205.117/registroTitulos/firmas_busqueda/seleccion") {
-     console.log('URLactual https://132.248.205.117/registroTitulos/firmas_busqueda/seleccion');
+  //console.log('antes del if');
+  if (URLactual=="http://132.248.205.117/e_titulos/public/registroTitulos/firmas_busqueda/seleccion") {
+     //console.log('URLactual https://132.248.205.117/registroTitulos/firmas_busqueda/seleccion');
      $.get('../lista-solicitudes/cedulasPen2', null, function( data)
      {
       $.each( data, function( key, val) {
@@ -41,7 +41,7 @@ console.log('antes del if');
      });
   }
   else {
-     console.log('hola');
+     //console.log('hola');
      $.get('cedulasPen2', null, function( data)
      {
       $.each( data, function( key, val) {
@@ -101,7 +101,6 @@ console.log('antes del if');
     rango.push(Math.min.apply(null, noEnv));
     rango.push(Math.max.apply(null, noEnv));
   }
-
   $('#datepicker').datepicker(
   {
       /*Boton para eliminar fecha*/

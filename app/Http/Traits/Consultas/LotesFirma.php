@@ -22,6 +22,7 @@ trait LotesFirma {
          $noPasoAfirma = 0;
          // $ids representa el conjunto de registros sin errores que se autorizan a firma
          $divIds = array_chunk($sinErrores, 100, true);
+         // $divIds = array_chunk($sinErrores, 500, true);
          foreach ($divIds as $key => $datos) {
             foreach ($datos as $id) {
                // actualizamos la tabla Selicitudes_sep en los campos status y fecha_lote
@@ -133,6 +134,11 @@ trait LotesFirma {
    public function motivosCancelacion(){
      $motivos = Cancela::all();
      return $motivos;
+   }
+
+   public function nombreNivel($nivel){
+     $nombre = DB::connection('condoc_eti')->select('select cat_nombre from _estudios WHERE cat_subcve = '.$nivel);
+     return $nombre[0]->cat_nombre;
    }
 
    //Verifica si la solicitud fue cancelada

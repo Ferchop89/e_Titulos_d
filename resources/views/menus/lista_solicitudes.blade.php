@@ -71,6 +71,7 @@
             </div>
          </div>
          <input type='submit' id="btn-update" class="btn btn-primary waves-effect waves-light b_btn" name='actualizar' value='Actualizar Información'/>
+         <input type='submit' id="btn-update-WS" class="btn btn-primary waves-effect waves-light b_btn" name='actualizar_WS' value='Actualizar por WS'/>
          <input type='submit' id="btn-enviar" class="btn btn-primary waves-effect waves-light b_btn" name='enviar' value='Enviar a Firma'/>
       </form>
     </div>

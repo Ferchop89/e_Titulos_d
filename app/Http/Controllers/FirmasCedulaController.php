@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 use \Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Models\{LotesUnam, SolicitudSep};
+use App\Models\{LotesUnam, SolicitudSep, Estudio};
 use Illuminate\Support\Facades\Auth;
 use App\Http\Traits\Consultas\XmlCadenaErrores;
 use App\Http\Traits\Consultas\TitulosFechas;
 use Carbon\Carbon;
+use DateTime;
 use Response;
 use Session;
 use DB;
@@ -258,7 +259,8 @@ class FirmasCedulaController extends Controller
          $querySol .= "WHERE DATE_FORMAT(fec_emision_tit,'%d/%m/%Y') = '$fecha_formato' AND ";
          $querySol .= "status != 1 ";
          $querySol .= "ORDER BY fecha_lote_id DESC, ";
-         $querySol .= "LPAD(foja,3,'0')+LPAD(folio,3,0) ASC";
+         $querySol .= "CAST(libro AS UNSIGNED INTEGER) ASC, CAST(foja AS UNSIGNED INTEGER) ASC, CAST(folio AS UNSIGNED INTEGER) DESC";
+         // $querySol .= "libro+LPAD(foja,4,'0')+LPAD(folio,4,0) ASC";
          // $querySol .= "ORDER BY LPAD(fecha_lote_id,5,'0')+";
          $solicitudes = DB::connection('condoc_eti')
                   ->select($querySol);
@@ -289,6 +291,7 @@ class FirmasCedulaController extends Controller
         return null;
       }
    }
+
    public function dataSolicitudes(Request $request)
    {
       // dd($request->all());
@@ -335,10 +338,10 @@ class FirmasCedulaController extends Controller
             $queryLotes .= "AND fecha_lote_id IS NOT NULL ";
             $queryLotes .= "ORDER BY fecha_lote_id DESC,LPAD(foja,4,'0'),LPAD(folio,4,0)";
             // Menu fojas tienen las fojas correspondientes a lote
-            //El menú fojas contienen todas las fojas de la lote y fecha de emión de titulosDatos
             $queryFojas  = "select DISTINCT foja from solicitudes_sep ";
             $queryFojas .= "WHERE fecha_lote_id = '$lote' AND ";
             $queryFojas .= "status > 1 ";
+            $queryFojas .= "ORDER BY foja ASC";
             // solicitudes
             $querySol  = "SELECT id, fec_emision_tit, fecha_lote_id, libro, foja, folio, ";
             $querySol .= "num_cta, nombre_completo, nivel, cve_carrera, sistema, datos, ";
@@ -350,7 +353,8 @@ class FirmasCedulaController extends Controller
             $querySol .= "fecha_lote_id = '$lote' AND foja = '$foja' AND " ;
             $querySol .= "status > 1 ";
             $querySol .= "ORDER BY fecha_lote_id DESC, ";
-            $querySol .= "LPAD(foja,4,'0')+LPAD(folio,4,0) ASC";
+            $querySol .= "CAST(libro AS UNSIGNED INTEGER) ASC, CAST(foja AS UNSIGNED INTEGER) ASC, CAST(folio AS UNSIGNED INTEGER) DESC";
+            // $querySol .= "libro ASC, foja ASC, folio DESC ";
          } else { //
             // Menu lotes contiene todas los lotes de la fecha de emisión de titutlos
             $queryLotes  = "SELECT DISTINCT fecha_lote_id AS loteId, DATE_FORMAT(fecha_lote,'%d-%m-%Y %h:%i:%s') AS lote ";
@@ -364,6 +368,7 @@ class FirmasCedulaController extends Controller
             $queryFojas  = "select DISTINCT foja from solicitudes_sep ";
             $queryFojas .= "WHERE fecha_lote_id = '$lote' AND ";
             $queryFojas .= "status > 1 ";
+            $queryFojas .= "ORDER BY foja ASC";
             // Las solicitudes corresponden a la Fecha de emisióń de titulos y del lote correspondiente
             $querySol  = "SELECT id, fec_emision_tit, fecha_lote_id, libro, foja, folio, ";
             $querySol .= "num_cta, nombre_completo, nivel, cve_carrera, sistema, datos, ";
@@ -375,7 +380,8 @@ class FirmasCedulaController extends Controller
             $querySol .= "fecha_lote_id = '$lote' AND ";
             $querySol .= "status > 1 ";
             $querySol .= "ORDER BY fecha_lote_id DESC, ";
-            $querySol .= "LPAD(foja,4,'0')+LPAD(folio,4,0) ASC";
+            $querySol .= "CAST(libro AS UNSIGNED INTEGER) ASC, CAST(foja AS UNSIGNED INTEGER) ASC, CAST(folio AS UNSIGNED INTEGER) DESC";
+            // $querySol .= "libro ASC, foja ASC, folio DESC ";
          }
       }else{ // No se especifica el lote y se especifica la foja
          if ($foja!=0) { // existe el valor de Lote
@@ -402,7 +408,7 @@ class FirmasCedulaController extends Controller
             $querySol .= "WHERE DATE_FORMAT(fec_emision_tit,'%d/%m/%Y') = '$fecha' AND ";
             $querySol .= "foja = '$foja' AND status<>1 ";
             $querySol .= "ORDER BY fecha_lote_id DESC, ";
-            $querySol .= "LPAD(foja,4,'0')+LPAD(folio,4,0) ASC";
+            $querySol .= "libro ASC, foja ASC, folio DESC ";
          } else { // Sin lote y sin Foja
             // Menu lotes contiene todas los lotes de la fecha de emisión de titutlos
             $queryLotes  = "SELECT DISTINCT fecha_lote_id AS loteId, DATE_FORMAT(fecha_lote,'%d-%m-%Y %h:%i:%s') AS lote ";
@@ -426,7 +432,8 @@ class FirmasCedulaController extends Controller
             // $querySol .= "fecha_lote_id = '$lote' AND ";
             $querySol .= "status > 1 ";
             $querySol .= "ORDER BY fecha_lote_id DESC, ";
-            $querySol .= "LPAD(foja,4,'0')+LPAD(folio,4,0) ASC";
+            // $querySol .= "LPAD(foja,4,'0')+LPAD(folio,4,0) ASC";
+            $querySol .= "libro ASC, foja ASC, folio ASC";
          }
       }
 
@@ -670,6 +677,7 @@ class FirmasCedulaController extends Controller
 
    public function showProgreso()
    {
+      // Genera archivo de envio zip/xml y envia al WS de la SEP
       $totalF = array();
       $queryFecha = '';
       $title = "Progreso de Firmas";
@@ -738,7 +746,7 @@ class FirmasCedulaController extends Controller
       $composite .=              "Fecha de Lote: ";
       $composite .=              "<a href=";
       $var = $data[$i]->fecha_lote;
-      $composite .=                 "'/registroTitulos/informacionDetallada/lote?fechaLote=$var'";
+      $composite .=                 "'.../../informacionDetallada/lote?fechaLote=$var'";
       $composite .=              ">".$data[$i]->fecha_lote."</a>";
       $composite .=           "</p>";
       $composite .=        "</div>";
@@ -843,47 +851,58 @@ class FirmasCedulaController extends Controller
      }
      $fecha_formato = ''; $aux = ''; $lote = array();
      switch ($roles_us[0]) {
-        case 'Director':
-           $fecha = DB::table('lotes_unam')->where('firma1', '1')->orderBy('fec_firma1', 'desc')->first();
+        case 'Jtit':
+           $lote = NULL;
+           $num=0;
+           $fecha = DB::table('lotes_unam')->where('firma'.$num, '1')->orderBy('fec_firma'.$num, 'desc')->first();
            if($fecha != null)
            {
-             $fecha_formato = Carbon::parse($fecha->fec_firma1)->format('d/m/Y');
-            $aux = Carbon::parse($fecha->fec_firma1)->format('Y-m-d');
-            $lote = DB::connection('condoc_eti')
-                   ->select('select * from lotes_unam WHERE firma1 LIKE "1" AND fecha_lote LIKE "'.$aux.'%" order by id');
+              $fecha_formato = Carbon::parse($fecha->fec_firma0)->format('d/m/Y');
+              $lote = $this->SolFirma($fecha->fec_firma0, $num);
            }
-
+        break;
+        case 'Director':
+            $lote = NULL;
+            $num=1;
+            $fecha = DB::table('lotes_unam')->where('firma'.$num, '1')->orderBy('fec_firma'.$num, 'desc')->first();
+            if($fecha != null)
+            {
+               $fecha_formato = Carbon::parse($fecha->fec_firma1)->format('d/m/Y');
+               $lote = $this->SolFirma($fecha->fec_firma1, $num);
+            }
            break;
         case 'SecGral':
-            $fecha = DB::table('lotes_unam')->where('firma2', '1')->orderBy('fec_firma2', 'desc')->first();
-              if($fecha != null)
-              {
-
-                 $fecha_formato = Carbon::parse($fecha->fec_firma2)->format('d/m/Y');
-                 $aux = Carbon::parse($fecha->fec_firma2)->format('Y-m-d');
-                 $lote = DB::connection('condoc_eti')
-                        ->select('select * from lotes_unam WHERE firma2 LIKE "1" AND fecha_lote LIKE "'.$aux.'%" order by id');
-              }
+            $lote = NULL;
+            $num=2;
+            $fecha = DB::table('lotes_unam')->where('firma'.$num, '1')->orderBy('fec_firma'.$num, 'desc')->first();
+            if($fecha != null)
+            {
+               $fecha_formato = Carbon::parse($fecha->fec_firma2)->format('d/m/Y');
+               //$aux = Carbon::parse($fecha->fec_firma2)->format('Y-m-d');
+               $lote = $this->SolFirma($fecha->fec_firma2, $num);
+            }
            break;
         case 'Rector':
-            $fecha = DB::table('lotes_unam')->where('firma2', '1')->orderBy('fec_firma2', 'desc')->first();
+           $lote = NULL;
+           $num=3;
+           $fecha = DB::table('lotes_unam')->where('firma'.$num, '1')->orderBy('fec_firma'.$num, 'desc')->first();
            if($fecha != null)
            {
-              $fecha = DB::table('lotes_unam')->where('firma3', '1')->orderBy('fec_firma3', 'desc')->first();
              $fecha_formato = Carbon::parse($fecha->fec_firma3)->format('d/m/Y');
-             $aux = Carbon::parse($fecha->fec_firma3)->format('Y-m-d');
-             $lote = DB::connection('condoc_eti')
-                    ->select('select * from lotes_unam WHERE firma3 LIKE "1" AND fecha_lote LIKE "'.$aux.'%" order by id');
+             $lote = $this->SolFirma($fecha->fec_firma3, $num);
            }
            break;
      }
-
-     $title = $fecha_formato.' - Solicitudes firmadas';
      $total = count($lote);
-     $listaErrores = $this->listaErr();
-     $acordeon = $this->generaListasxLoteSinF($lote, "Firmado");
+     if($total != 0){
+       $title = $fecha_formato.' - Solicitudes firmadas';
+     }else{
+       $title = 'Solicitudes firmadas';
+     }
+     $acordeon = $this->generaListasxLoteSinF($lote, " Firmado ");
+     // $acordeon = $this->generaLotes($lote, $total);
 
-     return view('menus/firmadas', compact('title','lote', 'total','acordeon', 'listaErrores'));
+     return view('menus/firmadas', compact('title','lote', 'total','acordeon', 'fecha_formato'));
    }
 
    public function postFirmadas(Request $request)
@@ -895,26 +914,30 @@ class FirmasCedulaController extends Controller
        ]);
 
        $fecha = $_POST['fecha'];
-       $date = date_create($fecha);
-       $fecha_formato = date_format($date, 'd/m/Y');
-
+       $time =  DateTime::createFromFormat('d/m/Y', $fecha);
+       $date = $time->format('Y-m-d');
+       $fecha_formato = $time->format('d/m/Y');
        $rol = Auth::user()->roles()->get();
        $roles_us = array(); //Obtenemos los roles del usuario actual
        foreach($rol as $actual){
          array_push($roles_us, $actual->nombre);
        }
        switch ($roles_us[0]) {
+          case 'Jtit':
+             $lote = DB::connection('condoc_eti')
+                 ->select('select * from lotes_unam WHERE firma0 = 1 AND fec_firma0 LIKE "'.$date.'%" order by id');
+             break;
           case 'Director':
              $lote = DB::connection('condoc_eti')
-                    ->select('select * from lotes_unam WHERE firma1 LIKE "1" AND fecha_lote LIKE "'.$fecha.'%" order by id');
+                    ->select('select * from lotes_unam WHERE firma1 LIKE "1" AND fec_firma1 LIKE "'.$date.'%" order by id');
              break;
           case 'SecGral':
              $lote = DB::connection('condoc_eti')
-                      ->select('select * from lotes_unam WHERE firma2 LIKE "1" AND fecha_lote LIKE "'.$fecha.'%" order by id');
+                      ->select('select * from lotes_unam WHERE firma2 LIKE "1" AND fec_firma2 LIKE "'.$date.'%" order by id');
              break;
           case 'Rector':
              $lote = DB::connection('condoc_eti')
-                      ->select('select * from lotes_unam WHERE firma3 LIKE "1" AND fecha_lote LIKE "'.$fecha.'%" order by id');
+                      ->select('select * from lotes_unam WHERE firma3 LIKE "1" AND fec_firma3 LIKE "'.$date.'%" order by id');
              break;
        }
 
@@ -923,233 +946,442 @@ class FirmasCedulaController extends Controller
        $title = $fecha_formato.' - Solicitudes firmadas';
        $acordeon = $this->generaListasxLoteSinF($lote, "Firmado");
 
-       return view('menus/firmadas', compact('title','lote', 'total','acordeon', 'listaErrores'));
-     }
+       return view('menus/firmadas', compact('title','lote', 'total','acordeon', 'listaErrores', 'fecha_formato'));
+   }
 
-     public function generaListasxLoteSinF($data, $estado){
-        // Elaboracion del acordion con listas.
-        $curp = $this->authCurp();
-        $composite = "<div class='firmas'>";
-        for ($i=0; $i < count($data) ; $i++) {
-        $x_list = $i + 1;
-        $alumnos = $this->detalleLote($data[$i]->fecha_lote);
-        // dd($alumnos[0]->num_cta);
-        $cuentas = "";
-        foreach ($alumnos as $key => $alumno) {
-           $cuentas .= $alumno->num_cta."*";
-        }
-        $composite .= "<div class='accordion-a'>";
-        $composite .=  "<a class = 'a-row' data-toggle='collapse' data-parent='#accordion' href='#collapse".$x_list."'>";
-        $composite .=     "<div class='Row'>";
-        $composite .=        "<div class='Cell id'>";
-        $composite .=           "<p> Lote: ".$data[$i]->id."</p>";
-        $composite .=        "</div>";
-        $composite .=        "<div class='Cell fechaLote'>";
-        $composite .=           "<p> Fecha de Lote: ".$data[$i]->fecha_lote."</p>";
-        $composite .=        "</div>";
-        $composite .=        "<div class='Cell numCedulaxLote'>";
-        $composite .=           "<p> Contiene: ".count($alumnos)." cédulas</p>";
-        $composite .=        "</div>";
-        $composite .=     "</div>";
-        $composite .=  "</a>";
-        $composite .= "</div>";
-        $composite .= "<div class='Cell btns firmado'>";
-        $composite .=   "<p> ".$estado." </p>";
-        $composite .= "</div>";
-        // solo el primer listado se despliega, los demas se colapsan.
-        $collapse   =       (count($data)==1)? 'in': '';
-        $composite .=       "<div id='collapse".$x_list."' class='panel-collapse collapse ".$collapse."'>";
-        $composite .=       "<div class='panel-body'>";
-        $composite .=        "<div class='table-responsive'>";
-        $composite .=         "<table class='table table-striped table-dark'>";
-        $composite .=           "<thead>";
-        $composite .=             "<tr>";
-        $composite .=               "<th scope='col'># solicitud</th>";
-        $composite .=               "<th scope='col'><strong>No. cuenta</strong></th>";
-        $composite .=               "<th scope='col'><strong>Nombre completo</strong></th>";
-        $composite .=               "<th scope='col'><strong>Clave carrera</strong></th>";
-        $composite .=               "<th scope='col'><strong>Nivel</strong></th>";
-        $composite .=             "</tr>";
-        $composite .=           "</thead>";
-        $composite .=           "<tbody>";
-        $regis = 1;
-        foreach ( $alumnos as $key => $alumno) {
-          $composite .=           "<tr>";
-          $composite .=             "<th scope='row'>".$alumno->id."</th>";
-          $composite .=               "<td>".$alumno->num_cta."</td>";
-          $composite .=               "<td>".$alumno->nombre_completo."</td>";
-          $composite .=               "<td>".$alumno->cve_carrera."</td>";
-          $composite .=               "<td>".$alumno->nivel."</td>";
-          $composite .=           "</tr>";
-        }
-        $composite .=            "</tbody>";
-        $composite .=         "</table>";
-        $composite .=        "</div>"; // cierra el table responsive
-        $composite .=       "</div>"; // cierra el panel-body
-        $composite .=      "</div>"; // cierra el collapse
-      }
-
-      return $composite;
-     }
-
-     public function showCedulasDGP(){
-       $fecha = DB::table('solicitudes_sep')->where('status', 7)->orderBy('fecha_lote', 'desc')->first();
-       if(isset($fecha)){
-         $fecha_formato = Carbon::parse($fecha->fecha_lote)->format('d/m/Y');
-         $aux = Carbon::parse($fecha->fecha_lote)->format('Y-m-d');
-         $lote = DB::connection('condoc_eti')
-                ->select('SELECT id, fecha_lote_id, libro, foja, folio, num_cta, nombre_completo, nivel, cve_carrera, sistema, datos, paridad
-                          -- from condoc_etitulos.solicitudes_sep as ss JOIN condoc_etitulos.lotes_unam as lu ON ss.fecha_lote = lu.fecha_lote
-                          from solicitudes_sep as ss
-                          JOIN lotes_unam as lu ON ss.fecha_lote = lu.fecha_lote
-                          -- JOIN _estudios as es ON es.
-                          where ss.status = 7 and ss.fecha_lote LIKE "'.$aux.'%" order by ss.id');
-         $title = $fecha_formato.' | Todos - Cédulas enviadas a la DGP';
-         $total = count($lote);
-         $listaErrores = $this->listaErr();
-
-         $niveles_con = (array)DB::connection('condoc_eti')->select('select * from _estudios');
-         $foo = array('cat_subcve' => 'Todos');
-         $foo = (object)$foo;
-         $niveles[0] = $foo;
-         foreach ($niveles_con as $nvl) {
-           array_push($niveles, $nvl);
-         }
-
-         $acordeon = $this->acordionTitulosF($lote);
-
-         return view('menus/cedulas_DGP', compact('title','lote', 'total','acordeon', 'listaErrores', 'niveles', 'aux'));
-       }
-       else{
-         $title = 'Cédulas enviadas a la DGP';
-         return view('menus/cedulas_DGP', compact('title'));
-       }
-     }
-
-     public function postCedulasDGP(Request $request){
-       if(isset($_POST['seleccion'])) {
-         $request->validate([
-             'nivel' => 'required',
-             'fecha' => 'required'
-         ],[
-             'nivel.required' => 'Debes seleccionar un nivel',
-             'fecha.required' => 'Debes seleccionar una fecha de lote'
-         ]);
-
-         $nivel = $_POST['nivel'];
-         $fecha = $_POST['fecha'];
-         $date = date_create($fecha);
-         $fecha_formato = date_format($date, 'd/m/Y');
-         $aux = Carbon::parse($fecha)->format('Y-m-d');
-         if($nivel == "Todos"){
-           $lote = DB::connection('condoc_eti')
-                  ->select('SELECT *
-                            from condoc_etitulos.solicitudes_sep as ss JOIN condoc_etitulos.lotes_unam as lu ON ss.fecha_lote = lu.fecha_lote
-                            where ss.status = 7 and ss.fecha_lote LIKE "'.$aux.'%" order by ss.id');
-         }else{
-           $lote = DB::connection('condoc_eti')
-                  ->select('SELECT *
-                            from condoc_etitulos.solicitudes_sep as ss JOIN condoc_etitulos.lotes_unam as lu ON ss.fecha_lote = lu.fecha_lote
-                            where ss.status = 7 and ss.fecha_lote LIKE "'.$aux.'%" AND nivel LIKE "'.$nivel.'" order by ss.id');
-         }
-         $title = $fecha_formato.' | '.$nivel.' - Cédulas enviadas a la DGP';
-         $total = count($lote);
-         $listaErrores = $this->listaErr();
-
-         $niveles_con = (array)DB::connection('condoc_eti')->select('select * from _estudios');
-         $foo = array('cat_subcve' => 'Todos');
-         $foo = (object)$foo;
-         $niveles[0] = $foo;
-         foreach ($niveles_con as $nvl) {
-           array_push($niveles, $nvl);
-         }
-
-         $acordeon = $this->acordionTitulosF($lote);
-
-         return view('menus/cedulas_DGP', compact('title','lote', 'total','acordeon', 'listaErrores', 'niveles','aux'));
-       }elseif(isset($_POST['impresion'])) {
-         $request->validate([
-             'fecha_env' => 'required'
-         ],[
-             'fecha_env.required' => 'Debes seleccionar una fecha de envío'
-         ]);
-         $fecha_env = $_POST['fecha_env'];
-         $fecha_formato = Carbon::parse($fecha_env)->format('d/m/Y');
-         $fecha_formato_c = Carbon::parse($fecha_env)->format('m/d/Y'); // mm dd yyyy
-         $sig = date('m/d/Y', strtotime('+1 day', strtotime($fecha_formato_c))); //dia siguiente
-         $data_prev = DB::connection('sybase')->select("select * from Titulos WHERE tit_fec_DGP >= '".$fecha_formato_c."' AND tit_fec_DGP < '".$sig."'");
-         //dd(count($data_prev));
-         if($data_prev == null){ //Si no existen solicitudes enviadas a DGP en esa fecha, se notifica
-           $msj = "No existen solicitudes enviadas con fecha ".$fecha_formato;
-           Session::flash('warning', $msj);
-           return redirect()->route('registroTitulos/cedulas_DGP');
-         }else{ //En caso contrario, se crea el listado
-           $titulos = DB::connection('sybase')->select("select tit_ncta, tit_dig_ver from Titulos where tit_fec_DGP  >= '".$fecha_formato_c."' AND tit_fec_DGP < '".$sig."'");
-           $arr_ncta = array();
-           foreach ($titulos as $tit) {
-             array_push($arr_ncta, $tit->tit_ncta.$tit->tit_dig_ver);
-           }
-           $data = array();
-           foreach ($arr_ncta as $ncta) {
-             $sql = DB::connection('condoc_eti')->select("select * from solicitudes_sep WHERE num_cta = '".$ncta."'");
-             array_push($data, $sql);
-           }
-           //dd($data);
-           $p = DB::connection('condoc_eti')->select("select * from solicitudes_sep WHERE nivel = '08'"); ///////////////// PRUEBA //////////////////////
-           $vista = $this->generaPDF($p, $fecha_formato); ///////////////// PRUEBA ////////////////////// Cambiar $p por $data
-           $view = \View::make('consultas.listasDGP', compact('vista'))->render();
-           $pdf = \App::make('dompdf.wrapper');
-           $pdf->loadHTML($view);
-           return $pdf->stream('EnvíoDGP_'.str_replace('/','-',$fecha_formato).'.pdf');
-         }
-       }
-     }
-
-     public function generaPDF($data,$fecha)
-     {
-
-       $composite = "";
-         $composite .= "<div class='container pdf_c'>";
-         // $composite .= "<div class='test'>Impresión de prueba</div>";
-         $composite .= "<div class='ati_pdf'>";
-         $composite .= "<table class='tabla'>";
-         $composite .= "<tr>";
-         $composite .= "<td><div align='left'><img src='images/logo_unam.jpg' height='120' width='105'></div></td>";
-         $composite .= "<td><div class='head_DGP' align='center'><h3>UNIVERSIDAD NACIONAL AUTONOMA DE MÉXICO.</h3>";
-         $composite .= "<h3>Dirección General de Administración Escolar.</h3>";
-         $composite .= "<h3>Departamento de Títulos.</h3>";
-         $composite .= "<h3>Listado de Cédulas enviadas a DGP. Fecha:".str_replace('.','/',$fecha)."</h3></div></td>";
+   public function generaListasxLoteSinF($data, $estado)
+   {
+      // Elaboracion del acordion con listas.
+      $composite = "<div class='firmas'>";
+      for ($i=0; $i < count($data) ; $i++) {
+         $x_list = $i + 1;
+         $cedulas = $this->cantidadCedulas($data[$i]->fecha_lote);
+         $composite .= "<div class='accordion-a style-firmas'>";
+         $composite .= "<table style='width:100%;'>";
+         $composite .= "<tr><td><p>Lote: ".$data[$i]->id."</p></td>";
+         $composite .= "<td><p> Fecha de Lote: <a href=";
+         $var = $data[$i]->fecha_lote;
+         $composite .= "'.../../informacionDetallada/firmadas/lote?fechaLote=$var'";
+         $composite .= "> ".$var."</a></p></td>";
+         $composite .= "<td><p>Contiene: ".$cedulas." cédulas</p></td>";
+         $composite .= "<td><p style='color: green;'>".$estado."</p></td>";
          $composite .= "</tr>";
          $composite .= "</table>";
          $composite .= "</div>";
+
+      }
+      return $composite;
+   }
+
+   public function SolFirma($fechaFirma, $num)
+   {
+      //$fecha_formato = Carbon::parse($fechaFirma)->format('d/m/Y');
+      $aux = Carbon::parse($fechaFirma)->format('Y-m-d');
+      $lote = DB::connection('condoc_eti')
+         ->table('lotes_unam')
+         ->where('firma'.$num, '1')
+         ->where('fec_firma'.$num, 'LIKE', $aux.'%')
+         ->paginate(5);
+      return $lote;
+   }
+
+   public function cedulasDGP_Fecha()
+   {
+      //Elegimos la ultima fecha en al que se ha hecho un envios a al DGP
+      $queryFecha  = "SELECT DISTINCT DATE_FORMAT(tit_fec_DGP,'%d/%m/%Y') AS fecha ";
+      $queryFecha .= "FROM solicitudes_sep ";
+      $queryFecha .= "WHERE tit_fec_DGP IS NOT NULL ";
+      $queryFecha .= "GROUP BY tit_fec_DGP ";
+      $queryFecha .= "ORDER BY fecha DESC";
+      $data = DB::select($queryFecha);
+      return (!empty($data))? $data[0]->fecha : "";
+   }
+   public function cedulasDGP_Envios($fecha, $nivel)
+   {
+      // Consultamos las cédulas enviadas a la DGP en el nivel y en la fecha elegida.
+      // $queryDGP =  "SELECT fecha_lote_id, nivel, cat_nombre as nivel_nombre ,fecha_lote, ";
+      $queryDGP =  "SELECT fecha_lote_id,fecha_lote, ";
+      $queryDGP.=  "tit_fec_DGP, DATE_FORMAT(tit_fec_DGP,'%d-%m-%Y') as fecha_DGP, count(*) AS cedulas ";
+      $queryDGP.=  "FROM solicitudes_sep s ";
+      $queryDGP.=  "INNER JOIN lotes_dgp l ";
+      $queryDGP.=  "ON l.lote_unam_id = s.fecha_lote_id ";
+      $queryDGP.=  "WHERE tit_fec_DGP IS NOT NULL ";
+      $queryDGP.=  "AND status=7 ";
+      $queryDGP.=  ($fecha!='*')? "AND DATE_FORMAT(tit_fec_DGP,'%d/%m/%Y') = '$fecha'  " : "";
+      $queryDGP.=  ($nivel!='*')? "AND nivel = '$nivel' " : "";
+      $queryDGP.=  "GROUP BY tit_fec_DGP ";
+      $queryDGP.=  "ORDER BY tit_fec_DGP DESC ";
+      // dd($queryDGP);
+      $data = DB::connection('condoc_eti')->select($queryDGP);
+      return $data;
+   }
+   public function cedulasDGP_Niveles($fecha,$nivel)
+   {
+      // Obtenemos los niveles de las cédulas en la fecha de elección.
+      $niveles = array();
+      $queryNivel =  "SELECT nivel, cat_nombre as nivel_nombre, count(*) AS cedulas ";
+      $queryNivel.=  "FROM solicitudes_sep ";
+      $queryNivel.=  "INNER JOIN _estudios ";
+      $queryNivel.=  "ON cat_subcve  COLLATE utf8_spanish_ci = nivel ";
+      $queryNivel.=  "WHERE tit_fec_DGP IS NOT NULL ";
+      $queryNivel.=  ($fecha!='*' )? "AND DATE_FORMAT(tit_fec_DGP,'%d/%m/%Y') = '$fecha' " : "";
+      // $queryNivel.=  ($nivel!='*' && $fecha!='*')? "AND nivel = '$nivel' " : "";
+      $queryNivel.=  "GROUP BY nivel";
+      $data = DB::connection('condoc_eti')->select($queryNivel);
+      $total_Cedulas=0; $niveles['*'] = '--Todos--'; // inicializamos los niveles y agregamos el nivel general
+      foreach ($data as $envio) {
+         $total_Cedulas += $envio->cedulas;
+         if (!in_array($envio->nivel, $niveles)) {
+            $niveles[$envio->nivel] = $envio->nivel_nombre.' ('.$envio->cedulas.' Cédulas)';
+         }
+      }
+      return $niveles;
+   }
+
+   public function showCedulasDGP()
+   {
+      // En primera consulta, se eligen todos los envios y todas niveles disponibles.
+      $fecha_inicial = '*'; $nivel = '*';
+      $data          = $this->cedulasDGP_Envios($fecha_inicial,$nivel);
+      $niveles       = $this->cedulasDGP_Niveles($fecha_inicial,$nivel);
+      // dd($fecha_inicial,$niveles,$data);
+      if (isset($data)) {
+         // Obtenemos el arreglo restringido de niveles disponibles ($niveles) y ,
+         // el Total de Lotes ($totLotes) y Total de cédulas ($totCedulas)
+         $total_Lotes = count($data); $total_Cedulas = 0;
+         foreach ($data as $envio) {
+            $total_Cedulas += $envio->cedulas;
+         }
+         $title = "Lotes Enviados:$total_Lotes; Cédulas: $total_Cedulas.";
+         $acordeon = $this->acordionTitulosLTS($data,$nivel);
+         // fecha que por omision se va a colocar primero en el Date Picker;
+         return view('menus/cedulas_DGP', compact('title','acordeon','niveles','nivel','fecha_inicial'));
+      }
+      else
+      {
+         $title = 'Cédulas enviadas a la DGP';
+         return view('menus/cedulas_DGP', compact('title'));
+      }
+   }
+
+   public function acordionTitulosLTS($data,$nivel)
+   {
+      // Elaboracion del acordion con listas.
+      $composite = "<div class='firmas' style='width:100%;'>";
+      for ($i=0; $i < count($data) ; $i++) {
+      $x_list = $i + 1;
+      // $cedulas = $this->cantidadCedulas($data[$i]->fecha_lote);
+      $composite .= "<div class='accordion-aL'>";
+      $composite .=     "<div class='Row'>";
+      $composite .=        "<div class='Cell_mod id_f right_f'>";
+      $composite .=           "<p> Lote Id: ".$data[$i]->fecha_lote_id."</p>";
+      $composite .=        "</div>";
+      $composite .=        "<div class='Cell_mod id_f right_f'>";
+      $composite .=           "<p> Envio: ".$data[$i]->tit_fec_DGP."</p>";
+      $composite .=        "</div>";
+      $composite .=        "<div class='Cell_mod fechaLoteL'>";
+      $composite .=           "<p>";
+      $composite .=              "Lote: ";
+      $composite .=              "<a href=";
+      $lote = $data[$i]->fecha_lote;
+      $envio = $data[$i]->tit_fec_DGP;
+      $composite .=                 "'.../../informacionDetallada/enviadas/lote?fechaLote=$lote&fechaEnvio=$envio&nivel=$nivel'";
+      $composite .=              ">".$data[$i]->fecha_lote."</a>";
+      $composite .=           "</p>";
+      $composite .=        "</div>";
+      $composite .=        "<div class='Cell_mod numCedulaxLote center'>";
+      $composite .=           "<p> Contiene: ".$data[$i]->cedulas." cédulas</p>";
+      $composite .=        "</div>";
+      $composite .=     "</div>";
+      $composite .= "</div>";
+      }
+      return $composite;
+   }
+
+   public function postCedulasDGP(Request $request)
+   {
+      // Regreso de el formulario de Envios a la DGP
+      $fecha_inicial = (isset($request->fecha))? $request->fecha : "*";
+      $nivel         = (isset($request->nivel))? $request->nivel : "*" ;
+      $data          = $this->cedulasDGP_Envios($fecha_inicial,$nivel);
+      $niveles       = $this->cedulasDGP_Niveles($fecha_inicial,$nivel);
+      if ($data==[]) {
+         // Replanteamos la consulta suprimiendo el nivel para que nos genere resultados.
+         $nivel = "*";
+         $data          = $this->cedulasDGP_Envios($fecha_inicial,$nivel);
+         $niveles       = $this->cedulasDGP_Niveles($fecha_inicial,$nivel);
+      }
+      if (isset($data)) {
+         // Obtenemos el arreglo restringido de niveles disponibles ($niveles) y ,
+         // el Total de Lotes ($totLotes) y Total de cédulas ($totCedulas)
+         $total_Lotes = count($data); $total_Cedulas = 0;
+         foreach ($data as $envio) {
+            $total_Cedulas += $envio->cedulas;
+         }
+         $title = "Lotes Enviados:$total_Lotes; Cédulas: $total_Cedulas.";
+         $acordeon = $this->acordionTitulosLTS($data,$nivel);
+         // fecha que por omision se va a colocar primero en el Date Picker;
+         return view('menus/cedulas_DGP', compact('title','acordeon','niveles','nivel','fecha_inicial'));
+      }
+      else
+      {
+         $title = 'Cédulas enviadas a la DGP';
+         return view('menus/cedulas_DGP', compact('title'));
+      }
+   }
+
+   public function postCedulasDGP_Respaldo(Request $request)
+   {
+    if(isset($_POST['seleccion'])) {
+      $request->validate([
+          'fecha' => 'required'
+      ],[
+          'fecha.required' => 'Debes seleccionar una fecha de lote'
+      ]);
+
+      $fecha = $_POST['fecha'];
+      $date = date_create($fecha);
+      $fecha_formato = date_format($date, 'd/m/Y');
+      $aux = Carbon::parse($fecha)->format('Y-m-d');
+      $lote = DB::connection('condoc_eti')
+               ->select("SELECT *
+                         FROM lotes_unam
+                         WHERE fecha_lote LIKE '$aux%' order by id");
+      $title = $fecha_formato.' - Cédulas enviadas a la DGP';
+      $total = count($lote);
+      $listaErrores = $this->listaErr();
+
+      $niveles_con = (array)DB::connection('condoc_eti')->select('select * from _estudios');
+      $foo = array('cat_subcve' => 'Todos');
+      $foo = (object)$foo;
+      $niveles[0] = $foo;
+      foreach ($niveles_con as $nvl) {
+        array_push($niveles, $nvl);
+      }
+
+      $acordeon = $this->acordionTitulosF($lote);
+
+      return view('menus/cedulas_DGP', compact('title','lote', 'total','acordeon', 'listaErrores', 'niveles','aux'));
+    }elseif(isset($_POST['impresion'])) {
+      $request->validate([
+          'fecha_env' => 'required'
+      ],[
+          'fecha_env.required' => 'Debes seleccionar una fecha de envío'
+      ]);
+      $fecha_env = $_POST['fecha_env'];
+      $fecha_formato = Carbon::parse($fecha_env)->format('d/m/Y');
+      $fecha_formato_c = Carbon::parse($fecha_env)->format('m/d/Y'); // mm dd yyyy
+      $sig = date('m/d/Y', strtotime('+1 day', strtotime($fecha_formato_c))); //dia siguiente
+      $data_prev = DB::connection('sybase')->select("select * from Titulos WHERE tit_fec_DGP >= '".$fecha_formato_c."' AND tit_fec_DGP < '".$sig."'");
+      //dd(count($data_prev));
+      if($data_prev == null){ //Si no existen solicitudes enviadas a DGP en esa fecha, se notifica
+        $msj = "No existen solicitudes enviadas con fecha ".$fecha_formato;
+        Session::flash('warning', $msj);
+        return redirect()->route('registroTitulos/cedulas_DGP');
+      }else{ //En caso contrario, se crea el listado
+        $titulos = DB::connection('sybase')->select("select tit_ncta, tit_dig_ver from Titulos where tit_fec_DGP  >= '".$fecha_formato_c."' AND tit_fec_DGP < '".$sig."'");
+        $arr_ncta = array();
+        foreach ($titulos as $tit) {
+          array_push($arr_ncta, $tit->tit_ncta.$tit->tit_dig_ver);
+        }
+        $data = array();
+        foreach ($arr_ncta as $ncta) {
+          $sql = DB::connection('condoc_eti')->select("select * from solicitudes_sep WHERE num_cta = '".$ncta."'");
+          array_push($data, $sql);
+        }
+        //dd($data);
+        $p = DB::connection('condoc_eti')->select("select * from solicitudes_sep WHERE nivel = '08'"); ///////////////// PRUEBA //////////////////////
+        $vista = $this->generaPDF($p, $fecha_formato); ///////////////// PRUEBA ////////////////////// Cambiar $p por $data
+        $view = \View::make('consultas.listasDGP', compact('vista'))->render();
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($view);
+        return $pdf->stream('EnvíoDGP_'.str_replace('/','-',$fecha_formato).'.pdf');
+      }
+    }
+   }
+
+   public function generaPDF_Envios($data,$nivel,$fecha,$lotes,$cedulas)
+   {
+      // General el HTML de los envíos a la DGP, sin especificar el detalle.
+      // dd($data,$nivel,$fecha,$lotes,$cedulas);
+      $composite = "";
+      $composite .= "<div class='container pdf_c'>";
+      $composite .= "<div class='ati_pdf'>";
+      $composite .= "<table class='tabla'>";
+      $composite .= "<tr>";
+      $composite .= "<td><div align='left'><img src='images/logo_unam.jpg' height='120' width='105'></div></td>";
+      $composite .= "<td><div class='head_DGP' align='center'><h3>UNIVERSIDAD NACIONAL AUTONOMA DE MÉXICO.</h3>";
+      $fecha      = ($fecha!='*')? '----> '.$fecha : "" ;
+      // Si se establece el nivel, lo tomamos del primer registros del conjunto "data"
+      $composite .= "<h3>$lotes Envios a DGP $fecha </h3>";
+      if ($nivel!='*') {
+         $nivel_n =  DB::table('_estudios')->where('cat_subcve', $nivel)->pluck('cat_nombre')[0];
+      } else {
+         $nivel_n="";
+      }
+      // colocamos un guion intermedio si $fecha y $nivel no estan vacios.
+      $composite .= "<h3>$nivel_n  $cedulas Cédulas </h3></div></td>";
+      $composite .= "</tr>";
+      $composite .= "</table>";
+      $composite .= "</div>";
+      for ($x=0; $x < count($data) ; $x++)
+      {
          $composite .= "<table id='t01'>";
          $composite .= "<thead>";
          $composite .= "<tr>";
          $composite .= "<th scope='col'><strong>#</strong></th>";
-         $composite .= "<th scope='col'><strong>NO. CTA.</strong></th>";
-         $composite .= "<th scope='col'><strong>NOMBRE</strong></th>";
-         $composite .= "<th scope='col'><strong>NIVEL</strong></th>";
-         $composite .= "<th scope='col'><strong>CVE. CARR.</strong></th>";
-         $composite .= "<th scope='col'><strong>FEC. EMI. TÍT.</strong></th>";
+         $composite .= "<th scope='col'><strong>Lote ID</strong></th>";
+         $composite .= "<th scope='col'><strong>Fecha de Envío</strong></th>";
+         $composite .= "<th scope='col'><strong>Fecha de Lote</strong></th>";
+         $composite .= "<th scope='col'><strong># Cédulas</strong></th>";
          $composite .= "</tr>";
          $composite .= "</thead>";
          $composite .= "<tbody>";
-         for ($x=0; $x < count($data) ; $x++)
-         {
-             $composite .= "<tr>";
-             $composite .= "<th>".($x+1)."</th>";
-             $composite .= "<td>".$data[$x]->num_cta."</td>";
-             $composite .= "<td>".$data[$x]->nombre_completo."</td>";
-             $composite .= "<td>".$data[$x]->nivel."</td>";
-             $composite .= "<td>".$data[$x]->cve_carrera."</td>";
-             $composite .= "<td>".$data[$x]->fec_emision_tit."</td>";
-             $composite .= "</tr>";
-         }
-         $composite .= "</tbody>";
-         $composite .= "</table>";
-
+          $composite .= "<tr>";
+          $composite .= "<th>".($x+1)."</th>";
+          $composite .= "<td>".$data[$x]->fecha_lote_id."</td>";
+          $composite .= "<td>".$data[$x]->tit_fec_DGP."</td>";
+          $composite .= "<td>".$data[$x]->fecha_lote."</td>";
+          $composite .= "<td>".$data[$x]->cedulas."</td>";
+          $composite .= "</tr>";
+          $composite .= "</tbody>";
+          $composite .= "</table>";
+          // Buscamos el detalle de la fecha y del nivel para filtrar las cedulasG
+          // showDetallePDF($fechaLote,$fechaEnvio,$nivel)
+          $detalle = $this->showDetallePDF($data[$x]->fecha_lote,
+                                           $data[$x]->tit_fec_DGP,
+                                           $nivel);
+          // $composite .= "<tr>";
+          $composite .= $detalle;
+          // $composite .= "</tr>";
+      }
       return $composite;
+   }
 
-     }
+   public function showDetallePDF($fechaLote,$fechaEnvio,$nivel)
+   {
+      // Detalle de los lotes enviados y se utiliza en el PDF
+      if ($nivel=='*') {
+         // filtro fecha todos los niveles
+         $lote = SolicitudSep::
+                     where('fecha_lote', $fechaLote)
+                     ->get();
+      } else {
+         // filtro fecha y nivel
+         $lote = SolicitudSep::
+                     where('fecha_lote', $fechaLote)->
+                     where('nivel',$nivel)->
+                     get();
+      }
+     $list = $this->armadoDetallePDF($lote);
+     return $list;
+   }
+
+   public function armadoDetallePDF($lote){
+      // Detalle PDF
+      // $composite = "<div class='lote'>";
+      // $composite =  "<table class='table table-striped table-dark table-bordered'>";
+      $composite =  "<table id='t02'>";
+      $composite .=     "<thead>";
+      $composite .=        "<tr>";
+      $composite .=           "<th scope='col'># SOLICITUD</th>";
+      $composite .=           "<th scope='col'><strong>NO. CUENTA</strong></th>";
+      $composite .=           "<th scope='col'><strong>NOMBRE COMPLETO</strong></th>";
+      $composite .=           "<th scope='col'><strong>CLV CARRERA</strong></th>";
+      $composite .=           "<th scope='col'><strong>NOMBRE CARRERA</strong></th>";
+      $composite .=           "<th scope='col'><strong>NIVEL</strong></th>";
+      $composite .=        "</tr>";
+      $composite .=     "</thead>";
+      $composite .=     "<tbody>";
+      foreach ($lote as $key => $alumno) {
+         $composite .=     "<tr id='".$alumno->num_cta."' class='".$alumno->num_cta."'>";
+         $composite .=        "<th scope='row'>".$alumno->id."</th>";
+         $composite .=           "<td>".$alumno->num_cta."</td>";
+         $composite .=           "<td>".$alumno->nombre_completo."</td>";
+         $composite .=           "<td>".$alumno->cve_carrera."</td>";
+         $composite .=           "<td>".$this->carreraNombre($alumno->cve_carrera)."</td>";
+         $composite .=           "<td>".$alumno->nivel."</td>";
+         $composite .=        "</tr>";
+      }
+      $composite .=     "</tbody>";
+      $composite .=  "</table>";
+      // $composite .= "</div>";
+      return $composite;
+   }
+
+   public function generaPDF_Cedulas($data,$request)
+   {
+      $composite = "";
+      $composite .= "<div class='container pdf_c'>";
+      // $composite .= "<div class='test'>Impresión de prueba</div>";
+      $composite .= "<div class='ati_pdf'>";
+      $composite .= "<table class='tabla'>";
+      $composite .= "<tr>";
+      $composite .= "<td><div align='left'><img src='images/logo_unam.jpg' height='120' width='105'></div></td>";
+      $composite .= "<td><div class='head_DGP' align='center'><h3>UNIVERSIDAD NACIONAL AUTONOMA DE MÉXICO.</h3>";
+      $composite .= "<h3>Dirección General de Administración Escolar.</h3>";
+      $composite .= "<h3>Departamento de Títulos.</h3>";
+      $composite .= "<h3>Listado de Cédulas enviadas a DGP. Fecha:</h3></div></td>";
+      $composite .= "</tr>";
+      $composite .= "</table>";
+      $composite .= "</div>";
+      $composite .= "<table id='t01'>";
+      $composite .= "<thead>";
+      $composite .= "<tr>";
+      $composite .= "<th scope='col'><strong>#</strong></th>";
+      $composite .= "<th scope='col'><strong>NO. CTA.</strong></th>";
+      $composite .= "<th scope='col'><strong>NOMBRE</strong></th>";
+      $composite .= "<th scope='col'><strong>NIVEL</strong></th>";
+      $composite .= "<th scope='col'><strong>CVE. CARR.</strong></th>";
+      $composite .= "<th scope='col'><strong>FEC. EMI. TÍT.</strong></th>";
+      $composite .= "</tr>";
+      $composite .= "</thead>";
+      $composite .= "<tbody>";
+      for ($x=0; $x < count($data) ; $x++)
+      {
+          $composite .= "<tr>";
+          $composite .= "<th>".($x+1)."</th>";
+          $composite .= "<td>".$data[$x]->num_cta."</td>";
+          $composite .= "<td>".$data[$x]->nombre_completo."</td>";
+          $composite .= "<td>".$data[$x]->nivel."</td>";
+          $composite .= "<td>".$data[$x]->cve_carrera."</td>";
+          $composite .= "<td>".$data[$x]->fec_emision_tit."</td>";
+          $composite .= "</tr>";
+      }
+      $composite .= "</tbody>";
+      $composite .= "</table>";
+      return $composite;
+   }
+
+   // public function pdf_DGP($nivel,$fecha)
+   public function pdf_DGP(Request $request)
+   {
+      // Generación de el PDF de envios a la DGP
+      // Pasamos las llaves aun arreglo..
+      $parametros = array_keys($request->all());
+      if(count($parametros)==1)
+      {
+         // Solo un parametro (entonces no se elige ni fecha ni nivel)
+         $fecha_inicial = '*';
+         $nivel         = '*';
+         $data          = $this->cedulasDGP_Envios($fecha_inicial,$nivel);
+      } else {
+         // Recuperamos $fecha y $niveles
+         $nivel         = $parametros[0];
+         $fecha_inicial = $parametros[1];
+         $data          = $this->cedulasDGP_Envios($fecha_inicial,$nivel);
+      }
+      // Variables del encabezado del documento PDF
+      $total_Lotes = count($data); $total_Cedulas = 0;
+      foreach ($data as $envio) {
+         $total_Cedulas += $envio->cedulas;
+      }
+      // Generación de la vista y el PDF.
+      $vista = $this->generaPDF_Envios($data, $nivel, $fecha_inicial, $total_Lotes,$total_Cedulas);
+      $view = \View::make('consultas.listasDGP', compact('vista'))->render();
+      $pdf = \App::make('dompdf.wrapper');
+      $pdf->loadHTML($view);
+      return $pdf->stream('EnvíoDGP_'.str_replace('/','-',$request['fecha']).'.pdf');
+   }
 
 }

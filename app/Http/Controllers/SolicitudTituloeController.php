@@ -405,10 +405,17 @@ class SolicitudTituloeController extends Controller
             Session::flash('info', $msj);
             return redirect()->route('registroTitulos/lista-solicitudes/pendientes');
          }
+         elseif(isset($_POST['actualizar_WS'])){
+           $this->actualizarXWS($_POST['check_list']);
+           //$this->actualizaFLFFIds($_POST['check_list']);
+           $msj = "Se actualizaron ".count($_POST['check_list'])." registros por WS.";
+           Session::flash('info', $msj);
+           return redirect()->route('registroTitulos/lista-solicitudes/pendientes');
+         }
       }
       $msj = "No se selecciono ningún registro.";
       Session::flash('info', $msj);
-      return redirect()->route('solicitudesPendientes');
+      return redirect()->route('registroTitulos/lista-solicitudes/pendientes');
 
 
    }

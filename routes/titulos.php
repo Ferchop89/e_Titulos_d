@@ -98,7 +98,7 @@ Route::get('/firmas_progreso', [
    'uses' => 'FirmasCedulaController@showProgreso',
    'as' => 'registroTitulos/firmas_progreso',
    'middleware' => 'roles',
-   'roles' => ['Admin', 'Jtit']
+   'roles' => ['Admin', 'Jtit', 'Director']
 ]);
 // Route::post('/firmas_progreso', [
 //    'uses' => 'FirmasCedulaController@postProgreso',
@@ -109,13 +109,21 @@ Route::get('/firmadas', [
   'uses' => 'FirmasCedulaController@showFirmadas',
   'as' => 'registroTitulos/firmadas',
   'middleware' => 'roles',
-  'roles' => ['Admin', 'Rector', 'Director', 'SecGral']
+  'roles' => ['Admin', 'Rector', 'Director', 'SecGral','Jtit']
 ]);
 Route::post('/firmadas', [
    'uses' => 'FirmasCedulaController@postFirmadas',
    'middleware' => 'roles',
-   'roles' => ['Admin', 'Rector', 'Director', 'SecGral']
+   'roles' => ['Admin', 'Rector', 'Director', 'SecGral','Jtit']
 ]);
+
+/************* Generación de PDF de Envios DGP en link**************/
+Route::get('pdf_DGP',[
+    'uses' => 'FirmasCedulaController@pdf_DGP',
+    'roles' => ['Admin','Jtit']
+])->name('pdf_DGP');
+/***************************/
+
 Route::get('/proceso', [
    'uses' => 'AlumnosLotesController@showprocesoAlumno',
    'as' => 'procesoAlumno',
@@ -146,6 +154,8 @@ Route::get('/home', [
 ]);
 
 Route::get('envioSep',[
+   // Tres firmas son las definitivas: Directora/Secretario/Rector.
+   // Adicionalmente firma Jud de titulos
    'uses'=> 'EnvioSep@envio3Firmas',
    'as' => 'envioSep',
    'middleware' => 'roles',
@@ -196,6 +206,21 @@ Route::get('/lista-solicitudes/cedulasPen', function(){
       }
       return $datos;
     });
+   Route::get('/cedulasDGP', function(){
+   // Route::get('/lista-solicitudes/cedulasDGP', function(){
+      // Fechas de envio de solicitudes a la DGP
+       $query  = "SELECT DISTINCT DATE_FORMAT(tit_fec_DGP,'%d-%m-%Y') AS lote ";
+       $query .= "FROM solicitudes_sep ";
+       $query .= "WHERE tit_fec_DGP IS NOT NULL ";
+       $query .= "GROUP BY tit_fec_DGP ";
+       // $query .= "ORDER BY lote DESC";
+       $data = DB::select($query);
+       $datos = array();
+       foreach ($data as $key => $value) {
+          $datos[$key] = $value->lote;
+       }
+       return $datos;
+      });
     Route::get('/lotes', function(){
        // Fechas de emision con registros pendientes de validar (sin errores), status no nulo ni vacio
         $query = "SELECT DATE_FORMAT(fecha_lote,'%d-%m-%Y') AS lote ";
@@ -210,6 +235,37 @@ Route::get('/lista-solicitudes/cedulasPen', function(){
         }
         return $datos;
       });
+    Route::get('/lotes_firmados', function(){
+         $rol = Auth::user()->roles()->get();
+         $roles_us = array(); //Obtenemos los roles del usuario actual
+         foreach($rol as $actual){
+           array_push($roles_us, $actual->nombre);
+         }
+         switch ($roles_us[0]) {
+            case 'Jtit':
+               $num = 0;
+               break;
+            case 'Director':
+               $num = 1;
+               break;
+            case 'SecGral':
+               $num = 2;
+               break;
+            case 'Rector':
+               $num = 3;
+               break;
+         }
+          $query = "SELECT DATE_FORMAT(fec_firma".$num.",'%d-%m-%Y') AS lote ";
+          $query .= "FROM lotes_unam ";
+          $query .= "WHERE firma".$num." = 1 ";
+          $query .= "GROUP BY lote";
+          $data = DB::select($query);
+          $datos = array();
+          foreach ($data as $key => $value) {
+             $datos[$key] = $value->lote;
+          }
+          return $datos;
+        });
     Route::get('/lista-solicitudes/cedulasPen3', function(){
        // Fechas de emision con registros pendientes de validar (sin errores), status no nulo ni vacio
        $query = " DATE_FORMAT(fec_emision_tit,'%d-%m-%Y') AS emision, ";
@@ -227,6 +283,8 @@ Route::get('/lista-solicitudes/cedulasPen', function(){
          $query  = "SELECT DATE_FORMAT(fecha_lote,'%Y%m%d%H%i%s') as lote,num_cta, nombre_completo, cve_carrera, datos ";
          $query .= " from solicitudes_sep ";
          $query .= " WHERE (";
+         $query .= "fec_emision_tit='2018-12-13 00:00:00' OR ";
+         $query .= "fec_emision_tit='2018-12-06 00:00:00' OR ";
          $query .= "fec_emision_tit='2018-11-29 00:00:00' OR ";
          $query .= "fec_emision_tit='2018-11-22 00:00:00' OR ";
          $query .= "fec_emision_tit='2018-11-15 00:00:00' OR ";
@@ -249,6 +307,12 @@ Route::get('/lista-solicitudes/cedulasPen', function(){
         });
 
    Route::get('/SIAE', function(){
+      // echo shell_exec("cd j_WS && javac abc.java && java XYZ");
+      // shell_exec('cd j_WS ');
+      // $salida = shell_exec('cd j_WS && ls -lart');
+      // $salida = shell_exec('cd j_WS && java XYZ');
+      // echo "<pre>$salida</pre>";
+      // dd('alto');
       // Fechas de emision con registros pendientes de validar (sin errores), status no nulo ni vacio
       // $query = " select * from solicitudes_sep where ";
       // $query .= "fec_emision_tit='2018-10-18 00:00:00' OR ";
@@ -257,32 +321,53 @@ Route::get('/lista-solicitudes/cedulasPen', function(){
       // $query .= "FROM solicitudes_sep ";
       // $query .= "GROUP BY emision";
       // ws
+      //$contraseñaConHash = '$2y$10$03JKFzQWes0R8YMuBrcWdO7SQEIGjVUHA4Rdf7HxzQcOeSsFkfFE.';
+      //$contraseñaConHash = '$2y$10$KrS09XnEbEG8r2qFnjNVB.amSjwbCW5gpjvLUDts6hImcAtQADB4a';
+      //dd($2y$10$DIbUrVU2Xs1j3tTrHLVL5eI4Gsc3GZgCu/xgv5UXZdj1g6S/LFU.G)
+      //dd(Hash::check('08081974', $contraseñaConHash));
+      //dd(bcrypt('08081974')); //--- CASO ESPECIAL ---
       $ws_SIAE = Web_Service::find(2);
       $identidad = new WSController();
       /*Numero de cuenta con problemas al consumir WS identidad SIAE*/
       //503459419
       //503006594
-      //517493614
-      $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '517493614', $ws_SIAE->key);
+      //517493614---
+      $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '305548337', $ws_SIAE->key);
+      // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '513013249', $ws_SIAE->key); --- INT/STRING
+      //$identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '054051690', $ws_SIAE->key);
+      //$identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '517493614', $ws_SIAE->key);
       // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '402048477', $ws_SIAE->key);
       // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '098040607', $ws_SIAE->key);
 
       // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '517490039', $ws_SIAE->key);
       // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '503006594', $ws_SIAE->key);
       // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '503459419', $ws_SIAE->key);
+      // $identidadVal = array();
+      //array_push((int)$identidad->(entidad-nacimiento));
+      //dd($identidad->{'entidad-nacimiento'});
       dd((array)$identidad);
+      //dd((array)$identidad);
       return (array)$identidad;
      });
    Route::get('/DGIRE', function(){
       $ws = new WSController();
       // $respuesta = $ws->ws_DGIRE('503459419');
-      $respuesta = $ws->ws_DGIRE('517493614');
+      //$respuesta = $ws->ws_DGIRE('517493614');//413527022
+      $respuesta = $ws->ws_DGIRE('412520178');//413527022
       dd($respuesta->respuesta);
    });
    Route::get('/DGIRE2', function(){
       $ws = new WSController();
       // $respuesta = $ws->ws_DGIRE('503459419');
-      $respuesta = $ws->ws_DGIRE2('306573396');
+      // $respuesta = $ws->ws_DGIRE2('306573396');
+      $respuesta = $ws->ws_DGIRE2('413527022');
+      dd($respuesta);
+   });
+   Route::get('/RENAPO', function(){
+      $ws = new WSController();
+      // $respuesta = $ws->ws_DGIRE('503459419');
+      // $respuesta = $ws->ws_DGIRE2('306573396');
+      $respuesta = $ws->ws_RENAPO('VIMC930212MDFLNN08');
       dd($respuesta);
    });
 
@@ -368,12 +453,23 @@ Route::post('/cedulas_DGP',[
   //   });
 Route::get('/emisionTitulos/CONDOC', 'SolicitudTituloeController@verTitulos');
 Route::get('/informacionDetallada/lote','AlumnosLotesController@showDetalleLote')->name('detalleLote');
-Route::get('/informacionDetallada/cuenta/lote','AlumnosLotesController@showDetalleCuenta')->name('detalleCuenta');
+Route::get('/informacionDetallada/enviadas/lote','AlumnosLotesController@showDetalleEnviadas')->name('detalleLote');
+Route::get('/informacionDetallada/firmadas/lote','AlumnosLotesController@showDetalleFirmadas')->name('detalleFirmas');
+Route::get('/informacionDetallada/cuenta/lote', [
+     'uses' => 'AlumnosLotesController@showDetalleCuenta',
+     'as' => 'detalleCuenta'
+  ]);
+
+  Route::get('/informacionDetallada/enviadas',[
+      'uses'=> 'AlumnosLotesController@showFiltradas',
+      'as'=> 'DetallesEnvio'
+    ]);
+
 /*Graficas */
 Route::get('/cedulasG' ,[
     'uses'=> 'GrafiController@cedulas',
     'as' => 'registroTitulos/cedulasG',
-    'roles' => ['Admin', 'Jtit']
+    'roles' => ['Admin', 'Jtit', 'Director']
 ]);
 
 /* Solicitudes que hayan sido canceladas */

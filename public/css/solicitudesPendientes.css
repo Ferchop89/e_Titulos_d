@@ -150,6 +150,15 @@ select[multiple], select[size] {
    width: 10%;
    min-width: 88px;
 }
+.style-firmas td {
+  height: auto;
+  border: solid;
+  border-width: thin;
+  width: auto;
+  text-align: center;
+  padding-top: 5px;
+  padding-button: 5px;
+}
 .accordion-a {
     width: 92%;
     display: inline-flex;
@@ -312,8 +321,9 @@ select[multiple], select[size] {
 .proceso_alumno th, .proceso_alumno td {
     padding: 10px;
 }
-#btn-update {
+#btn-update, #btn-update-WS {
    float: left;
+   margin: 2%;
 }
 thead tr {
     color: black;

@@ -9,6 +9,7 @@ use App\Http\Traits\Consultas\XmlCadenaErrores;
 use Carbon\Carbon;
 use DB;
 use Session;
+use Illuminate\Support\Facades\Log;
 
 class SelloController extends Controller
 {
@@ -179,6 +180,8 @@ class SelloController extends Controller
                                  'status' => 2,
                         ]);
          }
+         Log::error("Error: lote ".$lote);
+         Log::error($cadenas);
          $msj = "Error: Inconsistencia en firmas enviadas y recibidas, lote -> ".$lote;
          Session::flash('error', $msj);
       }

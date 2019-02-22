@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
 use SOAPClient;
+use App\Exceptions\RenapoException;
 
 class WSController extends Controller
 {
@@ -22,8 +23,8 @@ class WSController extends Controller
                 'exceptions' => true
              );
             $client = new SOAPClient($wsdl, $opts);
-            // dd($client);
-            // dd($client->__getFunctions());
+            dd($client);
+            dd($client->__getFunctions());
             dd($client, $client->__getTypes());
             $response = $client->consultarPorCurp($datos);
             // $response = $client->consultarCurpDetalle(['cveAlfaEntFedNac' => 'DF', 'fechaNacimiento' => '01/01/1989', 'nombre' => 'FERNANDO', 'primerApellido' => 'PACHECO', 'segundoApellido' => 'ESTRADA', 'sexo' => 'H']);
@@ -40,37 +41,76 @@ class WSController extends Controller
         return $response;
     }
 
-   public function ws_RENAPO($curp)
-   {
-      error_reporting(E_ALL);
-      ini_set("display_errors", 1);
-      ini_set('soap.wsdl_cache_enabled', '0');
-      ini_set('soap.wsdl_cache_ttl', '0');
-      ini_set("default_socket_timeout", 1);
-      $wsdl = 'http://webser.dgae.unam.mx:8280/services/ConsultaRenapoPorCurp?wsdl';
-      $opts = array(
-         'location'=> 'https://webser.dgae.unam.mx:8243/services/ConsultaRenapoPorCurp.ConsultaRenapoPorCurpHttpsSoap12Endpoint',
-         'connection_timeout' => 10 ,
-         'encoding' => 'ISO-8859-1',
-         'trace' => true,
-         'exceptions' => false
-      );
-      $client = new SOAPClient($wsdl, $opts);
-      $datos=[
-         'datos' => [
-         'cveCurp' => $curp,
-         ]
-      ];
-      $response = $client->consultarPorCurp($datos);
-      if(is_soap_fault($response)){
-         if(isset($response->faultcode))
-         {
-            Log::error("WS_RENAPO {$datos['datos']['cveCurp']} SOAP Faul: (faultcode: {$response->faultcode}, faultstring: {$response->faultstring})");
-            session(['errorWS' => 'Servicio de validación de CURP temporalmente fuera de servicio. Intente más tarde.']);
-         }
-      }
-      return $response;
-    }
+    public function ws_RENAPO($curp)
+    {
+       error_reporting(E_ALL);
+       ini_set("display_errors", 1);
+       ini_set('soap.wsdl_cache_enabled', '0');
+       ini_set('soap.wsdl_cache_ttl', '0');
+       ini_set("default_socket_timeout", 1);
+       $wsdl = 'http://webser.dgae.unam.mx:8280/services/ConsultaRenapoPorCurp?wsdl';
+       $opts = array(
+          'location'=> 'https://webser.dgae.unam.mx:8243/services/ConsultaRenapoPorCurp.ConsultaRenapoPorCurpHttpsSoap12Endpoint',
+          'connection_timeout' => 10 ,
+          'encoding' => 'ISO-8859-1',
+          'trace' => true,
+          'exceptions' => false
+       );
+       try {
+         $sxe = simplexml_load_string(file_get_contents($wsdl));
+       } catch (\Exception $e) {
+          throw new RenapoException($e->getMessage());
+       }
+       $client = new SOAPClient($wsdl, $opts);
+       $datos=[
+          'datos' => [
+          'cveCurp' => $curp,
+          ]
+       ];
+       $response = $client->consultarPorCurp($datos);
+       //dd($response);
+       if(is_soap_fault($response)){
+          if(isset($response->faultcode))
+          {
+            throw new RenapoException('');
+             // Log::error("WS_RENAPO {$datos['datos']['cveCurp']} SOAP Faul: (faultcode: {$response->faultcode}, faultstring: {$response->faultstring})");
+             // session(['errorWS' => 'Servicio de validación de CURP temporalmente fuera de servicio. Intente más tarde.']);
+          }
+       }
+       return $response;
+     }
+
+    public function ws_RENAPO_original($curp)
+    {
+       error_reporting(E_ALL);
+       ini_set("display_errors", 1);
+       ini_set('soap.wsdl_cache_enabled', '0');
+       ini_set('soap.wsdl_cache_ttl', '0');
+       ini_set("default_socket_timeout", 1);
+       $wsdl = 'http://webser.dgae.unam.mx:8280/services/ConsultaRenapoPorCurp?wsdl';
+       $opts = array(
+          'location'=> 'https://webser.dgae.unam.mx:8243/services/ConsultaRenapoPorCurp.ConsultaRenapoPorCurpHttpsSoap12Endpoint',
+          'connection_timeout' => 10 ,
+          'encoding' => 'ISO-8859-1',
+          'trace' => true,
+          'exceptions' => false
+       );
+       $client = new SOAPClient($wsdl, $opts);
+       $datos=[
+          'datos' => [
+          'cveCurp' => $curp,
+          ]
+       ];
+       $response = $client->consultarPorCurp($datos);
+       if(is_soap_fault($response)){
+          if(isset($response->faultcode))
+          {
+             Log::error("WS_RENAPO {$datos['datos']['cveCurp']} SOAP Faul: (faultcode: {$response->faultcode}, faultstring: {$response->faultstring})");
+             session(['errorWS' => 'Servicio de validación de CURP temporalmente fuera de servicio. Intente más tarde.']);
+          }
+       }
+       return $response;
+     }
 
    public function ws_SIAE($nombre, $num_cta, $key)
    {
@@ -87,7 +127,6 @@ class WSController extends Controller
       // $cta = '410060533'; // con causa 72
       // $cta = '308010769'; //Foto
       // $cta = '305016614'; //Fenando
-      // $cta = '079332938'; //Guillermo
       // $cta = '081581988'; // defuncion
       // $cta = '414045101'; // expulsion
       // $cta = 317241309; // suspension temporal
@@ -109,8 +148,10 @@ class WSController extends Controller
       }
          elseif ($nombre == 'identidad')
       {
-         $wsdl = 'https://www.dgae-siae.unam.mx/ws/soap/dgae_idn_srv.php?wsdl';
+         // $wsdl = 'https://www.dgae-siae.unam.mx/ws/soap/dgae_idn_srv.php?wsdl';
+         $wsdl = 'wsdl/wsdl_SIAE.xml';
       }
+
       $opts = array(
          'proxy_host' => "132.248.205.1",
          'proxy_port' => "8080",
@@ -121,12 +162,12 @@ class WSController extends Controller
          'trace' => true,
          'exceptions' => true
       );
+      // dd($wsdl);
       $client = new SOAPClient($wsdl, $opts);
+      // dd($client, $parametros);
       try {
 
           // dd($client->__getFunctions());
-
-
           if($nombre == 'trayectoria')
           {
               $response = $client->return_trayectoria($parametros);
@@ -145,10 +186,9 @@ class WSController extends Controller
             if(empty($response->cuenta))
             {
                 return $response->mensaje;
-                dd("hola");
             }
         }
-
+//los integramos a un zip todos los archivos xml de un lote,  y luego los elimianmso del directorio
         return $response;
     }
 
@@ -167,7 +207,7 @@ class WSController extends Controller
              );
             $client = new SOAPClient($wsdl, $opts);
             // dd($client->__getFunctions());
-            // dd($client->__getTypes());
+            // dd($client->__getArrayTypes());
             $response = $client->consultaDatosAlumno(['numeroCuenta' => $num_cta]);
         }
         catch (SoapFault $exception) {

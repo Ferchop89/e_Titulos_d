@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'CONDOC | Autorización de Transferencia de Información')
+@section('title', 'CONDOC | Autorización de Transferencia de Información y actualización de datos personales')
 
 @section('estilos')
 	<link href="{{ asset('css/alumnos.css') }}" rel="stylesheet">
@@ -18,6 +18,7 @@
 	<div  class="ati_vista">
 		<h2 align="center">AUTORIZACIÓN DE TRANSFERENCIA DE INFORMACIÓN</h2>
 		<h2 align="center">A LA DIRECCIÓN GENERAL DE PROFESIONES DE LA SECRETARÍA DE EDUCACIÓN PÚBLICA</h2>
+		<h2 align="center">Y ACTUALIZACIÓN DE DATOS PERSONALES</h2>
 		{{-- <div class="d_m">
 			<p><i>Por favor, completa los campos con la información correcta y posteriormente acepta lo establecido en este apartado.</i></p>
 		</div> --}}
@@ -25,6 +26,8 @@
 			{!! csrf_field() !!}
 	  <div class="div_cont">
 			<p class="date"> Ciudad Universitaria, Cd. Mx., a {{$fecha->day}} de {{$fecha->month}} de {{$fecha->year}}.</p>
+			<input name="fecha_completa" type="hidden" value="{{$fecha->day}}.{{$fecha->month}}.{{$fecha->year}}.">
+			<input name="num_cta" type="hidden" value="{{$alumno->num_cta}}">
 			<br>
 			<p align="justify">
 				<strong>
@@ -62,6 +65,7 @@
 			<br>
 				<div class="form">
 					<div class="form-group row">
+						<h4>Información personal.</h4><br>
 				    	<label for="nombres" class="col-sm-2 col-form-label">Nombre(s):</label>
 				    	<div class="col-sm-10">
 				      	<input type="text" id="nombres" name="nombres" class="width_n mayus form-control" placeholder="Nombre(s)" value="{{old('nombres', $alumno->nombres)}}" @if ($errors->has('nombres')) autofocus @endif onKeyUp="document.getElementById(this.id).value=document.getElementById(this.id).value.toUpperCase()">
@@ -72,10 +76,6 @@
 	 						 @endif
 							</div>
 				  	</div>
-					{{-- @if (old('nombres'))
-
-					@endif --}}
-					{{-- {{ dd( )}} --}}
 					<div class="form-group row">
 				    	<label for="apellido1" class="col-sm-2 col-form-label">Primer apellido: </label>
 				    	<div class="col-sm-10">
@@ -143,6 +143,198 @@
 								@endif
 							</div>
 						</div>
+					<div class="form-group row">
+
+						<h4>Domicilio.</h4><br>
+					   	<label for="codigo_postal" class="col-sm-2 col-form-label">C.P.:</label>
+					   	<div class="col-sm-10">
+								@if(isset($info_dl))
+						     	<input class="col-sm-8" type="text" id="codigo_postal" name="codigo_postal" class="width_n form-control" placeholder="Código postal" maxlength="5" value="{{old('codigo_postal', $info_dl->codigo_postal)}}" @if ($errors->has('codigo_postal')) autofocus @endif onKeyUp="document.getElementById(this.id).value=document.getElementById(this.id).value.toUpperCase()">
+								@else
+									<input class="col-sm-8" type="text" id="codigo_postal" name="codigo_postal" class="width_n form-control" placeholder="Código postal" maxlength="5" onfocusout="filtraCP()">
+								@endif
+								<input class="col-sm-2" type="submit" name="filtraXCodigo" id="filtraXCodigo" value="Buscar" onclick="visualiza();" />
+									@if ($errors->has('codigo_postal'))
+			 							<span class="help-block">
+			 								<strong>{{ $errors->first('codigo_postal') }}</strong>
+			 							</span>
+			 					 	@endif
+							</div>
+					 	</div>
+					<div class="form-group row">
+					   	<label for="estado" class="col-sm-2 col-form-label">Estado:</label>
+					   	<div class="col-sm-10">
+								@if(isset($info_dl->estado))
+								<select name="estado" class="width_n form-control">
+									<option value="{{$info_dl->estado}}">{{$info_dl->estado}}</option>
+								</select>
+								@else
+									@if(isset($estados))
+									<select name="estado" class="width_n form-control">
+										@foreach($estados as $edo)
+												<option value="{{ mb_strtoupper($edo->d_estado,'utf-8') }}" {{ (Request::old("estado") == $edo->d_estado ? "selected":"") }}>{{mb_strtoupper($edo->d_estado,'utf-8')}}</option>
+												<!-- <option value="{{$edo->d_estado}}">{{$edo->d_estado}}</option> -->
+										@endforeach
+									</select>
+									@else
+						     		<select name="estado" class="width_n form-control" disabled>
+											<!-- <option value="volvo">MÉXICO</option>
+									  	<option value="saab">Sinaloa</option> -->
+										</select>
+									@endif
+								@endif
+
+								@if ($errors->has('estado'))
+			 						 <span class="help-block">
+			 								 <strong>{{ $errors->first('estado') }}</strong>
+			 						 </span>
+			 				 @endif
+							</div>
+					 	</div>
+					<div class="form-group row">
+					   	<label for="municipio" class="col-sm-2 col-form-label">Municipio/Alcaldía:</label>
+					   	<div class="col-sm-10">
+								@if(isset($info_dl->municipio))
+								<select name="municipio" class="width_n form-control">
+									<option value="{{$info_dl->municipio}}">{{$info_dl->municipio}}</option>
+								</select>
+								@else
+									@if(isset($municipios))
+									<select name="municipio" class="width_n form-control">
+										@foreach($municipios as $mnp)
+											<option value="{{mb_strtoupper($mnp->d_mnpio,'utf-8')}}">{{mb_strtoupper($mnp->d_mnpio,'utf-8')}}</option>
+										@endforeach
+									</select>
+									@else
+						     		<select name="municipio" class="width_n form-control" disabled>
+											<!-- <option value="volvo">MÉXICO</option>
+									  	<option value="saab">Sinaloa</option> -->
+										</select>
+									@endif
+								@endif
+
+								@if ($errors->has('municipio'))
+				 					 <span class="help-block">
+				 							 <strong>{{ $errors->first('municipio') }}</strong>
+				 					 </span>
+				 			 @endif
+							</div>
+					 	</div>
+					<div class="form-group row">
+					   	<label for="colonia" class="col-sm-2 col-form-label">Colonia:</label>
+					   	<div class="col-sm-10">
+								@if(isset($info_dl->colonia))
+								<select name="colonia" class="width_n form-control">
+									<option value="{{$info_dl->colonia}}">{{$info_dl->colonia}}</option>
+								</select>
+								@else
+									@if(isset($colonias))
+									<select name="colonia" class="width_n form-control">
+										@foreach($colonias as $col)
+											<option value="{{mb_strtoupper($col->d_asenta,'utf-8')}}">{{mb_strtoupper($col->d_asenta,'utf-8')}}</option>
+										@endforeach
+									</select>
+									@else
+						     		<select name="colonia" class="width_n form-control" disabled>
+											<!-- <option value="volvo">MÉXICO</option>
+									  	<option value="saab">Sinaloa</option> -->
+										</select>
+									@endif
+								@endif
+
+								@if ($errors->has('colonia'))
+										 <span class="help-block">
+												 <strong>{{ $errors->first('colonia') }}</strong>
+										 </span>
+								 @endif
+							</div>
+					 	</div>
+					<div class="form-group row">
+					   	<label for="calle_numero" class="col-sm-2 col-form-label">Calle y número:</label>
+					   	<div class="col-sm-10">
+								@if(isset($info_dl))
+					     		<input type="text" id="calle_numero" name="calle_numero" class="width_n form-control" placeholder="Calle y número" value="{{old('calle_numero', $info_dl->calle_numero)}}" @if ($errors->has('calle_numero')) autofocus @endif onKeyUp="document.getElementById(this.id).value=document.getElementById(this.id).value.toUpperCase()">
+								@else
+									<input type="text" id="calle_numero" name="calle_numero" class="width_n form-control" placeholder="Calle y número">
+								@endif
+								@if ($errors->has('calle_numero'))
+				 					 <span class="help-block">
+				 							 <strong>{{ $errors->first('calle_numero') }}</strong>
+				 					 </span>
+				 			 @endif
+							</div>
+					 	</div><br>
+					<div class="form-group row">
+						<h4>Información laboral.</h4><br>
+					   	<label for="empleo" class="col-sm-2 col-form-label">¿Trabajas?:</label>
+					   	<div class="col-sm-10">
+								<table style="width:20%;"><tr>
+									@if(isset($info_dl->labora))
+										<td><p><input id="empleo_si" name="empleo" type="radio" value="{{old('empleo')}}" @if(old('empleo') == 1) checked @endif/> Si</p></td>
+										<td><p><input id="empleo_no" name="empleo" type="radio" value="{{old('empleo')}}" @if(old('empleo') == 0) checked @endif/> No</p></td>
+									@else
+										<td><p><input checked id="empleo_si" name="empleo" type="radio" value=1/> Si</p></td>
+										<td><p><input id="empleo_no" name="empleo" type="radio" value=0/> No</p></td>
+									@endif
+								</tr></table>
+								<!-- <label for="empleo" class="correo">Selecciona "Si" sólo en caso de ejercer en relación con la carrera que estudiaste.</label> -->
+								@if ($errors->has('empleo'))
+									 <span class="help-block">
+											 <strong>{{ $errors->first('empleo') }}</strong>
+									 </span>
+							 @endif
+							</div>
+					 	</div>
+					<div id="info_laboral_nombre" class="form-group row">
+					   	<label for="nombre_laboral" class="col-sm-2 col-form-label">Empresa/Institución:</label>
+					   	<div class="col-sm-10">
+								@if(isset($info_dl))
+					     		<input type="text" id="nombre_laboral" name="nombre_laboral" class="width_n form-control" placeholder="Nombre de la empresa/institución donde laboras" value="{{old('lugar_laboral', $info_dl->lugar_laboral)}}" @if ($errors->has('nombre_laboral')) autofocus @endif onKeyUp="document.getElementById(this.id).value=document.getElementById(this.id).value.toUpperCase()">
+								@else
+									<input type="text" id="nombre_laboral" name="nombre_laboral" class="width_n form-control" placeholder="Nombre de la empresa/institución donde laboras">
+								@endif
+								@if ($errors->has('nombre_laboral'))
+									 <span class="help-block">
+											 <strong>{{ $errors->first('nombre_laboral') }}</strong>
+									 </span>
+							 @endif
+							</div>
+					 	</div>
+					<div id="info_laboral_cargo" class="form-group row">
+					   	<label for="cargo" class="col-sm-2 col-form-label">Cargo:</label>
+					   	<div class="col-sm-10">
+								@if(isset($info_dl))
+					     		<input type="text" id="cargo" name="cargo" class="width_n form-control" placeholder="Cargo" value="{{old('cargo_laboral', $info_dl->cargo_laboral)}}" @if ($errors->has('cargo')) autofocus @endif onKeyUp="document.getElementById(this.id).value=document.getElementById(this.id).value.toUpperCase()">
+								@else
+									<input type="text" id="cargo" name="cargo" class="width_n form-control" placeholder="Cargo">
+								@endif
+								@if ($errors->has('cargo'))
+			 						 <span class="help-block">
+			 								 <strong>{{ $errors->first('cargo') }}</strong>
+			 						 </span>
+			 				 @endif
+							</div>
+					</div>
+					<div id="info_laboral_ingreso" class="form-group row">
+					   	<label for="ingreso" class="col-sm-2 col-form-label">Fecha de ingreso:</label>
+					   	<div class="col-sm-10">
+								@if(isset($info_dl))
+									@if(isset($info_dl->ingreso))
+										<input class="width_n form-control fecha datepicker_esp" placeholder="dd/mm/aaaa" type="text" name="ingreso" maxlength="10" value="{{old('ingreso', date('d/m/Y', strtotime($info_dl->ingreso_laboral)))}}" @if ($errors->has('ingreso')) autofocus @endif onKeyUp="document.getElementById(this.id).value=document.getElementById(this.id).value.toUpperCase()">
+									@else
+										<input class="width_n form-control fecha datepicker_esp" placeholder="dd/mm/aaaa" type="text" name="ingreso" maxlength="10">
+									@endif
+								@else
+									<input class="width_n form-control fecha datepicker_esp" placeholder="dd/mm/aaaa" type="text" name="ingreso" maxlength="10">
+								@endif
+								<!-- <input type="text" id="ingreso" name="ingreso" class="width_n form-control" placeholder="Fecha de ingreso (dd/mm/aaaa)" maxlength="10" value="{{old('cargo', $alumno->ingreso)}}" @if ($errors->has('ingreso')) autofocus @endif onKeyUp="document.getElementById(this.id).value=document.getElementById(this.id).value.toUpperCase()"> -->
+								@if ($errors->has('ingreso'))
+			 						 <span class="help-block">
+			 								 <strong>{{ $errors->first('ingreso') }}</strong>
+			 						 </span>
+			 				 @endif
+							</div>
+					</div>
 
 				</div>
 			<br>
@@ -193,4 +385,54 @@
 @endsection
 @section('animaciones')
 	<script src="{{asset('js/loadingDownload.js')}}"></script>
+
+	{{-- Para elegir fecha en español --}}
+  <script src="{{asset('js/datepicker_esp.js')}}"></script>
+
+	{{-- Para visualizar la zona en que está el código postal una vez hecha la búsqueda --}}
+  <script>
+		function getOffset( el ) {
+		 var _x = 0;
+		 var _y = 0;
+		 while( el && !isNaN( el.offsetLeft ) && !isNaN( el.offsetTop ) ) {
+				 _x += el.offsetLeft - el.scrollLeft;
+				 _y += el.offsetTop - el.scrollTop;
+				 el = el.offsetParent;
+		 }
+		 return { top: _y, left: _x };
+		}
+
+		function visualiza(){}
+			var elmnt = window.innerHeight;
+			var y = getOffset( document.getElementById('codigo_postal') ).top;
+			window.scroll(0, y-(elmnt/2));
+		}
+	</script>
+
+	{{-- Para evitar mostrar los campos de información laboral en caso de no trabajar --}}
+	<script>
+		if($('#empleo_si').is(':checked')) {
+			$("#info_laboral_nombre").show();
+			$("#info_laboral_cargo").show();
+			$("#info_laboral_ingreso").show();
+		}else{
+			$("#info_laboral_nombre").hide();
+			$("#info_laboral_cargo").hide();
+			$("#info_laboral_ingreso").hide();
+		}
+
+		$(function() {
+			$('input[type=radio][name=empleo]').change(function() {
+				if (this.value == 1) {
+					$("#info_laboral_nombre").show();
+					$("#info_laboral_cargo").show();
+					$("#info_laboral_ingreso").show();
+				} else {
+					$("#info_laboral_nombre").hide();
+					$("#info_laboral_cargo").hide();
+					$("#info_laboral_ingreso").hide();
+				}
+			})
+		});
+	</script>
 @endsection

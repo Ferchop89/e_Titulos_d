@@ -4,7 +4,7 @@ use Carbon\Carbon;
 namespace App\Http\Controllers;
 use \Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Models\{LotesUnam, SolicitudSep, SolicitudesCanceladas, LotesCancelados};
+use App\Models\{LotesUnam, SolicitudSep, SolicitudesCanceladas, LotesCancelados, Estudio};
 use Illuminate\Support\Facades\Auth;
 use App\Http\Traits\Consultas\XmlCadenaErrores;
 use App\Http\Traits\Consultas\TitulosFechas;
@@ -25,6 +25,8 @@ class AlumnosLotesController extends Controller
     $nombre = $_GET['nombre'];
     $carrera = $_GET['carrera'];
     $nivel = $_GET['nivel'];
+    $cuenta = substr($num_cta, 0, 8);
+    $foto = $this->consultaFotosMin($cuenta);
 
     $consulta = DB::connection('condoc_eti')->select('select * from solicitudes_sep WHERE num_cta = "'.$num_cta.'" AND cve_carrera = "'.$carrera.'" AND nivel = "'.$nivel.'"');
     $lote = $consulta[0]->fecha_lote;
@@ -223,8 +225,10 @@ class AlumnosLotesController extends Controller
     }
 
     $motivos = $this->motivosCancelacion();
+    $n_nivel = $this->nombreNivel($nivel);
+    $n_carrera = $this->carreraNombre($carrera);
 
-    return view('/menus/proceso_alumno', compact('title', 'nombre', 'num_cta', 'motivos', 'carrera', 'nivel', 'info', 'lote'));
+    return view('/menus/proceso_alumno', compact('title', 'nombre', 'num_cta', 'motivos', 'carrera', 'n_carrera', 'nivel', 'n_nivel', 'info', 'lote', 'foto'));
   }
 
   public function cancelaProcesoAlumno(Request $request){
@@ -266,8 +270,22 @@ class AlumnosLotesController extends Controller
 
       return redirect()->route('eSearchInfo', ['num_cta'=>$num_cta]);
   }
+
+  public function showDetalleFirmadas(){
+    $fechaLote = $_GET['fechaLote'];
+    $lote = SolicitudSep::where('fecha_lote', $fechaLote)->get();
+    $list = $this->armadoDetalleLote($lote);
+    $total = $lote->count();
+    $fecha = Carbon::parse($_GET['fechaLote'])->format("d-m-Y");
+    $fecha = explode("-", $fecha);
+    $datepicker = $fecha[0]."%2F".$fecha[1]."%2F".$fecha[2];
+    $fechaLote = Carbon::parse($_GET['fechaLote'])->format("d-m-Y H:i:s");
+    $title = "Lote: ".$lote[0]->fecha_lote_id."; &nbsp; fecha: ".$fechaLote."; &nbsp; cédula(s): ".$total;
+    return view('/menus/detalleFirmas', compact('title', 'fechaLote', 'list', 'datepicker'));
+  }
+
    public function showDetalleLote(){
-      $fechaLote = $_GET['fechaLote'];
+      $fechaLote = $_GET['fechaLote'];  // decia $_GET['lote'];
       $lote = SolicitudSep::where('fecha_lote', $fechaLote)->get();
       $list = $this->armadoDetalleLote($lote);
       $total = $lote->count();
@@ -279,6 +297,7 @@ class AlumnosLotesController extends Controller
       return view('/menus/detalleLote', compact('title', 'fechaLote', 'list', 'datepicker'));
    }
    public function armadoDetalleLote($lote){
+      // dd($lote);
       $composite = "<div class='lote'>";
       $composite .=  "<table class='table table-striped table-dark table-bordered'>";
       $composite .=     "<thead>";
@@ -293,10 +312,8 @@ class AlumnosLotesController extends Controller
       $composite .=        "</tr>";
       $composite .=     "</thead>";
       $composite .=     "<tbody>";
-
-      //
       foreach ($lote as $key => $alumno) {
-         $composite .=     "<tr class='".$alumno->num_cta."'>";
+         $composite .=     "<tr id='".$alumno->num_cta."' class='".$alumno->num_cta."'>";
          $composite .=        "<th scope='row'>".$alumno->id."</th>";
          $composite .=           "<td>".$alumno->num_cta."</td>";
          $composite .=           "<td>".$alumno->nombre_completo."</td>";
@@ -313,16 +330,84 @@ class AlumnosLotesController extends Controller
    }
 
    public function showDetalleCuenta(){
-     $fechaLote = $_GET['fechaLote'];
-     $lote = SolicitudSep::where('fecha_lote', $fechaLote)->get();
+     $num_cta = $_GET['num_cta'];
+     $carrera = $_GET['carrera'];
+     $infoP = SolicitudSep::where('num_cta', $num_cta)->where('cve_carrera', $carrera)->get();
+     $lote = SolicitudSep::where('fecha_lote', $infoP[0]->fecha_lote)->get();
+     $nombre = $infoP[0]->nombre_completo;
+     $nivel = $infoP[0]->nivel;
      $list = $this->armadoDetalleLote($lote);
      $total = $lote->count();
+     $fecha = Carbon::parse($lote[0]->fecha_lote)->format("d-m-Y");
+     $fecha = explode("-", $fecha);
+     $fechaLote = Carbon::parse($lote[0]->fecha_lote)->format("d-m-Y H:i:s");
+     $title = "Lote: ".$lote[0]->fecha_lote_id."; &nbsp; fecha: ".$fechaLote."; &nbsp; cédula(s): ".$total;
+     return view('/menus/detalleLoteCuenta', compact('title', 'fechaLote', 'list', 'num_cta', 'nombre', 'carrera', 'nivel'));
+   }
+
+   public function showDetalleEnviadas()
+   {
+      $fechaLote  = $_GET['fechaLote'];
+      $fechaEnvio = $_GET['fechaEnvio'];
+      $nivel = $_GET['nivel'];
+      if ($nivel=='*') {
+         // filtro fecha todos los niveles
+         $lote = SolicitudSep::
+                     where('fecha_lote', $fechaLote)
+                     ->get();
+      } else {
+         // filtro fecha y nivel
+         $lote = SolicitudSep::
+                     where('fecha_lote', $fechaLote)->
+                     where('nivel',$nivel)->
+                     get();
+      }
+     $list = $this->armadoDetalleLote($lote);
+     $total = $lote->count();
+     $nombre = ($nivel=='*')? '': Estudio::where('cat_subcve',$nivel)->pluck('cat_nombre')[0];
+     $nombre = $nivel.' '.$nombre;
+     return view('/menus/detalleEnviadas', compact('fechaEnvio','fechaLote','nombre', 'total','list'));
+   }
+
+   public function showFiltradas(){
+     $nivel = $_GET['nivel'];
+     $fechaLote = new Carbon($_GET['fechaLote']);
+     $fechaLote = $fechaLote->format('Y-m-d H:i:s');
+     if($nivel == "--- TODOS ---"){
+       $lote = SolicitudSep::where('fecha_lote', $fechaLote)->get();
+       $total = $lote->count();
+       $title = "Lote (".$total." cédulas): ".$fechaLote." | Todos";
+     }else{
+       $nivel_res = substr($nivel, 0, 2);
+       $lote = SolicitudSep::where('fecha_lote', $fechaLote)->where('nivel', $nivel_res)->get();
+       $total = $lote->count();
+       $title = "Lote (".$total." cédulas): ".$fechaLote." | ".$nivel;
+     }
+     $list = $this->armadoDetalleLote($lote);
      $fecha = Carbon::parse($_GET['fechaLote'])->format("d-m-Y");
      $fecha = explode("-", $fecha);
      $datepicker = $fecha[0]."%2F".$fecha[1]."%2F".$fecha[2];
      $fechaLote = Carbon::parse($_GET['fechaLote'])->format("d-m-Y H:i:s");
-     $title = "Lote: ".$lote[0]->fecha_lote_id."; &nbsp; fecha: ".$fechaLote."; &nbsp; cédula(s): ".$total;
-     return view('/menus/detalleLoteCuenta', compact('title', 'fechaLote', 'list', 'datepicker'));
+     $aux = Carbon::parse($_GET['fechaLote'])->format("Y-m-d H:i:s");
+     $niveles_con = (array)DB::connection('condoc_eti')->select('select * from _estudios');
+     $niveles_sol = (array)DB::connection('condoc_eti')
+                    ->select('SELECT nivel
+                              FROM condoc_tests.solicitudes_sep
+                              WHERE fecha_lote = "'.$aux.'"
+                              GROUP BY nivel
+                              ORDER BY nivel');
+     $foo = array('cat_subcve' => '--- TODOS ---');
+     $foo = (object)$foo;
+     $niveles[0] = $foo->cat_subcve;
+     foreach ($niveles_con as $nvl) {
+       foreach ($niveles_sol as $nvlc) {
+         if($nvl->cat_subcve == $nvlc->nivel){
+           $nombre = $nvl->cat_subcve.". ".$nvl->cat_nombre;
+           array_push($niveles, $nombre);
+         }
+       }
+     }
+     return view('/menus/detalleEnviadas', compact('title', 'fechaLote', 'list', 'niveles', 'datepicker', 'total'));
    }
 
    /* ///////////////////////// PASAR A FIRMASCEDULACONTROLLER ///////////////////////// */
@@ -380,9 +465,9 @@ class AlumnosLotesController extends Controller
      if($info == null){
        $msj = "No se encuentran registros con el número de cuenta ".$num_cta;
        Session::flash('error', $msj);
-     }elseif($info[0]->status != '7' || $info[0]->status != '8'){
-       $msj = "El alumno no cuenta con el proceso requerido para esta cancelación.";
-       Session::flash('info', $msj);
+     }elseif($info[0]->status != 7){
+       $msjc = "El alumno no cuenta con el proceso requerido para esta cancelación.";
+       Session::flash('info', $msjc);
      }
      $motivos = $this->motivosCancelacion();
      return view('/menus/cedulas_canceladas', ['foto' => $foto, 'info' => $info, 'motivos' => $motivos]);

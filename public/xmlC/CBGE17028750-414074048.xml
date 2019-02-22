@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<CancelaTituloElectronico xmlns="https://www.sige.sep.gob.mx/titulos/" xmlns:xsi="http://www.w3.oft/2001/XMLSchema-instace" version="1.0" xsi:schemalocation="https//www.siged.sep.gob.mx/titulos/ schema.xsd">
-  <FolioControl folio="CBGE17028750"/>
-  <MotCancelacion cveMotivo="R1"/>
-  <Autenticacion usuario="Administrador" password="$2y$10$G/xFMv2GBYNIQ3EdXosHZutsI4ssgMc8QRAp1hQ.5tVg66IVoLN0i"/>
-</CancelaTituloElectronico>

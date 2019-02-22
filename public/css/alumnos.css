@@ -15,7 +15,6 @@ input#num_cta{
   height: 32px;
   background-image: url("../images/pass.png");
   background-repeat: no-repeat;
-  background-color: #cccccc;
 }
 
 .input-group-addon.input-group-addon-custom {
@@ -56,6 +55,8 @@ input#num_cta{
    margin-top: 50px;
 }
 .bloque{
+   margin-top: 1px;
+   margin-bottom: 8px;
    height: 1px;
    background-color: black;
 }
@@ -71,16 +72,16 @@ input#num_cta{
 }
 
 /* Documento PDF de la ATI */
-.ati_pdf h1{ font-size: 14px; }
+.ati_pdf h1{ font-size: 12px; }
 
 .ati_pdf div, .ati_pdf p, .tabla_i td
 {
    font-family: Arial, sans-serif;
-   font-size: 12.5px;
+   font-size: 12px;
    margin: 0;
 }
 .ati_pdf br, .ati_pdf hr {
-   line-height: 14px;
+   line-height: 12px;
 }
 .cont_aut .date{
    text-align: right;
@@ -105,18 +106,24 @@ input#num_cta{
 }
 
 .dup p{ font-size: 15px; }
-.tabla, .tabla_i { width: 100%; }
-.pdf_c p { font-size: 12.5px; }
+.tabla { width: 100%; }
+.tabla_i {width: 90%; }
+.pdf_c p { font-size: 12px; }
+.pdf_c {margin-top: 0px;}
+
+@page { margin: 5mm; }
 
 .uni_na {
   position: absolute;
-  right: 0;
+  right: 18px;
 }
 .sub{
    font-size:5px;
 }
 
-.info_alumno br{ line-height: 6px; }
+.info_alumno br{ line-height: 4px; }
+.info_alumno { width: 90%; padding-left: 4%; }
+.seccion_info { padding-left: 4.2%; }
 
 .super{
   vertical-align:super;
@@ -147,4 +154,69 @@ input#num_cta{
 #t01 th {
     background-color: #5D6975;
     color: white;
+}
+
+#t02 {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 09px;
+    padding-top: 3%;
+}
+
+#t02 th, #t02 td {
+    text-align: left;
+    padding: 2px;
+}
+
+#t02 tr:nth-child(even){background-color: #F5F5F5}
+
+#t02 th {
+    background-color: #A0A0A0;
+    color: black;
+}
+
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  border-bottom: black;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 250px;
+  background-color: #555;
+  color: #fff;
+  text-align: justify;
+  font-size: 13px;
+  border-radius: 6px;
+  padding: 10px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: 0px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: 95%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+.aclaracion {
+  font-size: 12px;
+  text-align: justify;
 }
