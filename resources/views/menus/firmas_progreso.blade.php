@@ -27,8 +27,6 @@
                     <td><b>Firmas: </b></td>
                     <td>Departamento Títulos - <span class='fa fa-check-square-o f_dirt'/></td>
                     <td>Directora DGAE - <span class='fa fa-check-square-o f_dir'/></td>
-                    <td>Secretario Gral.- <span class='fa fa-check-square-o f_sec'/></td>
-                    <td>Rector UNAM- <span class='fa fa-check-square-o f_rec'/></td>
                     <td>
                   </tr>
                </table>

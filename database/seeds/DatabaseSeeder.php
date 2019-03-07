@@ -30,7 +30,8 @@ class DatabaseSeeder extends Seeder
           'lotes_unam',
           '_status_cedula',
           '_codigos_error_feu',
-          '_status_dgp'
+          '_status_dgp',
+          // '_posgradoUnam',
       ]);
       // En este orden porque los roles deben existir antes que los usuarios
       $this->call(Web_Service_Seeder::class);
@@ -45,6 +46,7 @@ class DatabaseSeeder extends Seeder
         $this->call(StatusCedulaSeeder::class);
         $this->call(CasoEspecialSeeder::class);
         $this->call(StatusDgpSeeder::class);
+        // $this->call(posgradoTableSeeder::class);
     }
 
     public function truncateTables(array $tables){

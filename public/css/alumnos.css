@@ -106,8 +106,7 @@ input#num_cta{
 }
 
 .dup p{ font-size: 15px; }
-.tabla { width: 100%; }
-.tabla_i {width: 90%; }
+.tabla, .tabla_i { width: 100%; }
 .pdf_c p { font-size: 12px; }
 .pdf_c {margin-top: 0px;}
 
@@ -121,7 +120,7 @@ input#num_cta{
    font-size:5px;
 }
 
-.info_alumno br{ line-height: 4px; }
+.info_alumno br{ line-height: 3px; }
 .info_alumno { width: 90%; padding-left: 4%; }
 .seccion_info { padding-left: 4.2%; }
 

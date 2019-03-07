@@ -332,7 +332,7 @@ Route::get('/lista-solicitudes/cedulasPen', function(){
       //503459419
       //503006594
       //517493614---
-      $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '305548337', $ws_SIAE->key);
+      $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '402000864', $ws_SIAE->key);
       // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '513013249', $ws_SIAE->key); --- INT/STRING
       //$identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '054051690', $ws_SIAE->key);
       //$identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '517493614', $ws_SIAE->key);
@@ -349,18 +349,11 @@ Route::get('/lista-solicitudes/cedulasPen', function(){
       //dd((array)$identidad);
       return (array)$identidad;
      });
-   Route::get('/DGIRE', function(){
-      $ws = new WSController();
-      // $respuesta = $ws->ws_DGIRE('503459419');
-      //$respuesta = $ws->ws_DGIRE('517493614');//413527022
-      $respuesta = $ws->ws_DGIRE('412520178');//413527022
-      dd($respuesta->respuesta);
-   });
    Route::get('/DGIRE2', function(){
       $ws = new WSController();
       // $respuesta = $ws->ws_DGIRE('503459419');
       // $respuesta = $ws->ws_DGIRE2('306573396');
-      $respuesta = $ws->ws_DGIRE2('413527022');
+      $respuesta = $ws->ws_DGIRE2('402000864');
       dd($respuesta);
    });
    Route::get('/RENAPO', function(){
@@ -517,9 +510,39 @@ Route::post('/cancelaC', [
 ])->where('num_cta','[0-9]+')
   ->where('carrera','[0-9]+');
 /* */
-Route::post('/response/componenteFirma', [
-   'uses' => 'SelloController@generaSello',
+Route::any('/response/componenteFirma', [
+   'uses' => 'SelloController@keySat',
    'as' => 'componenteFirma',
    'middleware' => 'roles',
-   'roles' => ['Admin', 'Jtit', 'Director', 'SecGral', 'Rector']
+   'roles' => ['Admin', 'Director']
 ]);
+Route::post('/autorizando/sat', [
+   'uses' => 'SelloController@generaSello',
+   'as' => 'firmaSat',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Director']
+]);
+Route::post('/firmado/sat', [
+   'uses' => 'SelloController@generaSello',
+   'as' => 'firmaSat',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Director']
+]);
+Route::get('/response/autorizaTitulos', [
+   'uses' => 'SelloController@autorizando',
+   'as' => 'autorizaTitulos',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit']
+]);
+Route::post('/response/autorizacionLotes', [
+   'uses' => 'SelloController@postAutorizando',
+   'as' => 'postAutoriza',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit']
+]);
+Route::get('/descarga/{lote}', function($lote){
+   $wsDGP = new WSController();
+   $response = $wsDGP->ws_Dgp_Descarga($lote);
+   file_put_contents("dgpDescarga/$lote.zip", $response->titulosBase64);
+   return 'dgpDescarga: '.$lote.'.zip';
+});

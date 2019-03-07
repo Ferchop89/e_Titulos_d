@@ -7,29 +7,123 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
 use SOAPClient;
 use App\Exceptions\RenapoException;
+use File;
+use DB;
 
 class WSController extends Controller
 {
-   public function ws_DGP()
-    {
-        try {
+   public function ws_Dgp_Carga($fileEnvioDGP,$fecha_lote_id)
+   {
+      // WS para el envio de títulos electrónicos
+      // Acceso WS de la DGP via php.
+      $nombreArchivo=$fileEnvioDGP[0];
+      // ws via java
+      exec("java -jar jar/TitulosElectronicos.jar $nombreArchivo", $respuestaDgp);
+      // Registro del numero de lote que devuelve la DGP
+      $registro = $this->registraLoteDgp($respuestaDgp,$fecha_lote_id);
+      return;
+   }
+   public function registraLoteDgp($respuestaDgp,$fecha_lote_id)
+   {
+      // dd($respuestaDgp,$fecha_lote_id);
+      $registros = DB::table('lotes_dgp')->
+               where('lote_unam_id',$fecha_lote_id)->
+               update([
+                     'lote_dgp'=>$respuestaDgp[0],
+                     ]);
+      // Actualizamos en la tabla solicitudes_sep el status a 5 "05.Enviado DGP"
+      $registros = DB::connection('condoc_eti')->
+               table('solicitudes_sep')->
+               where('fecha_lote_id',$fecha_lote_id)->
+               update([
+                     'status'=>5,
+                     ]);
+      return;
+   }
+   public function ws_Dgp_Descarga($loteDgp)
+   {
+      // Descarga del archivo Zip Codificado en base64
+      // que contiene la evaluación de los xml enviados
+      $usuario = 'usuariomet.qa362';
+      $contrasena = 'YfZqnDIw';
+      try {
             $wsdl = 'https://metqa.siged.sep.gob.mx/met-ws/services/TitulosElectronicos.wsdl';
             $opts = array(
                 'location'=> 'https://metqa.siged.sep.gob.mx:443/met-ws/services/',
-                // 'location'=> 'https://webser.dgae.unam.mx:8243/services/ConsultaRenapoPorDetalle.ConsultaRenapoPorDetalleHttpsSoap12Endpoint',
                 'connection_timeout' => 10 ,
-                'encoding' => 'ISO-8859-1',
+                'encoding' => 'UTF-8',
                 'trace' => true,
                 'exceptions' => true
              );
             $client = new SOAPClient($wsdl, $opts);
-            dd($client);
-            dd($client->__getFunctions());
-            dd($client, $client->__getTypes());
-            $response = $client->consultarPorCurp($datos);
-            // $response = $client->consultarCurpDetalle(['cveAlfaEntFedNac' => 'DF', 'fechaNacimiento' => '01/01/1989', 'nombre' => 'FERNANDO', 'primerApellido' => 'PACHECO', 'segundoApellido' => 'ESTRADA', 'sexo' => 'H']);
-            // dd($response, $curp);
+            $parametros = [
+               'numeroLote' => (string)$loteDgp,
+               'autenticacion' => ['usuario' => $usuario,
+                                    'password' => $contrasena]
+            ];
+            $response = $client->descargaTituloElectronico($parametros);
             return $response;
+        }
+        catch (SoapFault $exception) {
+
+            echo "<pre>SoapFault: ".print_r($exception, true)."</pre>\n";
+            echo "<pre>faultcode: '".$exception->faultcode."'</pre>";
+            echo "<pre>faultstring: '".$exception->getMessage()."'</pre>";
+        }
+        dd('finaliza lotes');
+        return $response;
+   }
+   public function ws_DGPback($fileEnvioDGP)
+   {
+      // header('Content-Type: text/plain; charset=UTF-8');
+      // WS para el envio de títulos electrónicos
+      $nombreArchivo = explode('/',$fileEnvioDGP[0])[1];
+      $nombreArchivo = 'unam.zip';
+      // $varArchivo = File::get($fileEnvioDGP[0]);
+      $varArchivo = File::get('xml/unam.zip');
+      $varArchivo64 = base64_encode((string)$varArchivo);
+      // dd($nombreArchivo,$varArchivo64);
+      $usuario = 'usuariomet.qa362';
+      $contrasena = 'YfZqnDIw';
+      // dd($varArchivo64,$nombreArchivo);
+
+      exec("java -jar jar/TitulosElectronicos.jar $nombreArchivo $varArchivo64",$output);
+      dd('salida:', $output);
+
+
+      try {
+            $wsdl = 'https://metqa.siged.sep.gob.mx/met-ws/services/TitulosElectronicos.wsdl';
+            $opts = array(
+                'location'=> 'https://metqa.siged.sep.gob.mx:443/met-ws/services/',
+                'connection_timeout' => 10 ,
+                'encoding' => 'UTF-8',
+                'trace' => true,
+                'exceptions' => true
+             );
+            $client = new SOAPClient($wsdl, $opts);
+            // dd($client);
+            // dd($client, $client->__getTypes());
+            // dd($client->__getFunctions());
+            $parametros = [
+               'nombreArchivo' => (string)$nombreArchivo,
+               'archivoBase64' => (string)$varArchivo64,
+               'autenticacion' => ['usuario' => $usuario,
+                                    'password' => $contrasena]
+            ];
+            // dd($client, $client->__getTypes());
+            $response = $client->cargaTituloElectronico($parametros);
+            dd($response);
+            dd($nombreArchivo,$varArchivo64);
+            $parametros2 = [
+               'numeroLote' => 53827,
+               'autenticacion' => ['usuario' => $usuario,
+                                 'password' => $contrasena]
+            ];
+            // dd($parametros, json_encode($parametros), $response);
+            $response2 = $client->descargaTituloElectronico($parametros2);
+            dd(base64_encode($response2->titulosBase64));
+
+            return $response->numeroLote;
 
         }
         catch (SoapFault $exception) {
@@ -39,7 +133,7 @@ class WSController extends Controller
             echo "<pre>faultstring: '".$exception->getMessage()."'</pre>";
         }
         return $response;
-    }
+   }
 
     public function ws_RENAPO($curp)
     {
@@ -62,6 +156,8 @@ class WSController extends Controller
           throw new RenapoException($e->getMessage());
        }
        $client = new SOAPClient($wsdl, $opts);
+       // dd($client->__getFunctions());
+       dd($client, $client->__getTypes());
        $datos=[
           'datos' => [
           'cveCurp' => $curp,
@@ -124,7 +220,7 @@ class WSController extends Controller
       // parametros de entrada para SOAP
       // $cta=request('trayectoria');
       // $cta = '313335127'; // con causa 72
-      // $cta = '410060533'; // con causa 72
+      // $cta = '410060533'; // con causa$num_cta 72
       // $cta = '308010769'; //Foto
       // $cta = '305016614'; //Fenando
       // $cta = '081581988'; // defuncion
@@ -193,7 +289,7 @@ class WSController extends Controller
     }
 
     public function ws_DGIRE($num_cta)
-    {
+    {//strlen(base64_decode($encoded_data));
         try {
             $wsdl = 'http://webser.dgae.unam.mx:8280/services/ConsultaDgire?wsdl';
             $opts = array(
@@ -201,7 +297,7 @@ class WSController extends Controller
                 'proxy_port' => 8080,
                 'location'=> 'http://webser.dgae.unam.mx:8280/services/ConsultaDgire.ConsultaDgireHttpSoap12Endpoint',
                 'connection_timeout' => 30 ,
-                'encoding' => 'ISO-8859-1',
+                'encoding' => 'ISOstrlen(base64_decode($encoded_data));-8859-1',
                 'trace' => 1,
                 'exceptions' => 1
              );

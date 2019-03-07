@@ -11,7 +11,9 @@ use Session;
 use Zipper;
 use DB;
 use DateTime;
-use SOAPClient;
+use App\Http\Controllers\Admin\WSController;
+use \FluidXml\FluidXml;
+
 
 class EnvioSep extends Controller
 {
@@ -27,15 +29,18 @@ class EnvioSep extends Controller
       // Conjunto de solicitudes_sep
       $loteCedulasXml = ''; $cuenta = 1;
       // Conjunto de registros de solicitudes que integras un lote (fecha_lote).
-      $solicitudes = SolicitudSep::where('status',6)
+      $solicitudes = SolicitudSep::where('status',4)
                                    ->where('fecha_lote',$fechaLote)
                                    ->get();
       // Las cedulas se integran a un archivo xml con sus tres firmas.
+      // dd('firmas',$solicitudes);
       if (count($solicitudes)==1) {
          // El archivo xml. Obtenemos el archivo XMLO en una cadena
-         $cedula = $this->cadenaArchivo($solicitud,$folio);
+         foreach ($solicitudes as $solicitud) {
+            $cedula = $this->cadenaArchivo($solicitud,$folio);
+         }
          // Un archivo envio de una sola cedula forma un archivo de extensión xml
-         $nombreArchivo = 'xml/'.$folio.'-'.$solicitud->num_cta.'.xml';
+         $nombreArchivo = 'xml/'.$folio.'.xml';
          // guardamos un archivo xml por cada cédula del Lote.
          // posteriormente se integran en un solo archivo ZIP si el count(lote) > 1 o XML si count(lote) = 1
          $cedula->save($nombreArchivo);
@@ -44,7 +49,9 @@ class EnvioSep extends Controller
          foreach ($solicitudes as $solicitud) {
             $cedula = $this->cadenaArchivo($solicitud,$folio);
             // Un archivo envio de una sola cedula forma un archivo de extensión xml
+            // Se le omite el numero de cuenta porque ya lo lleva en el folio interno
             $nombreArchivo = 'xml/'.$folio.'-'.$solicitud->num_cta.'.xml';
+            // $nombreArchivo = 'xml/'.$folio.'xml';
             // guardamos un archivo xml por cada cédula del Lote.
             // posteriormente se integran en un solo archivo ZIP si el count(lote) > 1 o XML si count(lote) = 1
             $cedula->save($nombreArchivo);
@@ -57,7 +64,7 @@ class EnvioSep extends Controller
 
       // GEneración del archivo de envio y envio mediante WS a la sep
       $this->generaZip($fechaLote);
-
+      // $this->generaZipDirGral($fechaLote);
       $this->enviaZipXml($fechaLote);
 
       // Copia de los Zip generados sin firmas para la Direccion generaLotes
@@ -70,17 +77,24 @@ class EnvioSep extends Controller
    {
       // Genera la cadena xlm para integrar el archivo ZIP o XML
       $sello1 = $this->firmaToSello($solicitud->firma1);
-      $sello2 = $this->firmaToSello($solicitud->firma2);
-      $sello3 = $this->firmaToSello($solicitud->firma3);
+      // $sello2 = $this->firmaToSello($solicitud->firma2);
+      // $sello3 = $this->firmaToSello($solicitud->firma3);
       // $datos del alumno que guarda en su registro y se utilizan para generar los nodos
       $datos = unserialize($solicitud->datos);
       // $nodos forma un arreglo de nodos de información para formar el XML
       // El folio contiene el Lote y el numero de cuenta.
-      $xFolio = $folio.'-'.$solicitud->num_cta;
+      $xFolio = $folio.$solicitud->num_cta;
       // $nodos contiene en un arreglo la información de una cédula para convertirla en archivo xml
-      $nodos = $this->IntegraNodosSep($xFolio,$datos,$sello1,$sello2,$sello3);
+
+      // Buscamos el certificado responsable en la tabla lotes_unam
+      $cer1 = DB::table('lotes_unam')
+                  ->where('id',$solicitud->fecha_lote_id)
+                  ->first();
+      // dd($solicitud->fecha_lote_id,$cer1,'hola');
+      $nodos = $this->IntegraNodosSep($xFolio,$datos,$sello1,$cer1->cert1);
       // $cedula contiene la versión XML y toma el arreglo de $nodos para formar el XML
       $cedula = $this->tituloXml($nodos);
+      // dd('EnvioSep: cadenaArchivo',$nodos,$cedula);
       return $cedula;
    }
 
@@ -117,64 +131,68 @@ class EnvioSep extends Controller
       // Consultamos el id de la fechaLote, porque es el valor de alta en lotes_dgp
       $fecha_lote_id = $this->obten_lote_id($fechaLote);
       $this->altaDPG($fecha_lote_id);
-
       // Actualiza el status de la tabla solicitudes_sep que pasa de '6' (firma rector) a '7' genera archivo XML
       // $this->statusXmlZip($fechaLote);
 
       // Envia por WS el Archivo XML o ZIP.
-      $this->xmlzipToDGP($fechaLote);
+      $this->xmlzipToDGP($fechaLote,$fecha_lote_id);
    }
-   public function xmlzipToDGP($fechaLote)
+   public function xmlzipToDGP($fechaLote,$fecha_lote_id)
    {
       // Leemos el archivo para enviarlo mediante el WS a la DGP.
-      $folio = Carbon::parse($fechaLote)->format('Ymdhis');
+      $lote = Carbon::parse($fechaLote)->format('Ymdhis');
       // buscamos si existe el archivo en formato xml (una sola cedula) o zip (muchas cedulas)
-      $archivoXml = 'xml/'.$folio.'.xml';
-      $archivoZip = 'xml/'.$folio.'.zip';
+      $archivoXml = 'xml/'.$lote.'.xml';
+      $archivoZip = 'xml/'.$lote.'.zip';
       $fileXml = glob($archivoXml);
       $fileZip = glob($archivoZip);
+      // Le proporcionamos la extensión adecuada al archivo.
       if ($fileXml!=[]) { // Se trata de un archivo xml
-         $file = 'xml';
+         $fileEnvioDGP = $fileXml;
       } elseif ($fileZip!=[]) { // Se trata de un archivo ZIP
-         $file = 'zip';
+         $fileEnvioDGP = $fileZip;
       } else {
-         $file = '';
+         $fileEnvioDGP = '';
       }
-      $this->ws_DGP();
+      // Creamos una nueva instancia del Web Service que se encuentra en la clase WSController
+      $wsDGP = new WSController();
+      $wsDGP->ws_Dgp_Carga($fileEnvioDGP,$fecha_lote_id);
+      // dd('Posterior a web service ws_DGP');
+      // $wsDGP = $wsDGP->ws_RENAPO('CACG620808SRL05');
       // Recuperamos el archivo para codificarlo en base 64 y llamar al WS.
 
    }
 
-   public function ws_DGP()
-   {
-        try {
-            $wsdl = 'https://metqa.siged.sep.gob.mx/met-ws/services/TitulosElectronicos.wsdl';
-            $opts = array(
-                'location'=> 'https://metqa.siged.sep.gob.mx:443/met-ws/services/',
-                // 'location'=> 'https://webser.dgae.unam.mx:8243/services/ConsultaRenapoPorDetalle.ConsultaRenapoPorDetalleHttpsSoap12Endpoint',
-                'connection_timeout' => 10 ,
-                'encoding' => 'ISO-8859-1',
-                'trace' => true,
-                'exceptions' => true
-             );
-            $client = new SOAPClient($wsdl, $opts);
-            // dd($client);
-            // dd($client->__getFunctions());
-            dd($client, $client->__getTypes());
-            $response = $client->consultarPorCurp($datos);
-            // $response = $client->consultarCurpDetalle(['cveAlfaEntFedNac' => 'DF', 'fechaNacimiento' => '01/01/1989', 'nombre' => 'FERNANDO', 'primerApellido' => 'PACHECO', 'segundoApellido' => 'ESTRADA', 'sexo' => 'H']);
-            // dd($response, $curp);
-            return $response;
-
-        }
-        catch (SoapFault $exception) {
-
-            echo "<pre>SoapFault: ".print_r($exception, true)."</pre>\n";
-            echo "<pre>faultcode: '".$exception->faultcode."'</pre>";
-            echo "<pre>faultstring: '".$exception->getMessage()."'</pre>";
-        }
-        return $response;
-   }
+   // public function ws_DGP()
+   // {
+   //      try {
+   //          $wsdl = 'https://metqa.siged.sep.gob.mx/met-ws/services/TitulosElectronicos.wsdl';
+   //          $opts = array(
+   //              'location'=> 'https://metqa.siged.sep.gob.mx:443/met-ws/services/',
+   //              // 'location'=> 'https://webser.dgae.unam.mx:8243/services/ConsultaRenapoPorDetalle.ConsultaRenapoPorDetalleHttpsSoap12Endpoint',
+   //              'connection_timeout' => 10 ,
+   //              'encoding' => 'ISO-8859-1',
+   //              'trace' => true,
+   //              'exceptions' => true
+   //           );
+   //          $client = new SOAPClient($wsdl, $opts);
+   //          // dd($client);
+   //          // dd($client->__getFunctions());
+   //          dd($clientxmlzipToDGP, $client->__getTypes());
+   //          $response = $client->consultarPorCurp($datos);
+   //          // $response = $client->consultarCurpDetalle(['cveAlfaEntFedNac' => 'DF', 'fechaNacimiento' => '01/01/1989', 'nombre' => 'FERNANDO', 'primerApellido' => 'PACHECO', 'segundoApellido' => 'ESTRADA', 'sexo' => 'H']);
+   //          // dd($response, $curp);
+   //          return $response;
+   //
+   //      }
+   //      catch (SoapFault $exception) {
+   //
+   //          echo "<pre>SoapFault: ".print_r($exception, true)."</pre>\n";
+   //          echo "<pre>faultcode: '".$exception->faultcode."'</pre>";
+   //          echo "<pre>faultstring: '".$exception->getMessage()."'</pre>";
+   //      }
+   //      return $response;
+   // }
    public function actualizaDGP()
    {
       // Actualizamos las fechas faltantes en lotes_dgp como si hubieran sido enviadas
@@ -239,7 +257,7 @@ class EnvioSep extends Controller
       //  Le borramos el atributo de sello para todos los responsables
       $cedula->query('firmaResponsable')->attr(['sello'=>'']);
       /// Si es un solo folio, le damos ext. xml si son mas de uno, le agragamos el nuermo de archivo consecutivo
-      $nombreArchivo = 'xmlG/'.$folio.'-'.$num_cta.'.xml';
+      $nombreArchivo = 'xmlG/'.$folio.$num_cta.'.xml';
       // pasamos a disco el xml
       $cedula->save($nombreArchivo);
    }
@@ -247,6 +265,7 @@ class EnvioSep extends Controller
    {
       // Pasamos a formate yyyymmddhhmmss la fecha extendida de fechaLote para indenficar los archivos
       $folio = Carbon::parse($fechaLote)->format('Ymdhis');
+      // dd($fechaLote,$folio,'generaZipDirGral');
       // los integramos a un zip todos los archivos xml de un lote,  y luego los elimianmso del directorio
       $archivos = 'xmlG/'.$folio.'*.xml';
       $files = glob($archivos);
@@ -269,10 +288,11 @@ class EnvioSep extends Controller
    public function firmaToSello($firma)
    {
       // Transmamos la firma en sello. Eliminamos de la firma header y footer
-      $firma = str_replace('-----BEGIN PKCS7-----','',$firma);
-      $firma = str_replace('-----END PKCS7-----','',$firma);
+      // $firma = str_replace('-----BEGIN PKCS7-----','',$firma);
+      // $firma = str_replace('-----END PKCS7-----','',$firma);
       // codificamos en base 64 para elaborar el sello;
-      $sello = base64_encode($firma);
+      // $sello = base64_encode($firma);
+      $sello = $firma;
 
       //  regresamos el sello a partir de la f
       return $sello;
@@ -308,7 +328,7 @@ class EnvioSep extends Controller
 
      $nodos = $this->integraNodosC($folioControl,$motivoCancela[0]->ID_MOTIVO_CAN,$user->name,$user->password);
      $cedula = $this->cancelaTituloXml($nodos);
-     $nombreArchivo = 'xmlC/'.$folioControl.'-'.$num_cta.'.xml';
+     $nombreArchivo = 'xmlC/'.$folioControl.$num_cta.'.xml';
      $cedula->save($nombreArchivo);
 
      //----------------- ELIMINAR/ACTUALIZAR BASES DE DATOS CORRESPONDIENTES ----------------------

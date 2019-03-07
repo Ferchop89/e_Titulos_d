@@ -35,6 +35,7 @@ class EtitulosController extends Controller
     }
    public function showInfo($num_cta)
    {
+      dd('Estamos en showInfo: ETitulosCOntroller.php');
       // Presentacion de Datos
       $cuenta = substr($num_cta, 0, 8);
       $verif = substr($num_cta, 8, 1);
@@ -48,6 +49,7 @@ class EtitulosController extends Controller
       // Obtención de XML
       $toXml = $this->tituloXml($nodos);
       // Obtención de la cadena origianl
+      dd($nodos);
       $cadenaOriginal = $this->cadenaOriginal($nodos);
       // Obención de los Errores.
       $errores = (isset($datos[1])==null)? 'Sin errores': $datos[1] ;

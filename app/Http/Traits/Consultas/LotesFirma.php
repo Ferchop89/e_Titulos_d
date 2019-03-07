@@ -20,8 +20,9 @@ trait LotesFirma {
          $idSol = "";
          $pasoAfirma = 0;
          $noPasoAfirma = 0;
-         // $ids representa el conjunto de registros sin errores que se autorizan a firma
-         $divIds = array_chunk($sinErrores, 100, true);
+         // $cedulas representa el conjunto de registros sin errores que se autorizan a firma
+         $cedulas = 5000;
+         $divIds = array_chunk($sinErrores, $cedulas, true);
          // $divIds = array_chunk($sinErrores, 500, true);
          foreach ($divIds as $key => $datos) {
             foreach ($datos as $id) {

@@ -31,6 +31,7 @@ class CreateSolicitudesSepTable extends Migration
             $table->unsignedInteger('status')->default(1);
             $table->unsignedInteger('fecha_lote_id')->nullable();
             $table->DateTime('fecha_lote')->nullable();
+            $table->text('cadenaOriginal')->default('');
             $table->text('firma0')->default('');
             $table->text('firma1')->default('');
             $table->text('firma2')->default('');

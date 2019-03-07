@@ -33,9 +33,15 @@ class AutorizacionController extends Controller
       $fecha = (object)['day' => $day, 'month' => $month, 'year' => $year];
       $alumno = Auth::guard('alumno')->user();
       $info_dl = InfoExtra::select()->where('num_cta', $alumno->num_cta)->first();
-      $estados = NULL;
-      $municipios = NULL;
-      $colonias = NULL;
+      if(isset($info_dl->codigo_postal)){
+        $estados = DB::connection('condoc_eti')->select('select DISTINCT(d_estado) FROM _sepomex WHERE d_codigo = '.$info_dl->codigo_postal);
+        $municipios = DB::connection('condoc_eti')->select('select DISTINCT(d_mnpio) FROM _sepomex WHERE d_codigo = '.$info_dl->codigo_postal);
+        $colonias = DB::connection('condoc_eti')->select('select DISTINCT(d_asenta) FROM _sepomex WHERE d_codigo = '.$info_dl->codigo_postal);
+      }else{
+        $estados = NULL;
+        $municipios = NULL;
+        $colonias = NULL;
+      }
       session()->forget('errorWS');
       return view('/autorizacion_t_info')->with(compact('fecha', 'alumno', 'info_dl', 'estados', 'municipios', 'colonias'));
     }
@@ -62,12 +68,9 @@ class AutorizacionController extends Controller
         $alumno = Auth::guard('alumno')->user();
         $info_dl = InfoExtra::select()->where('num_cta', $alumno->num_cta)->first();
 
-        //Eliminamos esa información para poder hacer una nueva búsqueda
+        //Actualizamos la información
         if($info_dl != null){
           $info_dl->codigo_postal = $cp;
-          $info_dl->estado = NULL;
-          $info_dl->municipio = NULL;
-          $info_dl->colonia = NULL;
           $info_dl->update();
         }else{ //Cargamos la información para el alumno en caso de no existir
           $info_dl = new InfoExtra();
@@ -96,7 +99,7 @@ class AutorizacionController extends Controller
             'calle_numero' => 'required',
             'nombre_laboral' => 'required',
             'cargo' => 'required',
-            'ingreso' => 'date_format:"d/m/Y"|required'
+            'ingreso' => 'required'
           ],[
             'nombres.required' => 'Debes proporcionar tu(s) nombre(s)',
             'apellido1.required' => 'Debes proporcionar tu apellido paterno',
@@ -120,8 +123,7 @@ class AutorizacionController extends Controller
             'calle_numero.required' => 'Debes proporcionar tu calle y número',
             'nombre_laboral.required' => 'Debes proporcionar en nombre de la empresa/institución donde laboras',
             'cargo.required' => 'Debes proporcionar el cargo en dicha empresa/institución',
-            'ingreso.required' => 'Debes proporcionar la fecha en que ingresaste en dicha empresa/institución',
-            'ingreso.date_format' => 'Debes proporcionar la fecha con formato dd/mm/aaaa'
+            'ingreso.required' => 'Debes proporcionar la fecha en que ingresaste en dicha empresa/institución'
           ]);
         }else{
           $request->validate([
@@ -209,7 +211,6 @@ class AutorizacionController extends Controller
              $info_extra->update();
            }else{
              $info_dl = new InfoExtra();
-             //$info_dl->num_cta = $num_cta;
              $info_dl->codigo_postal = $_POST['codigo_postal'];
              $info_dl->estado = strtoupper($_POST['estado']);
              $info_dl->municipio = strtoupper($_POST['municipio']);

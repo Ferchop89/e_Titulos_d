@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Support\Facades\Hash;
 
-use App\Models\{Web_Service, Alumno};
+use App\Models\{Web_Service, Alumno, InfoExtra};
 use App\Http\Controllers\Admin\WSController;
 use App\Http\Traits\Consultas\TitulosFechas;
 
@@ -109,6 +109,8 @@ class LoginController extends Controller
             if(!empty($info)){
                $nombres = $this->separaNombre($info->dat_nombre);
                $user = $this->createUserLogin($info->dat_ncta.$info->dat_dig_ver, $fechaCaptura, $nombres['apellido1'], $nombres['apellido2'], $nombres['nombre'], $info->dat_curp, null);
+               //Añadimos los datos necesarios para la nueva información
+               $info_dl = $this->createInfo($info->dat_ncta.$info->dat_dig_ver, NULL);
                if(Hash::check($fechaCaptura, $user->password)){ //Verificamos que la contraseña sea igual a la registrada
                  Auth::guard('alumno')->attempt($credentials);
                  return redirect()->intended('alumnos/ati');
@@ -124,6 +126,15 @@ class LoginController extends Controller
             if(isset($identidad) && (isset($identidad->nacimiento) && $identidad->nacimiento != "//")){ //Verificamos que exista el alumno en SIAE
                //Verificamos que coincidan los datos con SIAE
                $user = $this->createUserLogin($identidad->cuenta, $fechaCaptura, $identidad->apellido1, $identidad->apellido2, $identidad->nombres, $identidad->curp, $identidad->correo1);
+               //Añadimos los datos necesarios para la nueva información
+               if($identidad->codigo-postal != NULL){
+                 //dd("codigo_postal");
+                 $info_dl = $this->createInfo($info->dat_ncta.$info->dat_dig_ver, $identidad->codigo-postal);
+                 //con número de cuenta y codigo_postal
+               }else{
+                 //dd("sin_codigo_postal");
+                 $info_dl = $this->createInfo($info->dat_ncta.$info->dat_dig_ver, NULL);
+               }
                if(Hash::check($fechaCaptura, $user->password)){ //Verificamos que la contraseña sea igual a la registrada
                   Auth::guard('alumno')->attempt($credentials);
                   return redirect()->intended('alumnos/ati');
@@ -145,6 +156,15 @@ class LoginController extends Controller
             //Verificamos que su password (fecha de nacimiento) sea correcta
             if ($fecha_nac == $fechaCaptura){
                $this->createUserLogin($ws_DGIRE->numeroCuenta, $fechaCaptura, $ws_DGIRE->apellidoPaterno, $ws_DGIRE->apellidoMaterno, $ws_DGIRE->nombre, $ws_DGIRE->curp, " ",$ws_DGIRE->fechaNacimiento);
+               //Añadimos los datos necesarios para la nueva información
+               if($identidad->codigo-postal != NULL){
+                 //dd("codigo_postal");
+                 $info_dl = $this->createInfo($info->dat_ncta.$info->dat_dig_ver, $identidad->codigo-postal);
+                 //con número de cuenta y codigo_postal
+               }else{
+                 //dd("sin_codigo_postal");
+                 $info_dl = $this->createInfo($info->dat_ncta.$info->dat_dig_ver, NULL);
+               }
                Auth::guard('alumno')->attempt($credentials);
                return redirect()->intended('alumnos/ati');
             }else{ //Si no coinciden la contraseña y lo proporcionado
@@ -203,5 +223,12 @@ class LoginController extends Controller
          ->table('alumnos')
          ->where('num_cta', $num_cta)
          ->update(['password' => bcrypt($pass)]);
+   }
+   public function createInfo($num_cta, $cp){
+     $info_dl = new InfoExtra();
+     $info_dl->num_cta = $num_cta;
+     $info_dl->codigo_postal = $cp;
+     $info_dl->save();
+     return $info_dl;
    }
 }

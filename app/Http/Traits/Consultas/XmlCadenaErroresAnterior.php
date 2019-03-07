@@ -12,7 +12,6 @@ use App\Models\Carrera;
 use App\Models\SolicitudSep;
 use App\Models\Modo;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 
 use App\Models\Web_Service;
 use App\Http\Controllers\Admin\WSController;
@@ -83,7 +82,7 @@ trait XmlCadenaErrores {
       }
       $items = array_merge($items,$consulta);
       // Quinta consultaDatos
-      //$consulta = $this->titulosDatos($cuenta,$digito,$carrera); //Lo pasamos como parámetro para evitar repétir mucho código
+      //$consulta = $this->titulosDatos($cuenta,$digito,$carrera); //Lo pasamos como parámetro para evitar reétir mucho código
       $consulta = $consulta_datos;
       if (isset($consulta['errores'])!=null) {
          $errores = array_merge($errores,$consulta['errores']);
@@ -108,7 +107,7 @@ trait XmlCadenaErrores {
          $errores = array_merge($errores,$reglasRotas);
       }
       // Si el tipo de estudio antecedente es licenciatura, entonces el serv social va a 0
-      if ($items['_32_idTipoEstudioAntecedente'] <=  2)
+      if ($items['_32_idTipoEstudioAntecedente'] >=  2)
       {
          $items['_26_cumplioServicioSocial'] = '0';
          // y entonces el fundamento del servicio social no aplica...
@@ -198,10 +197,42 @@ trait XmlCadenaErrores {
          //  Encontro clave y nombre SEP para la clave local ($cuenta y $carrera)
          $resultado = (array)$sep[0];
       } else {
-         // No existe nombre de carrera ni clave,
-         // $carrerasLalo tiene las claves faltantes de Licenciatura, date_get_last_errors
-         // claves faltantes de posgrado, se consultan en la tabla _posgrado_Unam
-         $carrerasLalo = $this->eduardo();
+         // No existe nombre de carrera ni clave
+         // Realizamos una nueva busqueda en un archivo temporal de carreras que nos proporciona Eduardo Miranda
+         $carrerasLalo = [ '00452'=>'611310','00923'=>'431302','01157'=>'511301','01210'=>'411305','09121'=>'128304','10646'=>'621301',
+                           '11622'=>'301303','10647'=>'621311','20227'=>'771302','40723'=>'612301','41143'=>'521301','51922'=>'231301',
+                           '61021'=>'211327','61221'=>'411350','61222'=>'411351','61421'=>'452305','61422'=>'452304','61423'=>'452306',
+                           '61424'=>'452303','66621'=>'342319','09021'=>'563313','11136'=>'520396','01214'=>'411350','00253'=>'734369',
+                           '61223'=>'411352','00640'=>'621311','00248'=>'771327','00641'=>'621301','01334'=>'720353',
+                           '01057' => '203312', 	'50922' => '431302', 	'01053' => '245301', 	'01054' => '221351', 	'01055' => '271301', 	'40437' => '611303',
+                           '01056' => '203310', 	'01336' => '720355', 	'00642' => '611313', 	'01061' => '623306', 	'00445' => '611305', 	'00637' => '621311',
+                           '00638' => '621301', 	'01912' => '231301', 	'0123470' => '410731', 	'1003171' => '431798', 	'0093103' => '431715', 	'1003165' => '633722',
+                           '0163100' => '311745', 	'0123429' => '419733', 	'0063200' => '612741', 	'0113157' => '511771', 	'3003020' => '421701', 	'0083077' => '622746',
+                           '0073143' => '612746', 	'0083224' => '622737', 	'0013180' => '621741', 	'0143002' => '421761', 	'0093109' => '431788', 	'0123447' => '419716',
+                           '0093112' => '431742', 	'0093110' => '431755', 	'2000344' => '621766', 	'0113072' => '511730', 	'0093107' => '431731', 	'0113156' => '511702',
+                           '0123443' => '414766', 	'0113158' => '511724', 	'3003021' => '421706', 	'0083220' => '622745', 	'0083164' => '613712', 	'0043191' => '611768',
+                           '0143070' => '421761', 	'0083218' => '613712', 	'0113159' => '511719', 	'0093113' => '431768', 	'2000346' => '511702', 	'0063196' => '621759',
+                           '2000341' => '514745', 	'0063085' => '612741', 	'0083222' => '622746', 	'0803116' => '111705', 	'0043192' => '611706', 	'0043193' => '661701',
+                           '0143167' => '406701', 	'0083226' => '622739', 	'0113161' => '566708', 	'0143166' => '421761', 	'0093190' => '430704', 	'0113155' => '511727',
+                           '0093189' => '457702', 	'0010346' => '612722', 	'0093108' => '431753', 	'0123467' => '410787', 	'0123406' => '410715', 	'0113154' => '511730',
+                           '0123448' => '410785', 	'0013179' => '559702', 	'0093104' => '410778', 	'0010347' => '621741', 	'0073133' => '612732', 	'0104161' => '271501',
+                           '0724087' => '122539', 	'2004146' => '612501', 	'0044115' => '601514', 	'0064073' => '607502', 	'0964087' => '122539', 	'0124096' => '401505',
+                           '3004085' => '121502', 	'0064189' => '607502', 	'1004169' => '311556', 	'0044113' => '601528', 	'0744087' => '122539', 	'0674194' => '341501',
+                           '3004178' => '241584', 	'0664109' => '515530', 	'2004042' => '511533', 	'0794100' => '622502', 	'4004025' => '511530', 	'0594153' => '121579',
+                           '0064193' => '611520', 	'0754101' => '510501', 	'0124085' => '121502', 	'0074146' => '612501', 	'4004146' => '612501', 	'0164169' => '311556',
+                           '4004149' => '245508', 	'0924078' => '104501', 	'0694172' => '642573', 	'0194173' => '231501', 	'0744085' => '121502', 	'0054154' => '515507',
+                           '0024137' => '711504', 	'0164170' => '311578', 	'0974085' => '121502', 	'2004117' => '221538', 	'0104081' => '211502', 	'0104149' => '245508',
+                           '0064190' => '621560', 	'0754103' => '514501', 	'0044116' => '611584', 	'0134130' => '721511', 	'0024125' => '714502', 	'0104089' => '623507',
+                           '0104110' => '221502', 	'0514087' => '122539', 	'0044114' => '611562', 	'0104145' => '261501', 	'0904104' => '514516', 	'6214171' => '613501',
+                           '0034085' => '121502', 	'2004149' => '245508', 	'0104195' => '261505', 	'0104144' => '611545', 	'0054109' => '515530', 	'0134135' => '721516',
+                           '0805090' => '521605', 	'0075146' => '612601', 	'0015092' => '511609', 	'3005088' => '231601', 	'0105145' => '261601', 	'0105110' => '203601',
+                           '0125093' => '411601', 	'0755103' => '505605', 	'0055112' => '515602', 	'0725087' => '122605', 	'0695143' => '121613', 	'0045117' => '611602',
+                           '0675121' => '341601', 	'0125143' => '121613', 	'0165071' => '311618', 	'0715143' => '121613', 	'0085123' => '622601', 	'5005088' => '231601',
+                           '0745087' => '122605', 	'0975085' => '121602', 	'0055109' => '515601', 	'0105148' => '761601',
+                             '70321' => '120309',   '70322' => '120310',   '71024' => '273301',   '20412' => '611302', '0104120' => '221508', '0064192' => '213544',
+                           '0134133' => '721526', '0014198' => '511530', '0695160' => '121602', '0145095' => '421604', '0015111' => '511611', '0795123' => '622601',
+                           '0105089' => '623601', '1005071' => '311618', '0105091' => '245601', '0655085' => '121602', '0035085' => '121602', '0125085' => '121602',
+                           '0695085' => '121602', '3005085' => '121602'];
          if (array_key_exists($carrera,$carrerasLalo)) {
             // la carrera existe en el arreglo de Lalo. Entonces buscamos en la tabla de carreras el nombre de la misma.
             $nombreSep = Carrera::where('CVE_SEP',$carrerasLalo[$carrera])->pluck('CARRERA');
@@ -218,21 +249,12 @@ trait XmlCadenaErrores {
                $resultado['_10_nombreCarrera'] = '----';
             }
          } else {
-            // consultamos la carrera en posgrado.
-            $posgrado = DB::table('_posgradoUnam')->
-                        where('clave_carrera_unam',$carrera)->
-                        where('clave_orientacion_unam','00')->
-                        first();
-            if (isset($posgrado)) { // Existe la carrera en la tabla de posgrado
-               $resultado['_09_cveCarrera'] = $posgrado->clave_carrera_SEP;
-               $resultado['_10_nombreCarrera'] = $posgrado->nombre_carrera_UNAM;
-            } else { // NO existe la carrera en la tabla de posgrado
-               $errores['_09_cveCarrera'] = 'Sin clave SEP';
-               // Agregamos al arreglo de resultados la lleve "errores" que contiene un key-value de errores
-               $resultado['errores'] = $errores;
-               $resultado['_09_cveCarrera'] = '----';
-               $resultado['_10_nombreCarrera'] = '----';
-            }
+            $errores['_09_cveCarrera'] = 'Sin clave SEP';
+            // Agregamos al arreglo de resultados la lleve "errores" que contiene un key-value de errores
+            $resultado['errores'] = $errores;
+            $resultado['_09_cveCarrera'] = '----';
+            $resultado['_10_nombreCarrera'] = '----';
+
          }
       }
       // Busqueda de la clave UNAM
@@ -247,54 +269,6 @@ trait XmlCadenaErrores {
       // Agregamos al arreglos de resultados la llave "paridad" que contiene las llaves de paridad UNAM
       $resultado['paridad'] = $paridad;
       return $resultado;
-   }
-   public function eduardo()
-   {
-      // Arreglo original de claves faltantes.
-      // $carrerasLalo = [ '00452'=>'611310','00923'=>'431302','01157'=>'511301','01210'=>'411305','09121'=>'128304','10646'=>'621301',
-      //                   '11622'=>'301303','10647'=>'621311','20227'=>'771302','40723'=>'612301','41143'=>'521301','51922'=>'231301',
-      //                   '61021'=>'211327','61221'=>'411350','61222'=>'411351','61421'=>'452305','61422'=>'452304','61423'=>'452306',
-      //                   '61424'=>'452303','66621'=>'342319','09021'=>'563313','11136'=>'520396','01214'=>'411350','00253'=>'734369',
-      //                   '61223'=>'411352','00640'=>'621311','00248'=>'771327','00641'=>'621301','01334'=>'720353',
-      //                   '01057' => '203312', 	'50922' => '431302', 	'01053' => '245301', 	'01054' => '221351', 	'01055' => '271301', 	'40437' => '611303',
-      //                   '01056' => '203310', 	'01336' => '720355', 	'00642' => '611313', 	'01061' => '623306', 	'00445' => '611305', 	'00637' => '621311',
-      //                   '00638' => '621301', 	'01912' => '231301', 	'0123470' => '410731', 	'1003171' => '431798', 	'0093103' => '431715', 	'1003165' => '633722',
-      //                   '0163100' => '311745', 	'0123429' => '419733', 	'0063200' => '612741', 	'0113157' => '511771', 	'3003020' => '421701', 	'0083077' => '622746',
-      //                   '0073143' => '612746', 	'0083224' => '622737', 	'0013180' => '621741', 	'0143002' => '421761', 	'0093109' => '431788', 	'0123447' => '419716',
-      //                   '0093112' => '431742', 	'0093110' => '431755', 	'2000344' => '621766', 	'0113072' => '511730', 	'0093107' => '431731', 	'0113156' => '511702',
-      //                   '0123443' => '414766', 	'0113158' => '511724', 	'3003021' => '421706', 	'0083220' => '622745', 	'0083164' => '613712', 	'0043191' => '611768',
-      //                   '0143070' => '421761', 	'0083218' => '613712', 	'0113159' => '511719', 	'0093113' => '431768', 	'2000346' => '511702', 	'0063196' => '621759',
-      //                   '2000341' => '514745', 	'0063085' => '612741', 	'0083222' => '622746', 	'0803116' => '111705', 	'0043192' => '611706', 	'0043193' => '661701',
-      //                   '0143167' => '406701', 	'0083226' => '622739', 	'0113161' => '566708', 	'0143166' => '421761', 	'0093190' => '430704', 	'0113155' => '511727',
-      //                   '0093189' => '457702', 	'0010346' => '612722', 	'0093108' => '431753', 	'0123467' => '410787', 	'0123406' => '410715', 	'0113154' => '511730',
-      //                   '0123448' => '410785', 	'0013179' => '559702', 	'0093104' => '410778', 	'0010347' => '621741', 	'0073133' => '612732', 	'0104161' => '271501',
-      //                   '0724087' => '122539', 	'2004146' => '612501', 	'0044115' => '601514', 	'0064073' => '607502', 	'0964087' => '122539', 	'0124096' => '401505',
-      //                   '3004085' => '121502', 	'0064189' => '607502', 	'1004169' => '311556', 	'0044113' => '601528', 	'0744087' => '122539', 	'0674194' => '341501',
-      //                   '3004178' => '241584', 	'0664109' => '515530', 	'2004042' => '511533', 	'0794100' => '622502', 	'4004025' => '511530', 	'0594153' => '121579',
-      //                   '0064193' => '611520', 	'0754101' => '510501', 	'0124085' => '121502', 	'0074146' => '612501', 	'4004146' => '612501', 	'0164169' => '311556',
-      //                   '4004149' => '245508', 	'0924078' => '104501', 	'0694172' => '642573', 	'0194173' => '231501', 	'0744085' => '121502', 	'0054154' => '515507',
-      //                   '0024137' => '711504', 	'0164170' => '311578', 	'0974085' => '121502', 	'2004117' => '221538', 	'0104081' => '211502', 	'0104149' => '245508',
-      //                   '0064190' => '621560', 	'0754103' => '514501', 	'0044116' => '611584', 	'0134130' => '721511', 	'0024125' => '714502', 	'0104089' => '623507',
-      //                   '0104110' => '221502', 	'0514087' => '122539', 	'0044114' => '611562', 	'0104145' => '261501', 	'0904104' => '514516', 	'6214171' => '613501',
-      //                   '0034085' => '121502', 	'2004149' => '245508', 	'0104195' => '261505', 	'0104144' => '611545', 	'0054109' => '515530', 	'0134135' => '721516',
-      //                   '0805090' => '521605', 	'0075146' => '612601', 	'0015092' => '511609', 	'3005088' => '231601', 	'0105145' => '261601', 	'0105110' => '203601',
-      //                   '0125093' => '411601', 	'0755103' => '505605', 	'0055112' => '515602', 	'0725087' => '122605', 	'0695143' => '121613', 	'0045117' => '611602',
-      //                   '0675121' => '341601', 	'0125143' => '121613', 	'0165071' => '311618', 	'0715143' => '121613', 	'0085123' => '622601', 	'5005088' => '231601',
-      //                   '0745087' => '122605', 	'0975085' => '121602', 	'0055109' => '515601', 	'0105148' => '761601',
-      //                     '70321' => '120309',   '70322' => '120310',   '71024' => '273301',   '20412' => '611302', '0104120' => '221508', '0064192' => '213544',
-      //                   '0134133' => '721526', '0014198' => '511530', '0695160' => '121602', '0145095' => '421604', '0015111' => '511611', '0795123' => '622601',
-      //                   '0105089' => '623601', '1005071' => '311618', '0105091' => '245601', '0655085' => '121602', '0035085' => '121602', '0125085' => '121602',
-      //                   '0695085' => '121602', '3005085' => '121602'];
-      // Se excluyen las claves de siete dígitos.
-                           $carrerasLalo = [ '00452'=>'611310','00923'=>'431302','01157'=>'511301','01210'=>'411305','09121'=>'128304','10646'=>'621301',
-                                             '11622'=>'301303','10647'=>'621311','20227'=>'771302','40723'=>'612301','41143'=>'521301','51922'=>'231301',
-                                             '61021'=>'211327','61221'=>'411350','61222'=>'411351','61421'=>'452305','61422'=>'452304','61423'=>'452306',
-                                             '61424'=>'452303','66621'=>'342319','09021'=>'563313','11136'=>'520396','01214'=>'411350','00253'=>'734369',
-                                             '61223'=>'411352','00640'=>'621311','00248'=>'771327','00641'=>'621301','01334'=>'720353','01057'=>'203312',
-                                             '50922'=>'431302','01053'=>'245301','01054'=>'221351','01055'=>'271301','40437'=>'611303','01056'=>'203310',
-                                             '01336'=>'720355','00642'=>'611313','01061'=>'623306','00445'=>'611305','00637'=>'621311','00638'=>'621301',
-                                             '01912'=>'231301','70321'=>'120309','70322'=>'120310','71024'=>'273301','20412'=>'611302'];
-      return $carrerasLalo;
    }
    public function fechas1136($fecha, $tipoFecha, $item)
    {
@@ -704,19 +678,14 @@ trait XmlCadenaErrores {
             $errores['_21_fechaExpedicion'] = 'fecha de expedición de título inválida';
          }
          // preguntamos si existe la modalida de titulación en la tabla mapeo.
-         $testModa = isset($modo->ID_MODALIDAD_TITULACION);
          $modo = Modo::where('cat_subcve',$datos['_22_idModalidadTitulacion'])->first();
          if ($modo==[]) {
             // Ya existe $datos['_22_idModalidadTitulacion'], pero no la ModalidadTitulacion
-            if ($testModa) { // existe la modalidad pero no en catalogos
-               $datos['_22_idModalidadTitulacion'] = $modo->ID_MODALIDAD_TITULACION;
-               $datos['_23_modalidadTitulacion']   = '----';
-            } else {
-               $datos['_22_idModalidadTitulacion'] = '----';
-               $datos['_23_modalidadTitulacion']   = '----';
-            }
+            $datos['_22_idModalidadTitulacion'] =  '----';
+            $datos['_23_modalidadTitulacion']   =  '----';
             // Agregamos el mensaje de error a la llave _22_idModalidadTitulacion
             $errores['_22_idModalidadTitulacion'] = 'modalidad de titulación inexistente';
+
          } else {
             // Modalidad existencia si existe en catalogo.
             $datos['_22_idModalidadTitulacion']    = $modo->ID_MODALIDAD_TITULACION;
@@ -729,22 +698,15 @@ trait XmlCadenaErrores {
          // $fecha = strtotime($datos['_24_fechaExamenProfesional']);
          $fecha = Carbon::parse($datos['_24_fechaExamenProfesional'])->format('Y-m-d');
          if (!$fecha) {
-            $datos['_24_fechaExamenProfesional'] = '----';
-            $datos['_25_fechaExencionExamenProfesional'] = '----';
             $errores['_24_fechaExamenProfesional'] = 'fecha de examen profesional inválida';
             $errores['_25_fechaExencionExamenProfesional'] = 'fecha de exensión de examen profesional inválida';
          } else {
-            if ($testModa) { // Sí existe el ID del Examen Profesional,
-               if ($modo->ID_MODALIDAD_TITULACION==1) {
-                  $datos['_24_fechaExamenProfesional'] = $fecha;
-                  $datos['_25_fechaExencionExamenProfesional'] = '----';
-               } else {
-                  $datos['_24_fechaExamenProfesional'] = '----';
-                  $datos['_25_fechaExencionExamenProfesional'] = $fecha;
-               }
+            if ($modo->ID_MODALIDAD_TITULACION==1) {
+               $datos['_24_fechaExamenProfesional'] = $fecha;
+               $datos['_25_fechaExencionExamenProfesional'] = '----';
             } else {
                $datos['_24_fechaExamenProfesional'] = '----';
-               $datos['_25_fechaExencionExamenProfesional'] = '----';
+               $datos['_25_fechaExencionExamenProfesional'] = $fecha;
             }
          }
          // validamos fechas de servicio social.
@@ -764,13 +726,13 @@ trait XmlCadenaErrores {
          }
       }
 
-         if ($errores!=[]) {
-            $datos['errores'] = $errores;
-         }
+      if ($errores!=[]) {
+         $datos['errores'] = $errores;
+      }
 
-         if ($paridad!=[]) {
-            $datos['paridad'] = $paridad;
-         }
+      if ($paridad!=[]) {
+         $datos['paridad'] = $paridad;
+      }
 
       return $datos;
    }
@@ -1056,6 +1018,14 @@ trait XmlCadenaErrores {
             $componentes['FirmaResponsable1'] = $this->firmaResp_AttrUnam(
                         $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo);
             // ($curp,$idCarg,$cargo,$titulo)
+
+            // $nombre='IVONNE';$apellidoPat='RAMIREZ';$apeMat='WENCE';
+            // // $curp='UIES180831HDFSEP03';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
+            // $curp='UIES180831S03';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
+            // // $curp='RAWI6005073U0';$idCarg='9';$cargo='DIRECTOR GENERAL';$titulo='M. EN C.';
+            // $certR = 'CertificadoResponsable'; $noCertR='1682280437054458477';
+            // $componentes['FirmaResponsable1'] = $this->firmaResp_AttrUnam(
+            //             $nombre,$apellidoPat,$apeMat,$curp,$idCarg,$cargo,$titulo);
             break;
          case 'SecGral':
             $nombre='LEONARDO';$apellidoPat='LOMELI';$apeMat='VANEGAS';

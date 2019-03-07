@@ -38,21 +38,27 @@ class StatusCedulaSeeder extends Seeder
 
       $table = new StatusCedula();
       // $table->id = 5;
-      $table->nombreCorto = '05.Firma Srio';
-      $table->descripcion = 'Firmado por el Secretario General';
-      $table->save();
-
-      $table = new StatusCedula();
-      // $table->id = 6;
-      $table->nombreCorto = '06.Firma Rector';
-      $table->descripcion = 'Firmado por el Rector';
-      $table->save();
-
-      $table = new StatusCedula();
-      // $table->id = 7;
-      $table->nombreCorto = '07.Enviado DGP';
+      $table->nombreCorto = '05.Enviado DGP';
       $table->descripcion = 'Enviado a la Dirección General de Profesiones';
       $table->save();
+
+      // $table = new StatusCedula();
+      // // $table->id = 5;
+      // $table->nombreCorto = '05.Firma Srio';
+      // $table->descripcion = 'Firmado por el Secretario General';
+      // $table->save();
+      //
+      // $table = new StatusCedula();
+      // // $table->id = 6;
+      // $table->nombreCorto = '06.Firma Rector';
+      // $table->descripcion = 'Firmado por el Rector';
+      // $table->save();
+      //
+      // $table = new StatusCedula();
+      // // $table->id = 7;
+      // $table->nombreCorto = '07.Enviado DGP';
+      // $table->descripcion = 'Enviado a la Dirección General de Profesiones';
+      // $table->save();
     }
 
 }

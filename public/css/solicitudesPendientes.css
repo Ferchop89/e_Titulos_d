@@ -367,3 +367,13 @@ td{
     height: calc(100%);
   }
 }
+
+.firma_avanzada{
+  width: 45%;
+  margin: auto;
+  padding-top: 4%;
+}
+
+.file_in{
+  width: 56%;
+}

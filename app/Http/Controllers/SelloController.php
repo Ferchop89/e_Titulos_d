@@ -10,13 +10,145 @@ use Carbon\Carbon;
 use DB;
 use Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Hash;
+use File;
+
 
 class SelloController extends Controller
 {
    use XmlCadenaErrores;
-   public function generaSello()
+   public function autorizando()
    {
-      dd($_POST);
+      $lote = request()->input('lote');
+      $title = "Autorización de lote: ".$lote;
+      return view('/menus/autoriza', compact('title', 'lote'));
+   }
+   public function postAutorizando(Request $request){
+      $lote = request()->input('lote');
+      $request->validate(
+         ['autorizaPass' => 'required'],
+         ['autorizaPass.required' => 'Introduce tu contraseña']
+      );
+      $pass = "\$2y\$10\$TeGRbvJkixztzAuCLs94VO89ooGvGwKBdJ1UKoFrbqU4FbEWmQTvC";
+      if(Hash::check(request()->input('autorizaPass'), $pass))
+      {
+         $this->firmaTitulos($lote);
+         $msj = "Se autorizo el lote: $lote";
+         Session::flash('info', $msj);
+      }
+      else {
+         $msj = "Error: contraseña invalida";
+         Session::flash('error', $msj);
+         return redirect()->back();
+      }
+      return redirect()->route('registroTitulos/response/firma');
+   }
+   public function firmaTitulos($lote){
+      DB::table('lotes_unam')
+         ->where('id', $lote)
+         ->update([
+            'firma0' => 1,
+            'fec_firma0' => Carbon::now(),
+            'status' => 3
+         ]);
+      DB::table('solicitudes_sep')
+         ->where('fecha_lote_id', $lote)
+         ->update([
+            'status' => 3,
+            'firma0' => 1
+         ]);
+   }
+   public function keySat()
+   {
+      $title = 'Firma Electrónica Avanzada';
+      $lote = request()->input('lote');
+      $cadenas = request()->input('datos');
+      $cuentas = request()->input('cuentas');
+      $curp = request()->input('curp');
+      return view('/menus/key', compact('title', 'lote', 'cadenas', 'cuentas', 'curp'));
+   }
+   public function generaSello(Request $request)
+   {
+      header("Content-type: text/html; charset=UTF-8");
+      // dd(request()->file);
+      $this->validateFile();
+      $public_file = "certifica/cer.cer.pem";
+      $private_file = request()->file->getRealPath();
+      // $private_file="certifica/conllave.key.pem";
+      // $public_file="certifica/cer.pem";
+
+      // dd($private_file);
+
+      // $certFile = Storage::disk('local')->get($private_file);
+      // $keyFile = file_get_contents($public_file);
+
+      // $keyPassphrase = "FIRMAEF010189P";
+
+      // $keyCheckData = array(
+      //    0=>$keyFile,
+      //    1=>$keyPassphrase
+      // );
+      // dd($keyCheckData);
+      // $result = openssl_x509_check_private_key($certFile,$keyFile);
+
+
+      // dd($result);
+      // dd($request->hasFile('file'), $request->all(), $request);
+
+      $title = 'Firma Electrónica Avanzada';
+      $lote = request()->input('lote');
+      $cadenas = explode("@_@", request()->input('cadenas'));
+      $cuentas = explode("*", request()->input('cuentas'));
+      unset($cuentas[count($cuentas)-1]);
+      foreach ($cadenas as $key => $cadena) {
+         $this->firmaSAT($private_file, $public_file, $lote, $cadena, $cuentas[$key]);
+      }
+      $var = Storage::get($public_file);
+      // dd(strpos($var, "BEGIN CERTIFICATE-----"), strpos($var, "END CERTIFICATE-----"));
+      $var2 = substr($var, strpos($var, "BEGIN CERTIFICATE-----")+23);
+      $var2 = substr($var2, 0, strlen($var2)-27);
+      $certificado = str_ireplace("\n", "", $var2);
+      $this->guardarSatLotes($lote, $certificado);
+      $msj = "Firma exitosa";
+      Session::flash('info', $msj);
+      return redirect()->route('registroTitulos/response/firma');
+   }
+   public function validateFile(){
+      request()->validate([
+         'file' => ['required'],
+      ],[
+         'file.required' => 'Debes seleccionar un archivo',
+      ]);
+   }
+   public function firmaSAT($private_file, $public_file, $lote, $cadena, $cuenta)
+   {
+      try {
+         // Se obtiene la clave privada con la que se va a firmar
+         $private_key = openssl_get_privatekey(file_get_contents($private_file)); // $clave es la contraseña del archivo .key
+         if($private_key === false){
+            throw new \InvalidArgumentException('La llave privada es invalida');
+         }
+         openssl_sign($cadena,$Firma,$private_key, OPENSSL_ALGO_SHA256);
+
+         openssl_free_key($private_key);
+
+         $public_key = openssl_pkey_get_public(Storage::get($public_file));
+
+         $PubData = openssl_pkey_get_details($public_key);
+
+         $result = openssl_verify($cadena, $Firma, $public_key, "sha256WithRSAEncryption");
+         if($result)
+         {
+            $this->guardarSatSolicitudes($cuenta, base64_encode($Firma), $lote, $cadena);
+         }
+         else {
+
+         }
+
+      } catch (Exception $e) {
+          echo var_dump($e->getMessage());
+      }
    }
    public function sendingInfo()
    {
@@ -118,12 +250,6 @@ class SelloController extends Controller
          case 'Director':
             $msj = $this->guardarDirectora($cuentas, $cadenas, $lote, $estado);
             break;
-         case 'SecGral':
-            $msj = $this->guardarSecretario($cuentas, $cadenas, $lote, $estado);
-            break;
-         case 'Rector':
-            $msj = $this->guardarRector($cuentas, $cadenas, $lote, $estado);
-            break;
          default:
             $msj = "Permisos insuficientes";
             break;
@@ -142,6 +268,28 @@ class SelloController extends Controller
       else {
          return false;
       }
+   }
+   public function guardarSatSolicitudes($cuenta, $Firma, $lote, $cadena){
+      // Se actualizan las firmas1 en la tabla de solicitudes
+      DB::table('solicitudes_sep')
+            ->where('fecha_lote_id', $lote)
+            ->where('num_cta',$cuenta)
+            ->update([
+                  'firma1' => $Firma,
+                  'status' => 4,
+                  'cadenaOriginal' => $cadena
+            ]);
+   }
+   public function guardarSatLotes($lote, $certificado){
+      // Se ha realizado la firma 1
+      DB::table('lotes_unam')
+         ->where('id', $lote)
+         ->update([
+            'firma1' => true,
+            'fec_firma1'   => Carbon::now(),
+            'status' => 4,
+            'cert1' => $certificado
+         ]);
    }
    public function guardarTitulos($cuentas, $cadenas, $lote, $estado){
       if($estado){

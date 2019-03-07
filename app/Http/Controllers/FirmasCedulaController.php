@@ -705,19 +705,17 @@ class FirmasCedulaController extends Controller
       $day = substr($fecha,8,2);;
       $month = substr($fecha,5,2);
       $year = substr($fecha,0,4);
+      // Seleccionamos los lotes que tengan solicitudes que no hayan sido enviados a la DGP
       $queryFecha = "SELECT *, lotes_unam.id AS loteId FROM lotes_unam ";
-      $queryFecha .= "JOIN solicitudes_sep ON lotes_unam.fecha_lote = solicitudes_sep.fecha_lote ";
+      $queryFecha .= "JOIN solicitudes_sep ON lotes_unam.id = solicitudes_sep.fecha_lote_id ";
       $queryFecha .= "WHERE (YEAR(lotes_unam.fecha_lote) = ".$year." AND MONTH(lotes_unam.fecha_lote) = ".$month." AND DAY(lotes_unam.fecha_lote) = ".$day.")";
-      $queryFecha .= " AND solicitudes_sep.status <> 7 AND solicitudes_sep.fecha_lote IS NOT NULL GROUP BY solicitudes_sep.fecha_lote";
+      $queryFecha .= " AND solicitudes_sep.status < 5 AND solicitudes_sep.fecha_lote IS NOT NULL GROUP BY solicitudes_sep.fecha_lote";
       $lists = DB::connection('condoc_eti')->select($queryFecha);
+      // dd($lists);
       $total = count($lists);
       // Contabilizacion de firmas
       foreach ($lists as $l) {
-         if($l->firma0 && $l->firma1 && $l->firma2 && $l->firma3){
-            array_push($totalF, ['1','1','1','1']);
-         }elseif($l->firma0 && $l->firma1 && $l->firma2){
-            array_push($totalF, ['1','1','1']);
-         }elseif($l->firma0 && $l->firma1){
+         if($l->firma0 && $l->firma1){
             array_push($totalF, ['1','1']);
          }elseif($l->firma0){
             array_push($totalF, ['1']);
@@ -756,49 +754,13 @@ class FirmasCedulaController extends Controller
       $composite .=        "<div class='Cell_mod firmas_total'>";
       $composite .=           "<table style='width: 100%;'><tr>";
       $composite .=           "<td><p> Firmas: ".count($totalF[$i])."</p></td>";
-         if(count($totalF[$i]) == 4)
-         {
-            $composite .=     "<td>
-                                 <span class='fa fa-check-square-o f_dirt'/>
-                              </td>
-                              <td>
-                                 <span class='fa fa-check-square-o f_dir'/>
-                              </td>
-                              <td>
-                                 <span class='fa fa-check-square-o f_sec'/>
-                              </td>
-                              <td>
-                                 <span class='fa fa-check-square-o f_rec'/>
-                              </td>";
-         }
-         elseif(count($totalF[$i]) == 3)
-         {
-            $composite .=     "<td>
-                                 <span class='fa fa-check-square-o f_dirt'/>
-                              </td>
-                              <td>
-                                 <span class='fa fa-check-square-o f_dir'/>
-                              </td>
-                              <td>
-                                 <span class='fa fa-check-square-o f_sec'/>
-                              </td>
-                              <td>
-                                 <span class='fa fa-check-square-o f_rec oculto'/>
-                              </td>";
-      }
-      elseif(count($totalF[$i]) == 2)
+      if(count($totalF[$i]) == 2)
       {
          $composite .=        "<td>
                                  <span class='fa fa-check-square-o f_dirt'/>
                               </td>
                               <td>
                                  <span class='fa fa-check-square-o f_dir'/>
-                              </td>
-                              <td>
-                                 <span class='fa fa-check-square-o f_sec oculto'/>
-                              </td>
-                              <td>
-                                 <span class='fa fa-check-square-o f_rec oculto'/>
                               </td>";
       }
       elseif (count($totalF[$i]) == 1)
@@ -808,12 +770,6 @@ class FirmasCedulaController extends Controller
                               </td>
                               <td>
                                  <span class='fa fa-check-square-o f_dir oculto'/>
-                              </td>
-                              <td>
-                                 <span class='fa fa-check-square-o f_sec oculto'/>
-                              </td>
-                              <td>
-                                 <span class='fa fa-check-square-o f_rec oculto'/>
                               </td>";
       }
       $composite .=           "</tr></table>";
@@ -825,9 +781,9 @@ class FirmasCedulaController extends Controller
       // Evaluamos si el lote ya ha sido envioa a la SEP, donde status = 6 y cambiamos el texto del boton
       $enviado = SolicitudSep::where('fecha_lote',$data[$i]->fecha_lote)->first();
       $composite .=     "<input type='hidden' id='fechaLote' name='fecha_lote' value='".$data[$i]->fecha_lote."'>";
-      if(count($totalF[$i]) == 4){
+      if(count($totalF[$i]) == 2){
       // if(count($totalF[$i]) == 0){
-         if ($enviado->status <= 6) {
+         if ($enviado->status == 4) {
             // if ($enviado->status == 2) {
             $composite .=     "<input type='submit' value='Envío SEP' id='btnEnvioSep' class='btn btn-info'/>";
          } else {
@@ -968,7 +924,6 @@ class FirmasCedulaController extends Controller
          $composite .= "</tr>";
          $composite .= "</table>";
          $composite .= "</div>";
-
       }
       return $composite;
    }
@@ -1277,7 +1232,8 @@ class FirmasCedulaController extends Controller
      return $list;
    }
 
-   public function armadoDetallePDF($lote){
+   public function armadoDetallePDF($lote)
+   {
       // Detalle PDF
       // $composite = "<div class='lote'>";
       // $composite =  "<table class='table table-striped table-dark table-bordered'>";

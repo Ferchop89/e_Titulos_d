@@ -23,6 +23,7 @@ trait TitulosFechas {
      $query .=       "datepart(month,  tit_fec_emision_tit) = ".$fechaPartes[1]." AND ";
      $query .=       "datepart(day,  tit_fec_emision_tit) = ".$fechaPartes[2].")";
      // consulta
+     // dd('TitulosFechas, linea 26',$query);
      $datos = DB::connection('sybase')->select($query);
      return $datos;
   }
@@ -81,7 +82,7 @@ trait TitulosFechas {
      $query .= "LEFT JOIN Planteles ON plan_cve = carrp_plan ";
      $query .= "WHERE Titulos.tit_ncta = '".$cuenta."' ";
      $query .= "AND Titulos.tit_dig_ver = '".$verif."' ";
-
+     // dd('TitulosFechas linea 85',$query);
      $datos = DB::connection('sybase')->select($query);
      $info = array();
      foreach ($datos as $key => $value) {

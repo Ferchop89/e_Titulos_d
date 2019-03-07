@@ -428,30 +428,46 @@ $carreras = [
       $composite .=     "</div>";
       $composite .=  "</a>";
       $composite .= "</div>";
+      $manejoTilde = $this->loteCadena($data[$i]->fecha_lote, Auth::user()->roles()->first()->nombre);
+      /*PROCESO DE FIRMAS FEU*/
       $composite .= "<div class='Cell btns'>";
-      $url = "https://132.248.205.117/registroTitulos/response/firma?lote=".$data[$i]->fecha_lote."&cuentas=".$cuentas;
+      // $url = "https://132.248.205.117/registroTitulos/response/firma?lote=".$data[$i]->fecha_lote."&cuentas=".$cuentas;
       // $composite .=  "<form action='componenteFirma' method = 'POST'>";
-      $composite .=  "<form action='https://enigma.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
+      /*Pruebas*/
+      // $composite .=  "<form action='https://enigma.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
+      /*Producción*/
       // $composite .=  "<form action='https://kryptos.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
 
-      $composite .=     "<input type='hidden' name='_token' value='".csrf_token()."'>";
-      // $composite .=     "<input type='hidden' name='datos' value="."'".$this->loteCadena($data[$i]->fecha_lote, Auth::user()->roles()->first()->nombre)."'".">";
-      $manejoTilde = $this->loteCadena($data[$i]->fecha_lote, Auth::user()->roles()->first()->nombre);
-      $composite .=     "<input type='hidden' name='datos' value=\"".htmlspecialchars($manejoTilde)."\">";
-      $composite .=     "<input type='hidden' name='URL' value='".$url."'>";
-      $composite .=     "<input type='hidden' name='curp' value='".$curp."'>";
-      $composite .=     "<input type='submit' value='Firmar con FEU' id='btnFirma' class='btn'/>";
-      $composite .=  "</form>";
-      /*Para firmar con el SAT*/
-      $composite .=  "<form action='componenteFirma' method = 'POST'>";
-      // $composite .=  "<form action='https://enigma.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
-      // $composite .=  "<form action='https://kryptos.unam.mx/componentefirma/initSigningProcess' method = 'POST'>";
-      $composite .=     "<input type='hidden' name='_token' value='".csrf_token()."'>";
-      $composite .=     "<input type='hidden' name='datos' value=\"".htmlspecialchars($manejoTilde)."\">";
-      $composite .=     "<input type='hidden' name='URL' value='".$url."'>";
-      $composite .=     "<input type='hidden' name='curp' value='".$curp."'>";
-      $composite .=     "<input type='submit' value='Firmar con SAT' id='btnFirma' class='btn'/>";
-      $composite .=  "</form>";
+      // $composite .=     "<input type='hidden' name='_token' value='".csrf_token()."'>";
+      // $manejoTilde = $this->loteCadena($data[$i]->fecha_lote, Auth::user()->roles()->first()->nombre);
+      // $composite .=     "<input type='hidden' name='datos' value=\"".htmlspecialchars($manejoTilde)."\">";
+      // $composite .=     "<input type='hidden' name='URL' value='".$url."'>";
+      // $composite .=     "<input type='hidden' name='curp' value='".$curp."'>";
+      // $composite .=     "<input type='submit' value='Firmar con FEU' id='btnFirma' class='btn'/>";
+      // $composite .=  "</form>";
+
+
+      if($curp != "GOND701217HP2")
+      {
+         /*PROCESO PARA FIRMAR CON SAT*/
+         $composite .=  "<form action='componenteFirma' method = 'POST'>";
+         $composite .=     "<input type='hidden' name='_token' value='".csrf_token()."'>";
+         $composite .=     "<input type='hidden' name='lote' value='".$data[$i]->id."'>";
+         $composite .=     "<input type='hidden' name='cuentas' value='$cuentas'>";
+         $composite .=     "<input type='hidden' name='datos' value=\"".htmlspecialchars($manejoTilde)."\">";
+         $composite .=     "<input type='hidden' name='curp' value='".$curp."'>";
+         $composite .=     "<input type='submit' value='Firmar con SAT' id='btnFirma' class='btn'/>";
+         $composite .=  "</form>";
+      }
+      else {
+         /*PROCESO DE AUTORIZACION DEPTO. TITULOS*/
+         $composite .=  "<form action='autorizaTitulos' method = 'GET'>";
+         $composite .=     "<input type='hidden' name='_token' value='".csrf_token()."'>";
+         $composite .=     "<input type='hidden' name='lote' value='".$data[$i]->id."'>";
+         $composite .=     "<input type='hidden' name='curp' value='".$curp."'>";
+         $composite .=     "<input type='submit' value='Autorizar' id='btnFirma' class='btn'/>";
+         $composite .=  "</form>";
+      }
       $composite .= "</div>";
       $composite .=       "<div id='collapse".$x_list."' class='panel-collapse collapse'>";
       $composite .=       "<div class='panel-body'>";
@@ -581,21 +597,22 @@ $carreras = [
       // $nombre = Auth::user()->username;
       switch ($rol) {
          case 'Jtit':
-            $curp = "UIES180831S04";
-            // $curp = "GOND701217HP2";
+            // $curp = "UIES180831S04";
+            $curp = "GOND701217HP2";
             break;
          case 'Director':
-            $curp = "UIES180831S03";
+            // $curp = "UIES180831S03";
             // $curp = "RAWI6005073U0";
+            $curp = 'CACG620808HDFSRL05';
             break;
-         case 'SecGral':
-         $curp = "UIES180831S02";
-         // $curp = "LOVL7004289W7";
-            break;
-         case 'Rector':
-            $curp = "UIES180831S01";
-            // $curp = "GAWE510109C14";
-            break;
+         // case 'SecGral':
+         // $curp = "UIES180831S02";
+         // // $curp = "LOVL7004289W7";
+         //    break;
+         // case 'Rector':
+         //    $curp = "UIES180831S01";
+         //    // $curp = "GAWE510109C14";
+         //    break;
       }
       return $curp;
    }

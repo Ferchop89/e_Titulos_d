@@ -18,10 +18,12 @@ class CreateLotesUnam extends Migration
           $table->collation = 'utf8_spanish_ci';
           $table->increments('id');
           $table->DateTime('fecha_lote');
+          $table->unsignedInteger('status')->default(1);
           $table->boolean('firma0')->default(false);
           $table->DateTime('fec_firma0')->nullable();
           $table->boolean('firma1')->default(false);
           $table->DateTime('fec_firma1')->nullable();
+          $table->text('cert1')->nullable();
           $table->boolean('firma2')->default(false);
           $table->DateTime('fec_firma2')->nullable();
           $table->boolean('firma3')->default(false);
