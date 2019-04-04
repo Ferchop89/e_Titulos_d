@@ -1,5 +1,6 @@
 <?php
 use App\Http\Controllers\Admin\WSController;
+use App\Http\Controllers\InformesController;
 use App\Models\LotesUnam;
 use App\Models\SolicitudSep;
 
@@ -272,3 +273,22 @@ Route::get('/enviosPDF_DGP',[
     'roles' => ['Admin']
 ]);//->name('users');
 /***************************/
+// Estadisticas Totales
+Route::get('/resumenEnvio',[
+    'uses' => 'GrafiController@ResumenEnvios',
+    'as' => '/resumenEnvio',
+    'roles' => ['Admin','Jtit']
+]);
+/*******************************/
+/***************************/
+// Informe de Titulos o Grados por tipo de material de Título
+Route::get('/materialesInforme',[
+    'uses' => 'InformesCondocController@materialesInforme',
+    'as' => '/materialesInforme',
+    'roles' => ['Admin','Jtit']
+]);
+Route::post('/materialesInforme',[
+    'uses' => 'InformesCondocController@materialesPost',
+    'roles' => ['Admin','Jtit']
+]);
+/*******************************/
