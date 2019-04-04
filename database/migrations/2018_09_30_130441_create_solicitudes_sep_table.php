@@ -40,6 +40,8 @@ class CreateSolicitudesSepTable extends Migration
             $table->char('sistema')->nullable();
             $table->unsignedInteger('user_id');
             $table->unsignedInteger('ws_ati'); //0 no esta en ATI, 1 para ATI, 2 no esta en WS, 3 WS
+            $table->unsignedInteger('conAutorizacion')->default(0); // cedula autorizada
+            $table->unsignedInteger('conErrores')->default(0); // cedula con errores
             $table->timestamps();
             //Llaves foraneas
             $table->foreign('user_id')->references('id')->on('users');

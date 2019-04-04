@@ -19,6 +19,7 @@ class CreateStatusCedulaTable extends Migration
           $table->increments('id');
           $table->string('nombreCorto', 20);
           $table->text('descripcion');
+          $table->text('secuencia');
       });
     }
 
