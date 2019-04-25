@@ -52,11 +52,11 @@
       @endif
     </tr>
     <tr>
-      <td>Autorizado por el depto. de Títulos <input type="hidden" name="nombre" value="{{$nombre}}"></td>
-      @if($info['autorizacion'] != false)
+      <td>Revisión por el depto. de Títulos <input type="hidden" name="nombre" value="{{$nombre}}"></td>
+      @if($info['revision'] != false)
       <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
-      <td align="center"><span>{{ $info['fecha_aut'] }}</span></td>
-      <td align="center"><span>{{ $info['tiempo_aut'] }}</span></td>
+      <td align="center"><span>{{ $info['fecha_rev'] }}</span></td>
+      <td align="center"><span>{{ $info['tiempo_rev'] }}</span></td>
       @else
       <td align="center"><span class='fa fa-clock-o f_rec'/></td>
       <td></td>
@@ -65,10 +65,10 @@
     </tr>
     <tr>
       <td>Firmado por el depto. de Títulos <input type="hidden" name="carrera" value="{{$carrera}}"></td>
-      @if($info['firma_tit'] != false)
+      @if($info['autorizacion'] != false)
       <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
-      <td align="center"><span><a href=".../../informacionDetallada/cuenta/lote?fechaLote={{$lote}}&num_cta={{$num_cta}}&carrera={{$carrera}}">{{ $info['fecha_tit'] }}</a></span></td>
-      <td align="center"><span>{{ $info['tiempo_tit'] }}</span></td>
+      <td align="center"><span>{{ $info['fecha_aut'] }}</span></td>
+      <td align="center"><span>{{ $info['tiempo_aut'] }}</span></td>
       @else
       <td align="center"><span class='fa fa-clock-o f_rec'/></td>
       <td></td>
@@ -88,30 +88,6 @@
       @endif
     </tr>
     <tr>
-      <td>Firmado por el Secretario General</td>
-      @if($info['firma_sec'] != false)
-      <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
-      <td align="center"><span><a href=".../../informacionDetallada/cuenta/lote?fechaLote={{$lote}}&num_cta={{$num_cta}}&carrera={{$carrera}}">{{ $info['fecha_sec'] }}</a></span></td>
-      <td align="center"><span>{{ $info['tiempo_sec'] }}</span></td>
-      @else
-      <td align="center"><span class='fa fa-clock-o f_rec'/></td>
-      <td></td>
-      <td></td>
-      @endif
-    </tr>
-    <tr>
-      <td>Firmado por el Rector</td>
-      @if($info['firma_rec'] != false)
-      <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
-      <td align="center"><span><a href=".../../informacionDetallada/cuenta/lote?fechaLote={{$lote}}&num_cta={{$num_cta}}&carrera={{$carrera}}">{{ $info['fecha_rec'] }}</a></span></td>
-      <td align="center"><span>{{ $info['tiempo_rec'] }}</span></td>
-      @else
-      <td align="center"><span class='fa fa-clock-o f_rec'/></td>
-      <td></td>
-      <td></td>
-      @endif
-    </tr>
-    <tr>
       <td>Enviado a la Dirección General de Profesiones</td>
       @if($info['enviada'] != false)
       <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
@@ -120,6 +96,37 @@
       @endif
       <td></td>
       <td></td>
+    </tr>
+    <tr>
+      <td>Descargado de la Dirección General de Profesiones</td>
+      @if($info['descargada'] != false)
+      <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
+      @else
+      <td align="center"><span class='fa fa-clock-o f_rec'/></td>
+      @endif
+      <td></td>
+      <td></td>
+    </tr>
+    <tr>
+      @if($status_tit == 7)
+        <td>Rechazado por la Dirección General de Profesiones</td>
+        @if($info['tit_acepta'] != false)
+        <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
+        @else
+        <td align="center"><span class='fa fa-clock-o f_rec'/></td>
+        @endif
+        <td></td>
+        <td></td>
+      @elseif($status_tit == 8)
+        <td>Aprobado por la Dirección General de Profesiones</td>
+        @if($info['tit_rechaza'] != false)
+        <td align="center"><span class='fa fa-check-square-o f_dir'/></td>
+        @else
+        <td align="center"><span class='fa fa-clock-o f_rec'/></td>
+        @endif
+        <td></td>
+        <td></td>
+      @endif
     </tr>
   </table>
   <br><br>

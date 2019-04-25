@@ -332,7 +332,9 @@ Route::get('/lista-solicitudes/cedulasPen', function(){
       //503459419
       //503006594
       //517493614---
-      $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '402000864', $ws_SIAE->key);
+      // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '516228659', $ws_SIAE->key);
+      $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '516227559', $ws_SIAE->key);
+
       // $identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '513013249', $ws_SIAE->key); --- INT/STRING
       //$identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '054051690', $ws_SIAE->key);
       //$identidad = $identidad->ws_SIAE($ws_SIAE->nombre, '517493614', $ws_SIAE->key);
@@ -353,7 +355,8 @@ Route::get('/lista-solicitudes/cedulasPen', function(){
       $ws = new WSController();
       // $respuesta = $ws->ws_DGIRE('503459419');
       // $respuesta = $ws->ws_DGIRE2('306573396');
-      $respuesta = $ws->ws_DGIRE2('402000864');
+
+      $respuesta = $ws->ws_DGIRE2('516227559');
       dd($respuesta);
    });
    Route::get('/RENAPO', function(){
@@ -540,9 +543,21 @@ Route::post('/response/autorizacionLotes', [
    'middleware' => 'roles',
    'roles' => ['Admin', 'Jtit']
 ]);
-Route::get('/descarga/{lote}', function($lote){
-   $wsDGP = new WSController();
-   $response = $wsDGP->ws_Dgp_Descarga($lote);
-   file_put_contents("dgpDescarga/$lote.zip", $response->titulosBase64);
-   return 'dgpDescarga: '.$lote.'.zip';
-});
+Route::get('/descarga/{lote}', [
+   'uses' => 'ConsumoWsDgpController@descarga',
+   'as' => 'descargaXls',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit']
+]);
+Route::get('/recepcion/dgp', [
+   'uses' => 'ConsumoWsDgpController@showEnvios',
+   'as' => 'responseCedulas',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit']
+]);
+Route::get('/lecturaXls/{lote}', [
+   'uses' => 'HojasCalculo@respuestaSep',
+   'as' => 'readLote',
+   'middleware' => 'roles',
+   'roles' => ['Admin', 'Jtit']
+]);

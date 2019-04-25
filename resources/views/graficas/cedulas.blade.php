@@ -46,6 +46,7 @@
 
          <div class="divTable">
             <div class="divTableBody">
+
                <div class="divTableRow">
                   <div class="divTableCell"><strong>Día</strong></div>
                   @foreach ($data as $key => $value)
@@ -53,88 +54,168 @@
                   @endforeach
                   <div class="divTableCell"><strong>Total</strong></div>
                </div>
+
                <div class="divTableRow">
-                  <div class="divTableCell"><strong>Títulos</strong></div>
+                  <div class="divTableCell"><strong>Títulos Emitidos</strong></div>
                   @foreach ($data as $key => $value)
-                     <div class="divTableCell">{{$value['Titulos']}}</div>
+                     <div class="divTableCell"><strong>{{$value['Titulos']}}</strong></div>
                   @endforeach
-                  <div class="divTableCell">{{$totales['Titulos']}}</div>
+                  <div class="divTableCell"><strong>{{$totales['Titulos']}}</strong></div>
                </div>
+
                {{-- Si no existen pendientes en todo el mes, no se despliega el rubro --}}
                @if ($pendientesHTML!='')
-                  <a class= 'a-row' data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+                  <a class= 'a-row' data-toggle="collapse" data-parent="#accordion" href="#collapse3">
                   <div class="divTableRow">
                      <div class="divTableCell">
                         {{-- <a class= 'a-row' data-toggle="collapse" data-parent="#accordion" href="#collapse1"> --}}
                            <strong>
                               Pendientes
                            </strong>
-
                      </div>
                         @foreach ($data as $key => $value)
-                           <div class="divTableCell">{{$value['Pendientes']}}</div>
+                           <div class="divTableCell"><strong>{{($value['Pendientes']==0)? "": $value['Pendientes']}}</strong></div>
                         @endforeach
-                        <div class="divTableCell">{{$totales['Pendientes']}}</div>
+                        <div class="divTableCell"><strong>{{$totales['Pendientes']}}</strong></div>
                   </div>
                   {!! $pendientesHTML !!}
                   </a>
                @endif
-               <a class= 'a-row' data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+
                <div class="divTableRow">
                   <div class="divTableCell">
-                     {{-- <a class= 'a-row' data-toggle="collapse" data-parent="#accordion" href="#collapse1"> --}}
-                        <strong>
-                           No Autorizadas C/Errores
-                        </strong>
+                     <strong>
+                        Autorizaciones ATI
+                     </strong></div>
+                  @foreach ($data as $key => $value)
+                     <div class="divTableCell"><strong>{{($value['AutorizaAlumno']==0)? "": $value['AutorizaAlumno']}}</strong></div>
+                  @endforeach
+                  <div class="divTableCell"><strong>{{$totales['AutorizaAlumno']}}</strong></div>
+               </div>
 
+               <div class="divTableRow">
+                  <div class="divTableCell">
+                     <strong>
+                        <p style="padding-left: 5%;">Autorizaciones Sin/Errores</p>
+                     </strong></div>
+                  @foreach ($data as $key => $value)
+                     <div class="divTableCell"><strong>{{($value['AutorizaAlumnoSE']==0)? "": $value['AutorizaAlumnoSE']}}</strong></div>
+                  @endforeach
+                  <div class="divTableCell"><strong>{{$totales['AutorizaAlumnoSE']}}</strong></div>
+               </div>
+
+               @if ($listaHtml1!='')
+                  <a class= 'a-row' data-toggle="collapse" data-parent="#accordion" href="#collapse2">
+                  <div class="divTableRow">
+                     <div class="divTableCell">
+                        {{-- <a class= 'a-row' data-toggle="collapse" data-parent="#accordion" href="#collapse1"> --}}
+                           <strong>
+                              <p style="padding-left: 5%;">Autorizaciones Con/Errores</p>
+                           </strong>
+                     </div>
+                        @foreach ($data as $key => $value)
+                           <div class="divTableCell"><strong>{{($value['AutorizaAlumnoCE']==0)? "": $value['AutorizaAlumnoCE']}}</strong></div>
+                        @endforeach
+                        <div class="divTableCell"><strong>{{$totales['AutorizaAlumnoCE']}}</strong></div>
                   </div>
-                     @foreach ($data as $key => $value)
-                        <div class="divTableCell">{{$value['NoAutorConErr']}}</div>
-                     @endforeach
-                     <div class="divTableCell">{{$totales['NoAutorConErr']}}</div>
-               </div>
-               {!! $listaHtml !!}
-               </a>
+                  {!! $listaHtml1 !!}
+                  </a>
+               @endif
+
                <div class="divTableRow">
-                  <div class="divTableCell"><strong>No Autorizadas S/Errores</strong></div>
+                  <div class="divTableCell">
+                     <strong>
+                        No Autorizaciones ATI
+                     </strong></div>
                   @foreach ($data as $key => $value)
-                     <div class="divTableCell">{{$value['NoAutorSinErr']}}</div>
+                     <div class="divTableCell"><strong>{{($value['NoAutorizaAlumno']==0)? "": $value['NoAutorizaAlumno']}}</strong></div>
                   @endforeach
-                  <div class="divTableCell">{{$totales['NoAutorSinErr']}}</div>
+                  <div class="divTableCell"><strong>{{$totales['NoAutorizaAlumno']}}</strong></div>
                </div>
+
                <div class="divTableRow">
-                  <div class="divTableCell"><strong>Autorizadas</strong></div>
+                  <div class="divTableCell">
+                     <strong>
+                        <p style="padding-left: 5%;">No Autorizaciones Sin/Error</p>
+                     </strong>
+                  </div>
                   @foreach ($data as $key => $value)
-                     <div class="divTableCell">{{$value['Autorizadas']}}</div>
+                     <div class="divTableCell"><strong>{{($value['NoAutorizaAlumnoSE']==0)? "": $value['NoAutorizaAlumnoSE']}}</strong></div>
                   @endforeach
-                  <div class="divTableCell">{{$totales['Autorizadas']}}</div>
+                  <div class="divTableCell"><strong>{{$totales['NoAutorizaAlumnoSE']}}</strong></div>
                </div>
+
+               @if ($listaHtml!='')
+                  <a class= 'a-row' data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+                  <div class="divTableRow">
+                     <div class="divTableCell">
+                        {{-- <a class= 'a-row' data-toggle="collapse" data-parent="#accordion" href="#collapse1"> --}}
+                           <strong>
+                              <p style="padding-left: 5%;">No Autorizaciones Con/Error</p>
+                           </strong>
+                     </div>
+                        @foreach ($data as $key => $value)
+                           <div class="divTableCell"><strong>{{($value['NoAutorizaAlumnoCE']==0)? "": $value['NoAutorizaAlumnoCE']}}</strong></div>
+                        @endforeach
+                        <div class="divTableCell"><strong>{{$totales['NoAutorizaAlumnoCE']}}</strong></div>
+                  </div>
+                  {!! $listaHtml !!}
+                  </a>
+               @endif
+
                <div class="divTableRow">
-                  <div class="divTableCell"><strong>En Firma</strong></div>
+                  <div class="divTableCell"><strong>Revisados por JUD</strong></div>
                   @foreach ($data as $key => $value)
-                     <div class="divTableCell">{{$value['EnFirma']}}</div>
+                     <div class="divTableCell"><strong>{{($value['RevisadasJtit']==0)? "": $value['RevisadasJtit']}}</strong></div>
                   @endforeach
-                  <div class="divTableCell">{{$totales['EnFirma']}}</div>
+                  <div class="divTableCell"><strong>{{$totales['RevisadasJtit']}}</strong></div>
                </div>
+
                <div class="divTableRow">
-                  <div class="divTableCell"><strong>No enviadas</strong></div>
+                  <div class="divTableCell"><strong>Autorizadas por JUD</strong></div>
                   @foreach ($data as $key => $value)
-                     <div class="divTableCell">{{$value['NoEnviadas']}}</div>
+                     <div class="divTableCell"><strong>{{($value['AutorizadasJtit']==0)? "": $value['AutorizadasJtit']}}</strong></div>
                   @endforeach
-                  <div class="divTableCell">{{$totales['NoEnviadas']}}</div>
+                  <div class="divTableCell"><strong>{{$totales['AutorizadasJtit']}}</strong></div>
                </div>
+
                <div class="divTableRow">
-                  <div class="divTableCell"><strong>Enviadas</strong></div>
+                  <div class="divTableCell"><strong>Firmadas Dir.Gral. </strong></div>
                   @foreach ($data as $key => $value)
-                     <div class="divTableCell">{{$value['Enviadas']}}</div>
+                     <div class="divTableCell"><strong>{{($value['FirmadasDG']==0)? "": $value['FirmadasDG']}}</strong></div>
                   @endforeach
-                  <div class="divTableCell">{{$totales['Enviadas']}}</div>
+                  <div class="divTableCell"><strong>{{$totales['FirmadasDG']}}</strong></div>
                </div>
+
+               <div class="divTableRow">
+                  <div class="divTableCell"><strong>Enviados a DGP</strong></div>
+                  @foreach ($data as $key => $value)
+                     <div class="divTableCell"><strong>{{($value['EnviadasDGP']==0)? "": $value['EnviadasDGP']}}</strong></div>
+                  @endforeach
+                  <div class="divTableCell"><strong>{{$totales['EnviadasDGP']}}</strong></div>
+               </div>
+
+               <div class="divTableRow">
+                  <div class="divTableCell"><strong>Títulos Electrónicos Rechazados</strong></div>
+                  @foreach ($data as $key => $value)
+                     <div class="divTableCell"><strong>{{($value['TER']==0)? "": $value['TER']}}</strong></div>
+                  @endforeach
+                  <div class="divTableCell"><strong>{{$totales['TER']}}</strong></div>
+               </div>
+
+               <div class="divTableRow">
+                  <div class="divTableCell"><strong>Títulos Electrónicos Aprobados</strong></div>
+                  @foreach ($data as $key => $value)
+                     <div class="divTableCell"><strong>{{($value['TEA']==0)? "": $value['TEA']}}</strong></div>
+                  @endforeach
+                  <div class="divTableCell"><strong>{{$totales['TEA']}}</strong></div>
+               </div>
+
+
             </div>
          </div>
       </div>
    </div>
-
    @endif
 @endsection
 @section('animaciones')

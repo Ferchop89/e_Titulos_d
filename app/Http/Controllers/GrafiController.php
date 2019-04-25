@@ -51,19 +51,34 @@ class GrafiController extends Controller
         $ejeY   = 'CEDULAS';
         $chart1 = $this->bar_Genera($aSel,substr($mSel,0,2),$Titulo,$ejeX,$ejeY,$paletaActual);
         $data =   $this->dataBarra($aSel,substr($mSel,0,2));
+        // dd($this->dataBarraTotal());
+        // dd($data);
         // Inicializacion de los totales
-       $totales['Titulos']=$totales['Pendientes']=$totales['NoAutorConErr']=$totales['NoAutorSinErr']=0;
-       $totales['Autorizadas']=$totales['EnFirma']=$totales['NoEnviadas']=$totales['Enviadas']=0;
-        // Generamos los Totales en un arreglo [0] Solicitudes y [1] Citatorios
+        $totales['AutorizaAlumno']=$totales['NoAutorizaAlumno']=0;
+        $totales['Titulos']=$totales['Pendientes']=$totales['AutorizaAlumnoCE']=$totales['AutorizaAlumnoSE']=0;
+        $totales['NoAutorizaAlumnoCE']=$totales['NoAutorizaAlumnoSE']=$totales['RevisadasJtit']=0;
+        $totales['AutorizadasJtit']=$totales['FirmadasDG']=$totales['EnviadasDGP']=$totales['DescargaDGP']=0;
+        $totales['TEA']=$totales['TER']=0;
+               // Generamos los Totales en un arreglo [0] Solicitudes y [1] Citatorios
         foreach ($data as $value) {
-            $totales['Titulos']        = $totales['Titulos']         + $value['Titulos'];
-            $totales['Pendientes']     = $totales['Pendientes']      + $value['Pendientes'];
-            $totales['NoAutorConErr']  = $totales['NoAutorConErr']   + $value['NoAutorConErr'];
-            $totales['NoAutorSinErr']  = $totales['NoAutorSinErr']   + $value['NoAutorSinErr'];
-            $totales['Autorizadas']    = $totales['Autorizadas']     + $value['Autorizadas'];
-            $totales['EnFirma']        = $totales['EnFirma']         + $value['EnFirma'];
-            $totales['NoEnviadas']     = $totales['NoEnviadas']      + $value['NoEnviadas'];
-            $totales['Enviadas']       = $totales['Enviadas']        + $value['Enviadas'];
+            $totales['Titulos']           = $totales['Titulos']           + $value['Titulos'];
+            $totales['Pendientes']        = $totales['Pendientes']        + $value['Pendientes'];
+
+            $totales['AutorizaAlumnoCE']  = $totales['AutorizaAlumnoCE']  + $value['AutorizaAlumnoCE'];
+            $totales['AutorizaAlumnoSE']  = $totales['AutorizaAlumnoSE']  + $value['AutorizaAlumnoSE'];
+            $totales['AutorizaAlumno']    = $totales['AutorizaAlumnoCE'] + $totales['AutorizaAlumnoSE'];
+
+            $totales['NoAutorizaAlumnoCE']= $totales['NoAutorizaAlumnoCE']+ $value['NoAutorizaAlumnoCE'];
+            $totales['NoAutorizaAlumnoSE']= $totales['NoAutorizaAlumnoSE']+ $value['NoAutorizaAlumnoSE'];
+            $totales['NoAutorizaAlumno']  = $totales['NoAutorizaAlumnoCE'] + $totales['NoAutorizaAlumnoSE'];
+
+            $totales['RevisadasJtit']     = $totales['RevisadasJtit']     + $value['RevisadasJtit'];
+            $totales['AutorizadasJtit']   = $totales['AutorizadasJtit']   + $value['AutorizadasJtit'];
+            $totales['FirmadasDG']        = $totales['FirmadasDG']        + $value['FirmadasDG'];
+            $totales['EnviadasDGP']       = $totales['EnviadasDGP']       + $value['EnviadasDGP'];
+            $totales['DescargaDGP']       = $totales['DescargaDGP']       + $value['DescargaDGP'];
+            $totales['TER']               = $totales['TER']               + $value['TER'];
+            $totales['TEA']               = $totales['TEA']               + $value['TEA'];
         }
         // Grafico pie
         $nombreGraf = 'Nombre Pie';
@@ -74,18 +89,30 @@ class GrafiController extends Controller
          // Renderizamos en la vista.
          $chart2 = $this->grafica();
 
-         $lista = $this->listaErrores($aSel,substr($mSel,0,2));
-         $listaHtml = $this->listaErroresHMTL($lista);
+         $c_a=0;$c_e=1; // No autoriza y tiene errores.
+         $lista = $this->listaErrores($aSel,substr($mSel,0,2),$c_a,$c_e); // año y mes, $a_utoriza,$e_errores
+         $listaHtml = $this->listaErroresHMTL($lista,'collapse1');
+
+         $c_a=1;$c_e=1; // Autoriza y tiene errores.
+         $lista1 = $this->listaErrores($aSel,substr($mSel,0,2),$c_a,$c_e); // año y mes, $a_utoriza,$e_errores
+         $listaHtml1 = $this->listaErroresHMTL($lista1,'collapse2');
 
          $dataPendientes = $this->dataPendientes($aSel,substr($mSel,0,2));
+
          // Si no existen cuentas pendientes en todo el mes, la variable $pendientesHTML va a '' y no se despliega en la vista
          $pendientesHTML = $this->pendientesHTML($dataPendientes);
 
-         return view('graficas/cedulas', compact('chart1','chart2','a', 'aSel','mesHtml','data','title','totales','listaHtml','pendientesHTML'));
+         $chart2=null;
+
+         return view('graficas/cedulas', compact('chart1','chart2','a', 'aSel',
+                                                 'mesHtml','data','title','totales',
+                                                 'listaHtml','listaHtml1',
+                                                 'pendientesHTML'));
     }
 
-   public function listaErroresHMTL($lista)
+   public function listaErroresHMTL($lista,$collapse)
    {
+      // Crea el html de la lista de errores de la lista y el collapse especifico para ese segmento.
       $html = ''; $listaErr = array();
       if ($lista!=[]) { // Si existe una lista de errores.
          // Iteramos para cada fecha para formar una sola lista de errores
@@ -94,14 +121,10 @@ class GrafiController extends Controller
             foreach ($errores as $error => $valor) {
                if (isset($listaErr[$error])==null) { // no existe la llave en el arreglo, lo agregamos
                   $listaErr[$error] = $valor;
-               } else {
+               } else { // Si existe la llave en el arreglo, le sumamos el valor para totalizar los errores
                   $listaErr[$error] += $valor;
                }
             }
-         }
-         asort($listaErr);
-         if (array_key_exists('Sin errores/',$listaErr)) {
-            unset($listaErr['Sin errores/']);
          }
          // iteramos sobre el arreglo original para formar el HTML final y definitivo.
          $salida = array();
@@ -114,10 +137,10 @@ class GrafiController extends Controller
             $salida[$error] = $html;
          }
          // Impresion del encabezado con fechas
-         $composite=        "<div id='collapse1' class='panel-collapse collapse'>";
+         $composite=        "<div id='$collapse' class='panel-collapse collapse'>";
          $composite .=       "<div class='divTableRow header'>";
-         $composite .=         "<div class='divTableCell'>";
-         $composite .=              "<strong>Mensaje</strong>";
+         $composite .=         "<div class='divTableCell' style='background-color:white;'>";
+         $composite .=              "<strong></strong>";
          $composite .=         "</div>";
          foreach ($lista as $key => $value) {
             $fechaDma = substr($key,8,2) .'-'. substr($key,5,2) .'-'. substr($key,0,4);
@@ -132,24 +155,29 @@ class GrafiController extends Controller
          foreach ($salida as $error => $fechas) {
             // error es la primera columna y nos especifica el error.
             $composite .=      "<div class='divTableRow'>";
-            $composite .=        "<div class='divTableCell'>";
+            $composite .=        "<div class='divTableCell' style='padding-left: 5%;'>";
             $composite .=           "<strong>".$error."</strong>";
             $composite .=        "</div>";
             foreach ($fechas as $fecha => $cantidad)  {
                $composite .=        "<div class='divTableCell'>";
-               // impresion de columnas de encabezado con fechas1136
-               $composite .=           $cantidad;
-                           $composite .=        "</div>";
+               // $cantidad = ($cantidad==0)? "": $cantidad;
+               $composite .=           "<strong>".$cantidad."</strong>";
+               $composite .=        "</div>";
             }
             $composite .=        "<div class='divTableCell'>";
             // $total es la ultima columna, se agrega como la primera.
-            $total = (array_key_exists($error,$errores))? $listaErr[$error]: 0;
-            $composite .=           $total;
+            // Se busca en el arreglo de totales y si se encuentra se coloca el valor.
+            $total = (array_key_exists($error,$listaErr))? $listaErr[$error]: 0;
+            $composite .=           "<strong>".$total."</strong>";
             $composite .=        "</div>";
             $composite .=      "</div>";
          }
          $composite .= "</div>";
       }
+      // dd('hola', $salida, $composite);
+      // if($collapse=='collapse2'){
+      //    dd('hola', $composite);
+      // }
       return $composite;
    }
 
@@ -170,7 +198,7 @@ class GrafiController extends Controller
 
          // El numero de iteraciones verticales se refieren a la cantidad de cuentas.
          // Impresion del encabezado con fechas
-         $composite=        "<div id='collapse2' class='panel-collapse collapse'>";
+         $composite=        "<div id='collapse3' class='panel-collapse collapse'>";
          $composite .=       "<div class='divTableRow header'>";
          $composite .=         "<div class='divTableCell'>";
          $composite .=              "<strong>Número de Cuenta</strong>";
@@ -213,12 +241,13 @@ class GrafiController extends Controller
       return $composite;
    }
 
-   public function listaErrores($anio,$mes)
+   public function listaErrores($anio,$mes,$c_a,$c_e)
    {
       // Elabora un analisis de todos los errores en una fecha en particular
       $anioMes = "'".$anio.str_pad($mes,2,0,STR_PAD_LEFT)."'";
       $mysql        = "DATE_FORMAT(fec_emision_tit,'%Y-%m-%d') as emisionYmd, errores";
-      $mysqlWhere   = "DATE_FORMAT(fec_emision_tit, '%Y%m') = ".$anioMes."";
+      $mysqlWhere   = "DATE_FORMAT(fec_emision_tit, '%Y%m') = ".$anioMes." AND ";
+      $mysqlWhere  .= "conAutorizacion=$c_a AND conErrores=$c_e";
       $datos        = DB::table('solicitudes_sep')
                     ->select(DB::raw($mysql))
                     ->whereRaw($mysqlWhere)->get();
@@ -238,7 +267,36 @@ class GrafiController extends Controller
         }
 
       }
+      // Extendemos todas las fechas en el arreglo aunque no hayan sido cargadas.
+
+      $fechas = $this->femisionxMes($anio,$mes);
+      foreach ($fechas as $key=>$value) {
+         if (!array_key_exists($key,$libro)) {
+            $libro[$key]=array();
+         }
+      }
+      ksort($libro,SORT_STRING);
+      // dd('248',$libro,$fechas);
+      // dd($libro);
       return $libro;
+   }
+
+   public function femisionxMes($anio,$mes){
+      // Consultamos la tabla de titulos para obtener todas las fechas de emision de Titulos para un año-mes
+      $sybase        = " DISTINCT tit_fec_emision_tit ";
+      $sybasewhere   = " datepart(year,  tit_fec_emision_tit) = ".$anio." AND";
+      $sybasewhere  .= " datepart(month, tit_fec_emision_tit) = ".$mes." ";
+      $fechasAmes    = DB::connection('sybase')
+                        ->table('Titulos')
+                        ->select(DB::raw($sybase))
+                        ->whereRaw($sybasewhere)
+                        ->orderBy('tit_fec_emision_tit')
+                        ->get();
+      $fechas = array();
+      foreach ($fechasAmes as $key => $value) {
+         $fechas[substr($value->tit_fec_emision_tit,0,10)]=[];
+      }
+      return $fechas;
    }
 
     public function bar_Genera($anio,$mes,$Titulo,$ejeX,$ejeY,$paleta)
@@ -248,17 +306,21 @@ class GrafiController extends Controller
         // $arreglo contiene los datos de la consulta en arrenglo de llave-pair
         $arreglo = $this->dataBarra($anio,$mes);
         // El $arreglo se pasa a tres arreglos uno de etiquetas (dias de mes), otro de cedulas En proceso ($data1) y cedulas pendientes ($data2)
-        $labels = $data1 = $data2 = $data3 = $data4 = $data5 = $data6 = $data7 = $data8 = array();
+        $labels = $data1 = $data2 = $data3 = $data4 = $data5 = $data6 = $data7 = $data8 = $data9 = $data10 = array();
         foreach ($arreglo as $key => $value) {
           array_push($labels,$key);             // fecha de emison de titulo
           array_push($data1,$value['Titulos']); // titulos por fecha
           array_push($data2,$value['Pendientes']); // cedulas pendientes de trasferir de titulos a solicitudes_sep
-          array_push($data3,$value['NoAutorConErr']); // cedulas que contienen errores o sin errores que no han pasado a firma
-          array_push($data4,$value['NoAutorSinErr']); // cedulas no contienen errores o sin errores que no han pasado a firma
-          array_push($data5,$value['Autorizadas']); // cedulas sin errores que pasaron a firma pero no tiene aún firma alguna
-          array_push($data6,$value['EnFirma']); // cedulas que tienen una o varias firmas
-          array_push($data7,$value['NoEnviadas']); // cedulas con todas las firmas paro que aún no han sido enviadas a la sep
-          array_push($data8,$value['Enviadas']); // cedulas con todas las firmas y que ya han sido enviadas a la sep
+          array_push($data3,$value['AutorizaAlumnoSE']); //
+          array_push($data4,$value['AutorizaAlumnoCE']); //
+          array_push($data3,$value['NoAutorizaAlumnoSE']); //
+          array_push($data4,$value['NoAutorizaAlumnoCE']); //
+          array_push($data4,$value['RevisadasJtit']); //
+          array_push($data5,$value['AutorizadasJtit']); // cedulas sin errores que pasaron a firma pero no tiene aún firma alguna
+          array_push($data6,$value['FirmadasDG']); // cedulas que tienen una o varias firmas
+          array_push($data8,$value['EnviadasDGP']); // cedulas con todas las firmas y que ya han sido enviadas a la sep
+          array_push($data9,$value['TEA']);     // Titulos Electrónicos Aprobados
+          array_push($data10,$value['TER']);     // Títulos Electrónicos Rechazados
         }
         // Componemos el arreglo para el gráfico con etiquetas y datos
         // dd($labels,$data1,$data2,$Titulo,$ejeX,$ejeY);
@@ -272,7 +334,7 @@ class GrafiController extends Controller
         // Generamos el grafico de pie a partir de los datos
         // Separamos los datos totales en dos arreglos: etiquetas(key) y Valores en el orden mismo de la grafica de barras
         $etiquetasVal = ['Titulos'=>0,'Pendientes'=>0,'NoAutorConErr'=>0,'NoAutorSinErr'=>0,
-                         'Autorizadas'=>0,'EnFirma'=>0,'NoEnviadas'=>0,'Enviadas'=>0];
+                         'Autorizadas'=>0,'Firmadas'=>0,'Enviadas'=>0];
         $valores = array();
         foreach ($totales as $key => $value) {
            $etiquetasVal[$key] = $value;
@@ -373,7 +435,7 @@ class GrafiController extends Controller
                 "pointHoverBorderColor" => "rgba(220,220,220,1)",
                 'data' => $data5],
             [
-                "label" => "EnFirma",
+                "label" => "Firmadas",
                 'backgroundColor' => $paleta[5],
                 'borderColor' => $paleta[5],
                 "pointBorderColor" => "rgba(38, 185, 154, 0.7)",
@@ -381,15 +443,6 @@ class GrafiController extends Controller
                 "pointHoverBackgroundColor" => "#fff",
                 "pointHoverBorderColor" => "rgba(220,220,220,1)",
                 'data' => $data6],
-            [
-                "label" => "NoEnviadas",
-                'backgroundColor' => $paleta[6],
-                'borderColor' => $paleta[6],
-                "pointBorderColor" => "rgba(38, 185, 154, 0.7)",
-                "pointBackgroundColor" => "rgba(38, 185, 154, 0.7)",
-                "pointHoverBackgroundColor" => "#fff",
-                "pointHoverBorderColor" => "rgba(220,220,220,1)",
-                'data' => $data7],
             [
                 "label" => "Enviadas",
                 'backgroundColor' => $paleta[7],
@@ -477,20 +530,25 @@ class GrafiController extends Controller
        // Consultas por mes y año de fechas de emision de titulo
        // Año y mes para filtrar la consulta.
        $anioMes = "'".$anio.str_pad($mes,2,0,STR_PAD_LEFT)."'";
-
        $mysql        = "DATE_FORMAT(fec_emision_tit,'%Y-%m-%d') as emisionYmd,";
-       $mysql       .= "SUM(CASE WHEN (status = 1) AND NOT (errores LIKE '%Sin errores%') THEN 1 ELSE 0 END) AS NoAutorConErr, ";
-       $mysql       .= "SUM(CASE WHEN (status = 1) AND     (errores LIKE '%Sin errores%') THEN 1 ELSE 0 END) AS NoAutorSinErr, ";
-       $mysql       .= "SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS Autorizadas, ";
-       $mysql       .= "SUM(CASE WHEN status between 3 and 5 THEN 1 ELSE 0 END) AS EnFirma, ";
-       $mysql       .= "SUM(CASE WHEN status = 6 THEN 1 ELSE 0 END) AS NoEnviadas, ";
-       $mysql       .= "SUM(CASE WHEN status = 7 THEN 1 ELSE 0 END) AS Enviadas ";
+       $mysql       .= "SUM(CASE WHEN (conAutorizacion=1) THEN 1 ELSE 0 END ) AS AutorizaAlumno, ";
+       $mysql       .= "SUM(CASE WHEN (conAutorizacion=0) THEN 1 ELSE 0 END ) AS NoAutorizaAlumno, ";
+       $mysql       .= "SUM(CASE WHEN (conAutorizacion=1) AND (conErrores = 0) THEN 1 ELSE 0 END) AS  AutorizaAlumnoSE, ";
+       $mysql       .= "SUM(CASE WHEN (conAutorizacion=1) AND (conErrores = 1) THEN 1 ELSE 0 END) AS  AutorizaAlumnoCE, ";
+       $mysql       .= "SUM(CASE WHEN (status = 1) AND (conAutorizacion=0) AND (conErrores = 0) THEN 1 ELSE 0 END) AS NoAutorizaAlumnoSE, ";
+       $mysql       .= "SUM(CASE WHEN (status = 1) AND (conAutorizacion=0) AND (conErrores = 1) THEN 1 ELSE 0 END) AS NoAutorizaAlumnoCE, ";
+       $mysql       .= "SUM(CASE WHEN  status = 2 THEN 1 ELSE 0 END) AS RevisadasJtit, ";
+       $mysql       .= "SUM(CASE WHEN  status = 3 THEN 1 ELSE 0 END) AS AutorizadasJtit, ";
+       $mysql       .= "SUM(CASE WHEN  status = 4 THEN 1 ELSE 0 END) AS FirmadasDG, ";
+       $mysql       .= "SUM(CASE WHEN  status = 5 THEN 1 ELSE 0 END) AS EnviadasDGP, "; // general lote dgp
+       $mysql       .= "SUM(CASE WHEN  status = 6 THEN 1 ELSE 0 END) AS DescargaDGP, "; // descarga zip-xls
+       $mysql       .= "SUM(CASE WHEN  status = 7 THEN 1 ELSE 0 END) AS TER, "; // titulo Electronico Rechazado
+       $mysql       .= "SUM(CASE WHEN  status = 8 THEN 1 ELSE 0 END) AS TEA "; // titulo Electrónico Aceptado
        $mysqlWhere   = "DATE_FORMAT(fec_emision_tit, '%Y%m') = ".$anioMes."";
        $mysqlData    = DB::table('solicitudes_sep')
                      ->select(DB::raw($mysql))
                      ->whereRaw($mysqlWhere)
                      ->groupBy('fec_emision_tit')->get();
-
        $sybase        = " tit_fec_emision_tit AS emision, ";
        $sybase       .= " COUNT(*) AS titulos ";
        $sybasewhere   = " datepart(year,  tit_fec_emision_tit) = ".$anio." AND";
@@ -513,43 +571,66 @@ class GrafiController extends Controller
           if ($mysqlData!=[]) {
             foreach ($mysqlData as $registros) {
                 $sSep[$registros->emisionYmd] = [
-                                                 "NoAutorConErr"  => $registros->NoAutorConErr,
-                                                 "NoAutorSinErr"  => $registros->NoAutorSinErr,
-                                                 "Autorizadas"    => $registros->Autorizadas,
-                                                 "EnFirma"        => $registros->EnFirma,
-                                                 "NoEnviadas"     => $registros->NoEnviadas,
-                                                 "Enviadas"       => $registros->Enviadas];
+                                                 "AutorizaAlumno"    => $registros->AutorizaAlumno,
+                                                 "AutorizaAlumnoCE"  => $registros->AutorizaAlumnoCE,
+                                                 "AutorizaAlumnoSE"  => $registros->AutorizaAlumnoSE,
+                                                 "NoAutorizaAlumno"  => $registros->NoAutorizaAlumno,
+                                                 "NoAutorizaAlumnoCE"=> $registros->NoAutorizaAlumnoCE,
+                                                 "NoAutorizaAlumnoSE"=> $registros->NoAutorizaAlumnoSE,
+                                                 "RevisadasJtit"     => $registros->RevisadasJtit,
+                                                 "AutorizadasJtit"   => $registros->AutorizadasJtit,
+                                                 "FirmadasDG"        => $registros->FirmadasDG,
+                                                 "EnviadasDGP"       => $registros->EnviadasDGP,
+                                                 "DescargaDGP"       => $registros->DescargaDGP,
+                                                 "TEA"               => $registros->TEA,
+                                                 "TER"               => $registros->TER];
             }
           }
+          // Ordenamos el resultado en un arreglo adecuado para graficar
          foreach ($sybaseData as $valores) {
              $llave = substr($valores->emision,0,10);
              $key = explode('-',$llave); // cambiamos el formato de fecha de Ymd a dmY
              if (array_key_exists($llave,$sSep)) {
                 // La llave existe en los dos arreglos
                 // Se contabilizan las pendientes que son las cédulas que estan en titulos pero no en solicitudes_sep
-                $pendientes = $valores->titulos-$sSep[$llave]['NoAutorConErr']-$sSep[$llave]['NoAutorSinErr']-
-                              $sSep[$llave]['Autorizadas']-$sSep[$llave]['EnFirma']-$sSep[$llave]['NoEnviadas']-
-                              $sSep[$llave]['Enviadas'];
-                // almacenasmo en la fecha el resuptado de todos los campos.
+                $pendientes = $valores->titulos-$sSep[$llave]['AutorizaAlumnoCE']-
+                                                $sSep[$llave]['AutorizaAlumnoSE']-
+                                                $sSep[$llave]['NoAutorizaAlumnoCE']-
+                                                $sSep[$llave]['NoAutorizaAlumnoSE'];
+                // almacenasmo en la fecha el resultado de todos los campos.
                 $resultado[$key[2].'-'.$key[1].'-'.$key[0]] = ['Titulos'=>$valores->titulos,
                                                                'Pendientes'=> $pendientes,
-                                                               'NoAutorConErr'=>$sSep[$llave]['NoAutorConErr'],
-                                                               'NoAutorSinErr'=>$sSep[$llave]['NoAutorSinErr'],
-                                                               'Autorizadas'=>$sSep[$llave]['Autorizadas'],
-                                                               'EnFirma'=>$sSep[$llave]['EnFirma'],
-                                                               'NoEnviadas'=>$sSep[$llave]['NoEnviadas'],
-                                                               'Enviadas'=>$sSep[$llave]['Enviadas'] ];
+                                                               'AutorizaAlumno'=>$sSep[$llave]['AutorizaAlumno'],
+                                                               'AutorizaAlumnoCE'=>$sSep[$llave]['AutorizaAlumnoCE'],
+                                                               'AutorizaAlumnoSE'=>$sSep[$llave]['AutorizaAlumnoSE'],
+                                                               'NoAutorizaAlumno'=>$sSep[$llave]['NoAutorizaAlumno'],
+                                                               'NoAutorizaAlumnoCE'=>$sSep[$llave]['NoAutorizaAlumnoCE'],
+                                                               'NoAutorizaAlumnoSE'=>$sSep[$llave]['NoAutorizaAlumnoSE'],
+                                                               'RevisadasJtit'=>$sSep[$llave]['RevisadasJtit'],
+                                                               'AutorizadasJtit'=>$sSep[$llave]['AutorizadasJtit'],
+                                                               'FirmadasDG'=>$sSep[$llave]['FirmadasDG'],
+                                                               'EnviadasDGP'=>$sSep[$llave]['EnviadasDGP'],
+                                                               'DescargaDGP'=>$sSep[$llave]['DescargaDGP'],
+                                                               'TEA'=>$sSep[$llave]['TEA'],
+                                                               'TER'=>$sSep[$llave]['TER']];
 
              } else {
                 // solo se tienen los registros de Titulos
                 $resultado[$key[2].'-'.$key[1].'-'.$key[0]] = ['Titulos'=>$valores->titulos,
                                                                'Pendientes'=>$valores->titulos,
-                                                               'NoAutorConErr'=>0,
-                                                               'NoAutorSinErr'=>0,
-                                                               'Autorizadas'=>0,
-                                                               'EnFirma'=>0,
-                                                               'NoEnviadas'=>0,
-                                                               'Enviadas'=>0];
+                                                               'AutorizaAlumno'=>0,
+                                                               'AutorizaAlumnoCE'=>0,
+                                                               'AutorizaAlumnoSE'=>0,
+                                                               'NoAutorizaAlumno'=>0,
+                                                               'NoAutorizaAlumnoCE'=>0,
+                                                               'NoAutorizaAlumnoSE'=>0,
+                                                               'RevisadasJtit'=>0,
+                                                               'AutorizadasJtit'=>0,
+                                                               'FirmadasDG'=>0,
+                                                               'EnviadasDGP'=>0,
+                                                               'DescargaDGP'=>0,
+                                                               'TEA'=>0,
+                                                               'TER'=>0];
              }
          }
        }
@@ -557,6 +638,78 @@ class GrafiController extends Controller
        ksort($resultado);
        return $resultado;
     }
+
+    public function resumenEnvios()
+    {
+      $limites = $this->limitesFechaEmision();
+      $data = $this->dataBarraTotal($limites);
+      $title = 'Resumen de envíos a la DGP';
+      return view('graficas/cedulasResumen', compact('data','title','limites'));
+   }
+
+
+    public function dataBarraTotal($limites)
+    {
+      // Consulta de datos totales en las fechas de emisión de títulos contenidas en Solicitudes_sep
+
+      // fechas limite de emision de títulos en la tabla solicitudes_sep
+      $inicio = $limites['inicio']; $fin = $limites['fin'];
+       if (!$inicio==null) {  // las fechas si existen
+          $mysql        = "SUM(CASE WHEN (conAutorizacion=1) THEN 1 ELSE 0 END ) AS AutorizaAlumno, ";
+          $mysql       .= "SUM(CASE WHEN (conAutorizacion=0) THEN 1 ELSE 0 END ) AS NoAutorizaAlumno, ";
+          $mysql       .= "SUM(CASE WHEN (conAutorizacion=1) AND (conErrores = 0) THEN 1 ELSE 0 END) AS  AutorizaAlumnoSE, ";
+          $mysql       .= "SUM(CASE WHEN (conAutorizacion=1) AND (conErrores = 1) THEN 1 ELSE 0 END) AS  AutorizaAlumnoCE, ";
+          $mysql       .= "SUM(CASE WHEN (status = 1) AND (conAutorizacion=0) AND (conErrores = 0) THEN 1 ELSE 0 END) AS NoAutorizaAlumnoSE, ";
+          $mysql       .= "SUM(CASE WHEN (status = 1) AND (conAutorizacion=0) AND (conErrores = 1) THEN 1 ELSE 0 END) AS NoAutorizaAlumnoCE, ";
+          $mysql       .= "SUM(CASE WHEN  status = 2 THEN 1 ELSE 0 END) AS RevisadasJtit, ";
+          $mysql       .= "SUM(CASE WHEN  status = 3 THEN 1 ELSE 0 END) AS AutorizadasJtit, ";
+          $mysql       .= "SUM(CASE WHEN  status = 4 THEN 1 ELSE 0 END) AS FirmadasDG, ";
+          $mysql       .= "SUM(CASE WHEN  status = 5 THEN 1 ELSE 0 END) AS EnviadasDGP, "; // general lote dgp
+          $mysql       .= "SUM(CASE WHEN  status = 6 THEN 1 ELSE 0 END) AS DescargaDGP, "; // descarga zip-xls
+          $mysql       .= "SUM(CASE WHEN  status = 7 THEN 1 ELSE 0 END) AS TER, "; // titulo Electronico Rechazado
+          $mysql       .= "SUM(CASE WHEN  status = 8 THEN 1 ELSE 0 END) AS TEA "; // titulo Electrónico Aceptado
+          $mysqlWhere   = "fec_emision_tit BETWEEN '$inicio' AND '$fin'";
+          $mysqlData    = DB::table('solicitudes_sep')
+                        ->select(DB::raw($mysql))->whereRaw($mysqlWhere)->get()[0];
+                        // groupBy('fec_emision_tit')->get()[0];
+         // Títulos totales entre dos fechas.
+          $sybase        = "COUNT(*) AS titulos ";
+          $sybasewhere   = "tit_fec_emision_tit BETWEEN '$inicio' AND '$fin'";
+          $sybaseData  = DB::connection('sybase')
+                        ->table('Titulos')
+                        ->select(DB::raw($sybase))
+                        ->whereRaw($sybasewhere)
+                        ->get()[0];
+            // armamos un arreglo único con las dos consultas
+            $salida = array();
+            $salida['Titulos'] = $sybaseData->titulos;
+            foreach ($mysqlData as $key => $value) {
+               $salida[$key] = $value;
+            }
+       }
+       return $salida;
+    }
+
+    public function limitesFechaEmision()
+    {
+      // Fechas mayor y menor de emisión de títulos en el archivo Solicitudes_sep
+      $dataFEI = DB::table('solicitudes_sep')->select('fec_emision_tit')->groupBy('fec_emision_tit')
+                      ->orderBy('fec_emision_tit','ASC')->get();
+      $cuentaFechas = count($dataFEI);
+      $inicio = $fin = null; // Primera y última fechas de emisión de títulos
+      if ($cuentaFechas>0) { // consulta vacía
+          if ($cuentaFechas==1) {  // solo una fecha de emisión de títulos
+             $inicio = $fin = $dataFEI['fec_emision_tit'];
+          } else { // mas de una fecha de emisión de títulos
+             $inicio = $dataFEI[0]->fec_emision_tit;
+             $fin = $dataFEI[$cuentaFechas-1]->fec_emision_tit;
+          }
+      }
+      $salida = array();
+      $salida['inicio'] = $inicio;
+      $salida['fin'] = $fin;
+      return $salida;
+   }
 
    public function dataPendientes($anio,$mes)
    {

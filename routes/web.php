@@ -291,4 +291,8 @@ Route::post('/materialesInforme',[
     'uses' => 'InformesCondocController@materialesPost',
     'roles' => ['Admin','Jtit']
 ]);
+Route::get('/pdf_Materiales',[
+    'uses' => 'InformesCondocController@pdf_Materiales',
+    'roles' => ['Admin','Jtit']
+])->name('pdf_Materiales');
 /*******************************/

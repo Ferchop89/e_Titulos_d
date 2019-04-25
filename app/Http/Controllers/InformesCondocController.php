@@ -28,7 +28,7 @@ class InformesCondocController extends Controller
       $data   = $this->dataMaterialesGroup($inicio,$fin, $orden);
       $resumenHTML = $this->materialesHTML($data,$orden);
       $title = 'Material Títulos';
-      return view('graficas/materialTitulos', compact('title','inicio','fin','resumenHTML','ordenHTML'));
+      return view('graficas/materialTitulos', compact('title','inicio','fin','orden','resumenHTML','ordenHTML'));
    }
 
    public function materialesPost()
@@ -49,7 +49,7 @@ class InformesCondocController extends Controller
       $data   = $this->dataMaterialesGroup($inicio,$fin, $orden);
       $resumenHTML = $this->materialesHTML($data,$orden);
       $title = 'Material Títulos';
-      return view('graficas/materialTitulos', compact('title','inicio','fin','resumenHTML','ordenHTML'));
+      return view('graficas/materialTitulos', compact('title','inicio','fin','orden','resumenHTML','ordenHTML'));
    }
 
    public function radioHTML($orden)
@@ -67,7 +67,7 @@ class InformesCondocController extends Controller
    }
 
    public function materialesHTML ($data,$orden){
-      $html = "<table class='table'>";
+      $html = "<table class='table blueTable'>";
       $html .= "<tbody>";
       $html .= "<thead>";
       $html .= "<tr>";
@@ -94,14 +94,14 @@ class InformesCondocController extends Controller
          $html .= '<tr>';
          $html .= "<td>$value->nivel</td>";
          $html .= "<td>$value->material</td>";
-         $html .= "<td>$value->E01</td><td>$value->E02</td><td>$value->E03</td>";
-         $html .= "<td>$value->E04</td><td>$value->E05</td><td>$value->E06</td>";
-         $html .= "<td>$value->E07</td><td>$value->E08</td><td>$value->E09</td>";
-         $html .= "<td>$value->E10</td><td>$value->E11</td><td>$value->ST</td>";
+         $html .= "<td class='der'>$value->E01</td><td class='der'>$value->E02</td><td class='der'>$value->E03</td>";
+         $html .= "<td class='der'>$value->E04</td><td class='der'>$value->E05</td><td class='der'>$value->E06</td>";
+         $html .= "<td class='der'>$value->E07</td><td class='der'>$value->E08</td><td class='der'>$value->E09</td>";
+         $html .= "<td class='der'>$value->E10</td><td class='der'>$value->E11</td><td class='der'>$value->ST</td>";
          $subtotal = $value->E01+$value->E02+$value->E03+$value->E04+$value->E05+
                      $value->E06+$value->E07+$value->E08+$value->E09+$value->E10+
                      $value->E11+$value->ST;
-         $html .= "<td><strong>$subtotal</strong></td>";
+         $html .= "<td class='der'><strong>$subtotal</strong></td>";
          $html .= '</tr>';
          if ($i < (count($data)-1)) {
             $test = ($orden=='nivel')? $data[$i+1]->nivel: $data[$i+1]->material;
@@ -109,12 +109,12 @@ class InformesCondocController extends Controller
                // imprimimos el $cveSubtotal
                $html .= '<tr>';
                $html .= "<td></td>";
-               $html .= "<td><strong>SUBTOTAL</strong></td>";
-               $html .= "<td><strong>".$columnas['01']."</strong></td><td><strong>".$columnas['02']."</strong></td><td><strong>".$columnas['03']."</strong></td>";
-               $html .= "<td><strong>".$columnas['04']."</strong></td><td><strong>".$columnas['05']."</strong></td><td><strong>".$columnas['06']."</strong></td>";
-               $html .= "<td><strong>".$columnas['07']."</strong></td><td><strong>".$columnas['08']."</strong></td><td><strong>".$columnas['09']."</strong></td>";
-               $html .= "<td><strong>".$columnas['10']."</strong></td><td><strong>".$columnas['11']."</strong></td><td><strong>".$columnas['ST']."</strong></td>";
-               $html .= "<td><strong>{$this->sumaArreglo($columnas)}</strong></td>";
+               $html .= "<td class='der'><strong>SUBTOTAL</strong></td>";
+               $html .= "<td class='der'><strong>".$columnas['01']."</strong></td><td class='der'><strong>".$columnas['02']."</strong></td><td class='der'><strong>".$columnas['03']."</strong></td>";
+               $html .= "<td class='der'><strong>".$columnas['04']."</strong></td><td class='der'><strong>".$columnas['05']."</strong></td><td class='der'><strong>".$columnas['06']."</strong></td>";
+               $html .= "<td class='der'><strong>".$columnas['07']."</strong></td><td class='der'><strong>".$columnas['08']."</strong></td><td class='der'><strong>".$columnas['09']."</strong></td>";
+               $html .= "<td class='der'><strong>".$columnas['10']."</strong></td><td class='der'><strong>".$columnas['11']."</strong></td><td class='der'><strong>".$columnas['ST']."</strong></td>";
+               $html .= "<td class='der'><strong>{$this->sumaArreglo($columnas)}</strong></td>";
                $html .= '</tr>';
                // Actualizamos el valor de las columnas a subtotales cero
                $columnas = array('01'=>0,'02'=>0,'03'=>0,'04'=>0,'05'=>0,'06'=>0,
@@ -126,23 +126,23 @@ class InformesCondocController extends Controller
       // ultimo subtotal
       $html .= '<tr>';
       $html .= "<td></td>";
-      $html .= "<td><strong>SUBTOTAL</strong></td>";
-      $html .= "<td><strong>".$columnas['01']."</strong></td><td><strong>".$columnas['02']."</strong></td><td><strong>".$columnas['03']."</strong></td>";
-      $html .= "<td><strong>".$columnas['04']."</strong></td><td><strong>".$columnas['05']."</strong></td><td><strong>".$columnas['06']."</strong></td>";
-      $html .= "<td><strong>".$columnas['07']."</strong></td><td><strong>".$columnas['08']."</strong></td><td><strong>".$columnas['09']."</strong></td>";
-      $html .= "<td><strong>".$columnas['10']."</strong></td><td><strong>".$columnas['11']."</strong></td><td><strong>".$columnas['ST']."</strong></td>";
-      $html .= "<td><strong>{$this->sumaArreglo($columnas)}</strong></td>";
+      $html .= "<td class='der'><strong>SUBTOTAL</strong></td>";
+      $html .= "<td class='der'><strong>".$columnas['01']."</strong></td><td class='der'><strong>".$columnas['02']."</strong></td><td class='der'><strong>".$columnas['03']."</strong></td>";
+      $html .= "<td class='der'><strong>".$columnas['04']."</strong></td><td class='der'><strong>".$columnas['05']."</strong></td><td class='der'><strong>".$columnas['06']."</strong></td>";
+      $html .= "<td class='der'><strong>".$columnas['07']."</strong></td><td class='der'><strong>".$columnas['08']."</strong></td><td class='der'><strong>".$columnas['09']."</strong></td>";
+      $html .= "<td class='der'><strong>".$columnas['10']."</strong></td><td class='der'><strong>".$columnas['11']."</strong></td><td class='der'><strong>".$columnas['ST']."</strong></td>";
+      $html .= "<td class='der'><strong>{$this->sumaArreglo($columnas)}</strong></td>";
       $html .= "</tr>";
 
       // total
       $html .= '<tr>';
       $html .= "<td></td>";
-      $html .= "<td><strong>TOTAL</strong></td>";
-      $html .= "<td><strong>".$totales['01']."</strong></td><td><strong>".$totales['02']."</strong></td><td><strong>".$totales['03']."</strong></td>";
-      $html .= "<td><strong>".$totales['04']."</strong></td><td><strong>".$totales['05']."</strong></td><td><strong>".$totales['06']."</strong></td>";
-      $html .= "<td><strong>".$totales['07']."</strong></td><td><strong>".$totales['08']."</strong></td><td><strong>".$totales['09']."</strong></td>";
-      $html .= "<td><strong>".$totales['10']."</strong></td><td><strong>".$totales['11']."</strong></td><td><strong>".$totales['ST']."</strong></td>";
-      $html .= "<td><strong>{$this->sumaArreglo($totales)}</strong></td>";
+      $html .= "<td class='der'><strong>TOTAL</strong></td>";
+      $html .= "<td class='der'><strong>".$totales['01']."</strong></td><td class='der'><strong>".$totales['02']."</strong></td><td class='der'><strong>".$totales['03']."</strong></td>";
+      $html .= "<td class='der'><strong>".$totales['04']."</strong></td><td class='der'><strong>".$totales['05']."</strong></td><td class='der'><strong>".$totales['06']."</strong></td>";
+      $html .= "<td class='der'><strong>".$totales['07']."</strong></td><td class='der'><strong>".$totales['08']."</strong></td><td class='der'><strong>".$totales['09']."</strong></td>";
+      $html .= "<td class='der'><strong>".$totales['10']."</strong></td><td class='der'><strong>".$totales['11']."</strong></td><td class='der'><strong>".$totales['ST']."</strong></td>";
+      $html .= "<td class='der'><strong>{$this->sumaArreglo($totales)}</strong></td>";
       $html .= '</tr>';
 
       $html .= "</tbody>";
@@ -220,6 +220,30 @@ class InformesCondocController extends Controller
 
       $sybaseData = DB::connection('sybase')->select($selectSybase);
       return $sybaseData;
+   }
+
+   public function pdf_Materiales(Request $request)
+   {
+      // Generación de el PDF de materiales
+      $parametros = array_keys($request->all());
+      $inicio = $parametros[0];$fin = $parametros[1]; $orden = $parametros[2];
+      // html para la generación de la vista
+      // $ordenHTML = $this->radioHTML($orden);
+      $data   = $this->dataMaterialesGroup($inicio,$fin, $orden);
+      $inicio = Carbon::parse($inicio)->format('d-m-Y');
+      $fin = Carbon::parse($fin)->format('d-m-Y');
+      $resumenHTML = $this->materialesHTML($data,$orden);
+      // $title = 'Material Títulos';
+
+      $vista = $resumenHTML;
+      // generación de la vista y generación del PDF
+      $view = \View::make('graficas.Materiales', compact('vista','inicio','fin','orden'))->render();
+      $pdf = \App::make('dompdf.wrapper');
+      $pdf->loadHTML($view);
+      // $pdf->setPaper('letter','portrait');
+      $pdf->setPaper('letter','landscape');
+      // return view('graficas.Materiales',compact('vista'));
+      return $pdf->stream('Materiales.pdf');
    }
 
 }

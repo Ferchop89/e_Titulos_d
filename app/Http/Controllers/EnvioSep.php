@@ -33,14 +33,13 @@ class EnvioSep extends Controller
                                    ->where('fecha_lote',$fechaLote)
                                    ->get();
       // Las cedulas se integran a un archivo xml con sus tres firmas.
-      // dd('firmas',$solicitudes);
       if (count($solicitudes)==1) {
          // El archivo xml. Obtenemos el archivo XMLO en una cadena
          foreach ($solicitudes as $solicitud) {
             $cedula = $this->cadenaArchivo($solicitud,$folio);
          }
          // Un archivo envio de una sola cedula forma un archivo de extensión xml
-         $nombreArchivo = 'xml/'.$folio.'.xml';
+         $nombreArchivo = 'xml/'.$folio.$solicitud->num_cta.'.xml';
          // guardamos un archivo xml por cada cédula del Lote.
          // posteriormente se integran en un solo archivo ZIP si el count(lote) > 1 o XML si count(lote) = 1
          $cedula->save($nombreArchivo);
@@ -59,17 +58,28 @@ class EnvioSep extends Controller
             // $this->XmldirGral($nodos, $folio, $solicitud->num_cta);
          }
       }
-
       // Generación del ZIP/XML y envio a la SEP (en ese orden)
 
       // GEneración del archivo de envio y envio mediante WS a la sep
       $this->generaZip($fechaLote);
       // $this->generaZipDirGral($fechaLote);
-      $this->enviaZipXml($fechaLote);
-
+      // Consultamos el id de la fechaLote, porque es el valor de alta en lotes_dgp
+      $fecha_lote_id = $this->obten_lote_id($fechaLote);
+      $responseDGP = $this->enviaZipXml($fechaLote, $fecha_lote_id, $solicitud->num_cta);
+      if(!empty($responseDGP))
+      {
+         // Registro del numero de lote que devuelve la DGP
+         $wsDGP = new WSController();
+         $wsDGP->registraLoteDgp($responseDGP,$fecha_lote_id);
+         $msj = "Lote UNAM $fecha_lote_id enviado. Registrado en DGP con el lote: ".$responseDGP[0];
+         Session::flash('success', $msj);
+      }
+      else {
+         $msj = "Lote UNAM $fecha_lote_id enviado. Sin respuesta de DGP, intente enviar más tarde.";
+         Session::flash('error', $msj);
+      }
       // Copia de los Zip generados sin firmas para la Direccion generaLotes
       $this->generaZipDirGral($fechaLote);
-
       return redirect()->route('registroTitulos/firmas_progreso'); // registroTitulos/firmas_progreso  /firmas_progreso
    }
 
@@ -123,26 +133,24 @@ class EnvioSep extends Controller
          }
       }
    }
-   public function enviaZipXml($fechaLote)
+   public function enviaZipXml($fechaLote, $fecha_lote_id, $num_cta)
    {
       // Registro del envio a la DGP (tabla lotes_DGP ), actualiza el status
       // del lote en la tabla solicitudes_sep y procede al envio del WS.
-
-      // Consultamos el id de la fechaLote, porque es el valor de alta en lotes_dgp
-      $fecha_lote_id = $this->obten_lote_id($fechaLote);
       $this->altaDPG($fecha_lote_id);
       // Actualiza el status de la tabla solicitudes_sep que pasa de '6' (firma rector) a '7' genera archivo XML
       // $this->statusXmlZip($fechaLote);
-
+      
       // Envia por WS el Archivo XML o ZIP.
-      $this->xmlzipToDGP($fechaLote,$fecha_lote_id);
+      $responseDGP = $this->xmlzipToDGP($fechaLote,$fecha_lote_id, $num_cta);
+      return $responseDGP;
    }
-   public function xmlzipToDGP($fechaLote,$fecha_lote_id)
+   public function xmlzipToDGP($fechaLote, $fecha_lote_id, $num_cta="")
    {
       // Leemos el archivo para enviarlo mediante el WS a la DGP.
       $lote = Carbon::parse($fechaLote)->format('Ymdhis');
       // buscamos si existe el archivo en formato xml (una sola cedula) o zip (muchas cedulas)
-      $archivoXml = 'xml/'.$lote.'.xml';
+      $archivoXml = 'xml/'.$lote.$num_cta.'.xml';
       $archivoZip = 'xml/'.$lote.'.zip';
       $fileXml = glob($archivoXml);
       $fileZip = glob($archivoZip);
@@ -156,43 +164,10 @@ class EnvioSep extends Controller
       }
       // Creamos una nueva instancia del Web Service que se encuentra en la clase WSController
       $wsDGP = new WSController();
-      $wsDGP->ws_Dgp_Carga($fileEnvioDGP,$fecha_lote_id);
-      // dd('Posterior a web service ws_DGP');
-      // $wsDGP = $wsDGP->ws_RENAPO('CACG620808SRL05');
-      // Recuperamos el archivo para codificarlo en base 64 y llamar al WS.
-
+      $responseDGP = $wsDGP->ws_Dgp_Carga($fileEnvioDGP,$fecha_lote_id);
+      return $responseDGP;
    }
 
-   // public function ws_DGP()
-   // {
-   //      try {
-   //          $wsdl = 'https://metqa.siged.sep.gob.mx/met-ws/services/TitulosElectronicos.wsdl';
-   //          $opts = array(
-   //              'location'=> 'https://metqa.siged.sep.gob.mx:443/met-ws/services/',
-   //              // 'location'=> 'https://webser.dgae.unam.mx:8243/services/ConsultaRenapoPorDetalle.ConsultaRenapoPorDetalleHttpsSoap12Endpoint',
-   //              'connection_timeout' => 10 ,
-   //              'encoding' => 'ISO-8859-1',
-   //              'trace' => true,
-   //              'exceptions' => true
-   //           );
-   //          $client = new SOAPClient($wsdl, $opts);
-   //          // dd($client);
-   //          // dd($client->__getFunctions());
-   //          dd($clientxmlzipToDGP, $client->__getTypes());
-   //          $response = $client->consultarPorCurp($datos);
-   //          // $response = $client->consultarCurpDetalle(['cveAlfaEntFedNac' => 'DF', 'fechaNacimiento' => '01/01/1989', 'nombre' => 'FERNANDO', 'primerApellido' => 'PACHECO', 'segundoApellido' => 'ESTRADA', 'sexo' => 'H']);
-   //          // dd($response, $curp);
-   //          return $response;
-   //
-   //      }
-   //      catch (SoapFault $exception) {
-   //
-   //          echo "<pre>SoapFault: ".print_r($exception, true)."</pre>\n";
-   //          echo "<pre>faultcode: '".$exception->faultcode."'</pre>";
-   //          echo "<pre>faultstring: '".$exception->getMessage()."'</pre>";
-   //      }
-   //      return $response;
-   // }
    public function actualizaDGP()
    {
       // Actualizamos las fechas faltantes en lotes_dgp como si hubieran sido enviadas
@@ -226,7 +201,7 @@ class EnvioSep extends Controller
             insert([ 'lote_unam_id' => $fecha_lote_id,
                      'user_id' => Auth::id(),
                      'lote_dgp' => 0,  // lote_dgp not null
-                     'msj_carga' => 'Carga Pendiente' ,
+                     'msj_carga' => 'Crea Lote' ,
                      'fecha_carga'=> null ,
                      'estatus' => 1, // estatus not nul
                      'msj_consulta' => null,
@@ -234,7 +209,8 @@ class EnvioSep extends Controller
                      'archivo_descarga' => '', // archivo not null
                      'ruta_descarga' => '',  // ruta not null
                      'msj_descarga' => null,
-                     'fecha_descarga' => null
+                     'fecha_descarga' => null,
+                     'created_at' => Carbon::now()
          ]);
       }
 

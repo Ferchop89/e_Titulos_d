@@ -188,11 +188,19 @@ trait XmlCadenaErrores {
       $query2 .= 'carrp_nombre   AS _10_nombreCarrera ';
       $query2 .= 'from Carrprog ';
       $query2 .= "where carrp_cve = '".$carrera."'";
+      // Consulta de la Orientación de la carrera que cursa el alumnos
+      $query3  = 'SELECT dat_orientacion AS orientacion ';
+      $query3 .= 'from Datos ';
+      $query3 .= "where ";
+      $query3 .= "dat_ncta = '".$cuenta."' and ";
+      $query3 .= "dat_dig_ver = '".$digito."' and ";
+      $query3 .= "dat_car_actual = '".$carrera."' ";
       // inicialización de arreglos.
       $errores = $datos = $paridad = array(); // errores y faltantes
       // Buscamos el nombre y carrera SEP
       $sep  = (array)DB::connection('sybase')->select($query1); // Carrera SEP
       $unam = (array)DB::connection('sybase')->select($query2); // Carrera UNAM
+      $orienta = (array)DB::connection('sybase')->select($query3); // Carrera UNAM
       // Busqueda de la clave SEP
       if ($sep!=[]) {
          //  Encontro clave y nombre SEP para la clave local ($cuenta y $carrera)
@@ -218,14 +226,28 @@ trait XmlCadenaErrores {
                $resultado['_10_nombreCarrera'] = '----';
             }
          } else {
-            // consultamos la carrera en posgrado.
-            $posgrado = DB::table('_posgradoUnam')->
-                        where('clave_carrera_unam',$carrera)->
-                        where('clave_orientacion_unam','00')->
-                        first();
-            if (isset($posgrado)) { // Existe la carrera en la tabla de posgrado
+            // consultamos la carrera en posgrado y utilizamos el Orientacion del Query3 y $orienta
+            $posgrado = []; // Inicializamo $posgrado
+            // Solo realizamos la consulta si tenemos la orientación, para evitar el error de indice inexistente en $orienta
+            if ($orienta!=[]) {
+               $posgrado = DB::table('_posgradoUnam')->
+                           where('clave_carrera_unam',$carrera)->
+                           where('clave_orientacion_unam',$orienta[0]->orientacion)->
+                           first();
+            }
+            if ($posgrado!=[]) { // Existe la carrera en la tabla de posgrado
                $resultado['_09_cveCarrera'] = $posgrado->clave_carrera_SEP;
-               $resultado['_10_nombreCarrera'] = $posgrado->nombre_carrera_UNAM;
+               // Buscamos la clave en la tabla de carreras Sep para que coincidan los nombres
+               $nombreSep = Carrera::where('CVE_SEP',$posgrado->clave_carrera_SEP)->pluck('CARRERA');
+               if (isset($nombreSep[0])) {
+                  $resultado['_10_nombreCarrera'] = $nombreSep[0];
+               } else {
+                  $errores['_09_cveCarrera'] = 'Sin clave SEP';
+                  // Agregamos al arreglo de resultados la lleve "errores" que contiene un key-value de errores
+                  $resultado['errores'] = $errores;
+                  $resultado['_09_cveCarrera'] = '----';
+                  $resultado['_10_nombreCarrera'] = '----';
+               }
             } else { // NO existe la carrera en la tabla de posgrado
                $errores['_09_cveCarrera'] = 'Sin clave SEP';
                // Agregamos al arreglo de resultados la lleve "errores" que contiene un key-value de errores
@@ -704,8 +726,8 @@ trait XmlCadenaErrores {
             $errores['_21_fechaExpedicion'] = 'fecha de expedición de título inválida';
          }
          // preguntamos si existe la modalida de titulación en la tabla mapeo.
-         $testModa = isset($modo->ID_MODALIDAD_TITULACION);
          $modo = Modo::where('cat_subcve',$datos['_22_idModalidadTitulacion'])->first();
+         $testModa = isset($modo->ID_MODALIDAD_TITULACION);
          if ($modo==[]) {
             // Ya existe $datos['_22_idModalidadTitulacion'], pero no la ModalidadTitulacion
             if ($testModa) { // existe la modalidad pero no en catalogos
@@ -787,6 +809,8 @@ trait XmlCadenaErrores {
       $query .= "from Escprocedencia ";
       $query .= "join Catprocedencia on catproc_cve = escpro_cveproc ";
       $query .= "join Paisedos on escpro_cveproc = catproc_cve ";
+      // En el caso que el nivel sea 06 (Licenciatura SUA), la consideramos nivel 05 (Licenciatura)
+      $nivel = ($nivel=='06')? '05': $nivel;
       $query .= "where escpro_ncta = '".$cuenta."' and escpro_nivel_pro < '".$nivel."' "; // $nivel es $info['nivelProf']
       $query .= "and escpro_nivel_pro<>'07' ";
       $query .= "order by escpro_nivel_pro asc";

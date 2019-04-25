@@ -23,7 +23,6 @@ trait TitulosFechas {
      $query .=       "datepart(month,  tit_fec_emision_tit) = ".$fechaPartes[1]." AND ";
      $query .=       "datepart(day,  tit_fec_emision_tit) = ".$fechaPartes[2].")";
      // consulta
-     // dd('TitulosFechas, linea 26',$query);
      $datos = DB::connection('sybase')->select($query);
      return $datos;
   }
@@ -138,6 +137,26 @@ trait TitulosFechas {
          $solicitud->sistema = $sistema;
          $solicitud->user_id = $user_id;
          $solicitud->ws_ati = $datosyerrores[3];
+         // Actualizamos el campo verificando si la solicitud tiene errores.
+         if (in_array('Sin errores',$datosyerrores[1])) {
+            // Sin errores es una etiqueta única,
+            $solicitud->conErrores = 0;
+            // se considera un error la falta de autorizacion, por tanto cuenta con autorización
+            $solicitud->conAutorizacion = 1; //
+         } else {
+            if (in_array('Sin autorización alumno',$datosyerrores[1])) {
+               // No cuenta con la etiqueta de "Sin autorizacion del alumno", por tanto cuenta con autorizacion
+               $solicitud->conAutorizacion = 0; //
+               // Si tiene una etiqueta, no tiene errores, ya que "Sin autorizacion alumno" no se considera error
+               $solicitud->conErrores = (count($datosyerrores[1])==1)? 0: 1;
+            } else {
+               // No cuenta con la etiqueta "sin autorizacion" por tanto tiene conAutorizacion y
+               // No cuenta con la etiqueta "Sin errores" por tanto cuenta con errores,
+               $solicitud->conErrores = 1;
+               $solicitud->conAutorizacion = 1;
+            }
+
+         }
          $solicitud->save();
          $cuenta = array(1, 0, 0);
       } else

@@ -14,51 +14,59 @@ class StatusCedulaSeeder extends Seeder
     {
       $table = new StatusCedula();
       // $table->id = 1;
-      $table->nombreCorto = '01.Solicitud';
-      $table->descripcion = 'Solicitud de cédula profesional electrónica';
+      $table->nombreCorto = '01.Carga Solicitudes';
+      $table->descripcion = 'Pasaron de títulos a solicitudes';
+      $table->secuencia = 'Pendientes de revisión';
       $table->save();
 
       $table = new StatusCedula();
       // $table->id = 2;
-      $table->nombreCorto = '02.Autorizado Jtit';
-      $table->descripcion = 'Autorizado por el depto. de Títulos';
+      $table->nombreCorto = '02.Revisa JUD';
+      $table->descripcion = 'Revisados por JUD';
+      $table->secuencia = 'Pendientes de autorización JUD.';
       $table->save();
 
       $table = new StatusCedula();
       // $table->id = 3;
-      $table->nombreCorto = '03.Firma Jtit';
-      $table->descripcion = 'Firmado por el depto. de Títulos';
+      $table->nombreCorto = '03.Autoriza JUD';
+      $table->descripcion = 'Autorizados JUD';
+      $table->secuencia = 'Pendientes de firma DGAE';
       $table->save();
 
       $table = new StatusCedula();
       // $table->id = 4;
       $table->nombreCorto = '04.Firma DGAE';
-      $table->descripcion = 'Firmado por la Directora DGAE';
+      $table->descripcion = 'Firmados DGAE';
+      $table->secuencia = 'Pendientes de envio a DGP';
       $table->save();
 
       $table = new StatusCedula();
       // $table->id = 5;
       $table->nombreCorto = '05.Enviado DGP';
-      $table->descripcion = 'Enviado a la Dirección General de Profesiones';
+      $table->descripcion = 'Enviados a DGP';
+      $table->secuencia = 'Pendientes de descarga DGP';
       $table->save();
 
-      // $table = new StatusCedula();
-      // // $table->id = 5;
-      // $table->nombreCorto = '05.Firma Srio';
-      // $table->descripcion = 'Firmado por el Secretario General';
-      // $table->save();
-      //
-      // $table = new StatusCedula();
-      // // $table->id = 6;
-      // $table->nombreCorto = '06.Firma Rector';
-      // $table->descripcion = 'Firmado por el Rector';
-      // $table->save();
-      //
-      // $table = new StatusCedula();
-      // // $table->id = 7;
-      // $table->nombreCorto = '07.Enviado DGP';
-      // $table->descripcion = 'Enviado a la Dirección General de Profesiones';
-      // $table->save();
+      $table = new StatusCedula();
+      // $table->id = 6;
+      $table->nombreCorto = '06.Descarga DGP';
+      $table->descripcion = 'Descargados DGP';
+      $table->secuencia = 'Pendientes de aprobación DGP';
+      $table->save();
+
+      $table = new StatusCedula();
+      // $table->id = 7;
+      $table->nombreCorto = '07.TER en DGP';
+      $table->descripcion = 'Título Electrónico Rechazado';
+      $table->secuencia = 'Pendiente de corrección';
+      $table->save();
+
+      $table = new StatusCedula();
+      // $table->id = 8;
+      $table->nombreCorto = '08.TEA en DGP';
+      $table->descripcion = 'Título Electrónico Aprobado';
+      $table->secuencia = 'Título Electrónico Aprobado';
+      $table->save();
     }
 
 }

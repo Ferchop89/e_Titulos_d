@@ -1,3 +1,5 @@
 *
 !public/
+!certifica/
+!lotes_dgp_xls/
 !.gitignore

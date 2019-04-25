@@ -1,8 +1,9 @@
 @extends('layouts.app')
 @section('title', 'Resumen | '.$title)
 @section('estilos')
-    <link href="{{ asset('css/listados.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/graficasTable.css') }}" rel="stylesheet">
+       {{-- <link href="{{ asset('css/listados.css') }}" rel="stylesheet">
+       <link href="{{ asset('css/graficasTable.css') }}" rel="stylesheet"> --}}
+       <link href="{{ asset('css/pdf/materiales.css') }}" rel="stylesheet">
 @endsection
 @section('content')
    @if ($resumenHTML=='')
@@ -12,7 +13,7 @@
          <strong>Sin Información en este periodo</strong>
       </div>
    @else
-      <h2>RESUMEN TITULOS Y MATERIALES DE ELABORACIÓN</h2>
+      <h2>RESUMEN TÍTULOS Y MATERIALES DE ELABORACIÓN</h2>
       @if ($errors->any())
           <div class="alert alert-danger">
              <h5>Información faltante</h5>
@@ -34,6 +35,7 @@
                   <th scope="col">Periodo</th>
                   <th scope="col">Orden</th>
                   <th scope="col">Consulta</th>
+                  <th scope="col">Impresión</th>
                 </tr>
               </thead>
               <tbody>
@@ -47,6 +49,9 @@
                   </td>
                   <td>
                      <button  class="btn btn-primary waves-effect waves-light" type="submit" form="materiales" value="Submit">Consultar</button></button>
+                  </td>
+                  <td>
+                     <a href="{{ route('pdf_Materiales',[$inicio,$fin,$orden]) }}" target="_blank"><i class="fa fa-file-pdf-o" style="font-size:24px;color:red">PDF</i></a>
                   </td>
                 </tr>
               </tbody>
