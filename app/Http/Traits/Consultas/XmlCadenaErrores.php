@@ -31,6 +31,7 @@ trait XmlCadenaErrores {
       // Consulta por porOmision Integra los Items xml que no requieren consulta y son valores predeterminados
       $consulta = $this->porOmision($cuenta,$digito,$carrera);
       $items = array_merge($items,$consulta);
+
       // Primer consulta
       $consulta = $this->carrerasProcedencia($cuenta,$digito,$carrera);
       if (isset($consulta['errores'])!=null) {
@@ -44,6 +45,7 @@ trait XmlCadenaErrores {
          unset($consulta['paridad']);
       }
       $items = array_merge($items,$consulta);
+
       // Segunda consulta de Datos
       $consulta = $this->titulosEscprocedencia($cuenta,$carrera);
       if (isset($consulta['errores'])!=null) {
@@ -56,6 +58,7 @@ trait XmlCadenaErrores {
          unset($consulta['paridad']);
       }
       $items = array_merge($items,$consulta);
+
       // Tecer consulta de Datos
       $nivel = $items['atrib_nivelProf']; // Proviene de titulosProcedencia
       $consulta = $this->antecedente($cuenta,$nivel);
@@ -70,6 +73,7 @@ trait XmlCadenaErrores {
       }
       $items = array_merge($items,$consulta);
       unset($items['atrib_nivelProf']); // Eliminamos el nivel. No se ocupa en el documento final.
+
       // Cuarta consultaDatos
       $consulta = $this->titulosExamenes($cuenta,$carrera);
       if (isset($consulta['errores'])!=null) {
@@ -82,8 +86,8 @@ trait XmlCadenaErrores {
          unset($consulta['paridad']);
       }
       $items = array_merge($items,$consulta);
+
       // Quinta consultaDatos
-      //$consulta = $this->titulosDatos($cuenta,$digito,$carrera); //Lo pasamos como parámetro para evitar repétir mucho código
       $consulta = $consulta_datos;
       if (isset($consulta['errores'])!=null) {
          $errores = array_merge($errores,$consulta['errores']);
@@ -98,7 +102,6 @@ trait XmlCadenaErrores {
       // Ordenamos los items. Todos tienen un sub item (ejem: __05__) y como se agregaron
       // los items "por omision" que vienen desordenados, es necesario reenumerar para tenerlos consecutivos.
       ksort($items);
-
       // Cambios y validaciones adicionales posteriores a la reunión del 25/feb/2019 con
       // Personal de la Sep ////////////////////////////////////////////////////////
 
@@ -107,24 +110,16 @@ trait XmlCadenaErrores {
       if ($reglasRotas!=[]) {
          $errores = array_merge($errores,$reglasRotas);
       }
-      // Si el tipo de estudio antecedente es licenciatura, entonces el serv social va a 0
-      if ($items['_32_idTipoEstudioAntecedente'] <=  2)
-      {
-         $items['_26_cumplioServicioSocial'] = '0';
-         // y entonces el fundamento del servicio social no aplica...
-         $items['_27_idFundamentoLegalServicioSocial'] = '5';
-         $items['_28_fundamentoLegalServicioSocial'] = 'NO APLICA';
 
-      } else {
-         $items['_26_cumplioServicioSocial'] = '1';
-      }
-
-      ////////////////////////////////////////////////////////////////////////////////
 
       // Si no existen los errores, el arreglo de errores
       if ($errores==[]) {
          $errores['sin errores'] = 'Sin errores';
       }
+
+      $items = $this->ajusteServicioSocial($items);
+      $items = $this->ajusteFechas($items,$paridad);
+
       // Integramos errores y Datos
       $resultado[0] = $items;
       $resultado[1] = $errores;
@@ -132,6 +127,50 @@ trait XmlCadenaErrores {
       $resultado[3] = $fuente;
       return $resultado;
    }
+
+   public function ajusteServicioSocial($items)
+   {
+      // Si el tipo de estudio antecedente es licenciatura, entonces el serv social va a 0
+      if ($items['_32_idTipoEstudioAntecedente'] <=  2)
+      { // antecedente licenciatura o maestria
+         $items['_26_cumplioServicioSocial'] = '0';
+         // y entonces el fundamento del servicio social no aplica...
+         $items['_27_idFundamentoLegalServicioSocial'] = '5';
+         $items['_28_fundamentoLegalServicioSocial'] = 'NO APLICA';
+      } else { // antecedente tecnico, bachillerato o secundaria,
+         $items['_26_cumplioServicioSocial'] = '1';
+      }
+      return $items;
+   }
+
+   public function ajusteFechas($items,$paridad)
+   {
+      // dd($items,$paridad['_12_fechaTerminacion']);
+      if (isset($paridad['_12_fechaTerminacion'])) {
+         if (strpos($paridad['_12_fechaTerminacion'],'aaaaAAAA')) {
+            // Mensaje La fecha de terminación de la carrera no puede ser posterior
+            // a la fecha de exención de examen profesional en el nodo Expedición
+            if ($items['_12_fechaTerminacion'] > $items['_25_fechaExencionExamenProfesional']) {
+               if ($items['_25_fechaExencionExamenProfesional']=='----') {
+                  $items['_12_fechaTerminacion']  = $items['_24_fechaExamenProfesional'];
+               } else {
+                  $items['_12_fechaTerminacion']  = $items['_25_fechaExencionExamenProfesional'];
+               }
+            }
+            // Mensaje La fecha de terminación de la carrera no puede ser posterior
+            // a la fecha de examen profesional en el nodo Expedición
+            if ($items['_12_fechaTerminacion'] > $items['_24_fechaExamenProfesional']) {
+               if ($items['_24_fechaExamenProfesional']=='----') {
+                  $items['_12_fechaTerminacion']  = $items['_25_fechaExencionExamenProfesional'];
+               } else {
+                  $items['_12_fechaTerminacion']  = $items['_24_fechaExamenProfesional'];
+               }
+            }
+         }
+      }
+      return $items;
+   }
+
    public function reglasXml($items)
    {
       // Reglas del negocio para fechas y que se validan en el XMLDiff\Base
@@ -332,7 +371,7 @@ trait XmlCadenaErrores {
                   $datos['_12_fechaTerminacion'] = $fecha;
                   $errores['_12_fechaTerminacion'] = 'periodo irregular (ddmmaaaa)';
                } else {
-                  $datos['_12_fechaTerminaciantecedenteon'] = $fechaX;
+                  $datos['_12_fechaTerminacion'] = $fechaX;
                   $paridad['_12_fechaTerminacion'] = $fecha.'. tipo(ddmmaaaa)';
                }
             } elseif($item=='36') { // item 36 Solo es obligatorio la fecha de terminacion
@@ -381,19 +420,18 @@ trait XmlCadenaErrores {
                $fecha1 = substr($fecha,0,4).'-01-01'; $fecha2 = substr($fecha,4,4).'-01-01';
             }
             // verificamos la calidad de la información
-
             if ($item=='11') { // Periodo de estudios
                if ( !strtotime($fecha1) || !strtotime($fecha2) || $fecha1>$fecha2 || strlen($fecha)!=8 ) {
                   $datos['_11_fechaInicio']      = '----';
                   $datos['_12_fechaTerminacion'] = $fecha;
                   $errores['_12_fechaTerminacion'] = 'periodo irregular tipo(aaaaAAAA)';
                } else {
-                  // Fechas correctas
+                  // Fechas correctas.
                   $datos['_11_fechaInicio']      = $fecha1;
                   $datos['_12_fechaTerminacion'] = $fecha2;
                   $paridad['_12_fechaTerminacion'] = $fecha.'. tipo(aaaaAAAA)';
                }
-            } elseif ($item=='36'){ // Periodo antecedente
+            }  elseif ($item=='36'){ // Periodo antecedente
                if ( !strtotime($fecha1) || !strtotime($fecha2) || $fecha1>$fecha2 || strlen($fecha)!=8 ) {
                   $datos['_36_fechaInicio']      = '----';
                   $datos['_37_fechaTerminacion'] = $fecha;
@@ -800,23 +838,35 @@ trait XmlCadenaErrores {
    public function antecedente($cuenta,$nivel)
    {
       // ante periodo se divide en 2 fechas y se omite de la salida
-      $query = "Select distinct catproc_nombre as _31_institucionProcedencia, ";
-      $query .= "escpro_cveproc as clave_escuela_previa, ";
-      $query .= "escpro_nivel_pro as ante_nivel, ";
-      $query .= "catproc_ent_fed as _34_idEntidadFederativa, ";
-      $query .= "escpro_fec_exp as carrera_fechas, ";
-      $query .= "escpro_tipo_fec as fecha_tipo ";
-      $query .= "from Escprocedencia ";
-      $query .= "join Catprocedencia on catproc_cve = escpro_cveproc ";
-      $query .= "join Paisedos on escpro_cveproc = catproc_cve ";
+      $querySelect = "Select distinct catproc_nombre as _31_institucionProcedencia, ";
+      $querySelect .= "escpro_cveproc as clave_escuela_previa, ";
+      $querySelect .= "escpro_nivel_pro as ante_nivel, ";
+      $querySelect .= "catproc_ent_fed as _34_idEntidadFederativa, ";
+      $querySelect .= "escpro_fec_exp as carrera_fechas, ";
+      $querySelect .= "escpro_tipo_fec as fecha_tipo ";
+      $querySelect .= "from Escprocedencia ";
+      $querySelect .= "join Catprocedencia on catproc_cve = escpro_cveproc ";
+      $querySelect .= "join Paisedos on escpro_cveproc = catproc_cve ";
       // En el caso que el nivel sea 06 (Licenciatura SUA), la consideramos nivel 05 (Licenciatura)
       $nivel = ($nivel=='06')? '05': $nivel;
-      $query .= "where escpro_ncta = '".$cuenta."' and escpro_nivel_pro < '".$nivel."' "; // $nivel es $info['nivelProf']
-      $query .= "and escpro_nivel_pro<>'07' ";
-      $query .= "order by escpro_nivel_pro asc";
-
+      $queryWhere  = "where escpro_ncta = '".$cuenta."' and escpro_nivel_pro < '".$nivel."' "; // $nivel es $info['nivelProf']
+      $queryWhere .= "and escpro_nivel_pro<>'07' ";
+      $queryWhere .= "order by escpro_nivel_pro asc";
+      $query = $querySelect.$queryWhere;
       $info = (array)DB::connection('sybase')
                      ->select($query);
+      // dd($info);
+      if ($info!=[]) {
+         $datos = (array)$info[count($info)-1];
+         if ($datos['ante_nivel']==3||$datos['ante_nivel']==4) {
+            $nivel = '03';
+            $queryWhere  = "where escpro_ncta = '".$cuenta."' and escpro_nivel_pro < '".$nivel."' "; // $nivel es $info['nivelProf']
+            $queryWhere .= "order by escpro_nivel_pro asc";
+            $query = $querySelect.$queryWhere;
+            $info = (array)DB::connection('sybase')
+                           ->select($query);
+         }
+      }
       // Escuela antecedente.antecedente
       $datos = $errores = $resultado = $paridad = array();
       if ($info!=[]) {
@@ -894,6 +944,7 @@ trait XmlCadenaErrores {
       }
       return $resultado;
    }
+
    public function titulos($cuenta,$carrera)
    {
       $query = 'SELECT ';
@@ -1001,8 +1052,8 @@ trait XmlCadenaErrores {
       $cadenaOriginal .= $nodos['Expedicion']['fundamentoLegalServicioSocial'].'|';
       $cadenaOriginal .= $nodos['Expedicion']['idEntidadFederativa'].'|';
       $cadenaOriginal .= $nodos['Expedicion']['entidadFederativa'].'|';
-
-      $cadenaOriginal .= $nodos['Antecedente']['institucionProcedencia'].'|';
+      // Sustituimos comillas dobles por simples para hacer coincidir cadena original y xml
+      $cadenaOriginal .= str_replace("\"","'",$nodos['Antecedente']['institucionProcedencia']).'|';
       $cadenaOriginal .= $nodos['Antecedente']['idTipoEstudioAntecedente'].'|';
       $cadenaOriginal .= $nodos['Antecedente']['tipoEstudioAntecedente'].'|';
       $cadenaOriginal .= $nodos['Antecedente']['idEntidadFederativa'].'|';
@@ -1244,9 +1295,8 @@ trait XmlCadenaErrores {
                                           $cumplioServicioSocial,
                                           $idfundamentoSS,$fundamentoSS,
                                           $idEntidadFederativa,$eFederativa);
-
-      // Nodo Antecendente Ejemplo: C.E.T.I.S. NO. 80|4|BACHILLERATO|09|CIUDAD DE MÉXICO|2000-06-12|2003-08-12|(noCedula)||
-      $inst=$datos['_31_institucionProcedencia'];
+      // Se reemplazan cadenas dobles por simples para hacer coincidir cadena original y xml
+      $inst=str_replace("\"","'",$datos['_31_institucionProcedencia']);
       $idTipoE=$datos['_32_idTipoEstudioAntecedente'];
       $tipoE=$datos['_33_tipoEstudioAntecedente'];
       $idEntFed=$datos['_34_idEntidadFederativa'];
@@ -1397,6 +1447,34 @@ trait XmlCadenaErrores {
      $data['noCedula'] = $noCedula; // Opcional, si esta vacio, omitr en el XML
      return $data;
    }
+
+   public function ayerr_2($errores)
+   {
+      // Genera un arreglo para actualizar las vbles autorizacion y errores (ayerr)
+      // Esta función debe ser identica a la que función ayerr de TitulosFechas
+      $ayer = array();
+      $ayer['conErrores'] = 0; $ayer['conAutorizacion']=0;
+      if (in_array('Sin errores',$errores)) {
+         // Sin errores es una etiqueta única,
+         $ayer['conErrores'] = 0;
+         // se considera un error la falta de autorizacion, por tanto cuenta con autorización
+         $ayer['conAutorizacion'] = 1;
+      } else {
+         if (in_array('Sin autorización alumno',$errores)) {
+            // Etiqueta "Sin autorizacion del alumno", por tanto no cuenta con autorizacion
+            $ayer['conAutorizacion'] = 0;
+            // Si tiene solo una etiqueta, no tiene errores, ya que "Sin autorizacion alumno" no se considera error
+            $ayer['conErrores'] = (count($errores)==1)? 0: 1;
+         } else {
+            // No cuenta con la etiqueta "sin autorizacion" por tanto tiene conAutorizacion y
+            // No cuenta con la etiqueta "Sin errores" por tanto cuenta con errores,
+            $ayer['conErrores'] = 1;
+            $ayer['conAutorizacion'] = 1;
+         }
+      }
+      return $ayer;
+   }
+
    public function actualizaFLFF($cuenta9,$carrera)
    {
       // Actualiza la información de una solicitud sep.
@@ -1421,6 +1499,7 @@ trait XmlCadenaErrores {
       // actualizamos datos y errores, fecha_emision_tit, libro, foja y folio.
       if(count($infoFLFF)!==0)
       {
+         $ayer = $this->ayerr_2($datosyerrores[1]);
          // Actualizamos los 4 campos en Solicitudes Sep.
          DB::table('solicitudes_sep')
                     ->where('id', $dato->id)
@@ -1429,7 +1508,9 @@ trait XmlCadenaErrores {
                               'foja'    => trim($infoFLFF[0]->tit_foja),
                               'folio'   => trim($infoFLFF[0]->tit_folio),
                               'datos'   => serialize($datosyerrores[0]),
-                              'errores' => serialize($datosyerrores[1])
+                              'errores' => serialize($datosyerrores[1]),
+                              'conErrores' => $ayer['conErrores'],
+                              'conAutorizacion' => $ayer['conAutorizacion']
                      ]);
       }
    }
