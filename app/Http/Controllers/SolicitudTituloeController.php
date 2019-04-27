@@ -65,7 +65,11 @@ class SolicitudTituloeController extends Controller
          Session::flash('error', $msj);
       }
       $trayectorias = $this->consultaTitulos($cuenta, $verif);
-      return view('/menus/search_eTitulosInfo', ['numCta' => $num_cta,'foto' => $foto, 'identidad' => $identidad, 'trayectorias' => $trayectorias]);
+      foreach ($trayectorias as $key => $value) {
+         $trayectorias[$key]['tit_fec_emision_tit']=Carbon::parse($value['tit_fec_emision_tit'])->format('d/m/Y');
+      }
+      return view('/menus/search_eTitulosInfo',
+                  ['numCta' => $num_cta,'foto' => $foto, 'identidad' => $identidad, 'trayectorias' => $trayectorias]);
     }
    public function existRequest($num_cta, $nombre, $carrera, $nivel)
    {
@@ -126,25 +130,36 @@ class SolicitudTituloeController extends Controller
       // Muestra la vista de solicitudes pendientes de enviar a firma.
       $queryFecha = '';
       // Se establecen parametros adicionales para usar como fecha de filtrado
-      if (isset(request()->datepicker)) {
+      if (isset(request()->inicio_emision) && isset(request()->fin_emision)) {
+        //dd(request()->inicio_emision, request()->fin_emision);
          // Se invierte la fecha porque el DatePicker la presente invertida
-         $fecha_o = request()->datepicker;
-         $fecha_d = substr($fecha_o,0,2);$fecha_m=substr($fecha_o,3,2);$fecha_a=substr($fecha_o,6,4);
-         $fecha = Carbon::parse($fecha_a."/".$fecha_m."/".$fecha_d)->format('Y/m/d');
-         // regresamos el formato de la fecha_d para usarlo como valor inicial en el datepicker
-         $fecha_d = request()->datepicker;
+         $fecha_o = request()->inicio_emision;
+         $fecha_of = request()->fin_emision;
+         $ini_fecha_d = substr($fecha_o,0,2);$fecha_m=substr($fecha_o,3,2);$fecha_a=substr($fecha_o,6,4);
+         $fin_fecha_d = substr($fecha_of,0,2);$fecha_mf=substr($fecha_of,3,2);$fecha_af=substr($fecha_of,6,4);
+
+         $ini_fecha = Carbon::parse($fecha_a."/".$fecha_m."/".$ini_fecha_d)->format('Y-m-d');
+         $fin_fecha = Carbon::parse($fecha_af."/".$fecha_mf."/".$fin_fecha_d)->format('Y-m-d');
+
+         //para datepicker
+         $f_inicio = Carbon::parse($fecha_a."/".$fecha_m."/".$ini_fecha_d)->format('d/m/Y');
+         $f_fin = Carbon::parse($fecha_af."/".$fecha_mf."/".$fin_fecha_d)->format('d/m/Y');
       } else {
          // Como no se especifica la fecha se carga la fecha de emision de titulo mas proxima
          $fechaSolicitud = SolicitudSep::where('status','=',1)
+                           ->where('fecha_lote_id', NULL)
                            ->orderBy('fec_emision_tit')
                            ->pluck('fec_emision_tit')
                            ->last();
-         $fecha =  Carbon::parse($fechaSolicitud)->format('Y/m/d');
-         // para el DatePicker
-         $fecha_d =  Carbon::parse($fechaSolicitud)->format('d/m/Y');
+
+         $ini_fecha =  Carbon::parse($fechaSolicitud)->format('Y-m-d');
+         $fin_fecha =  Carbon::parse($fechaSolicitud)->format('Y-m-d');
+         //para datepicker
+         $f_inicio = Carbon::parse($fechaSolicitud)->format('d/m/Y');
+         $f_fin = Carbon::parse($fechaSolicitud)->format('d/m/Y');
       }
       // Si existe fecha en el datepicker, la enviamos como parametro para elegir los errores de la fecha elegida
-      $queryFecha = $this->queryFecha($fecha);
+      $queryFecha = $this->queryPeriodo($ini_fecha, $fin_fecha);
       // dd($queryFecha);
       // dd($fecha);
       $listaErrores =  $this->listaErr($queryFecha);
@@ -186,7 +201,7 @@ class SolicitudTituloeController extends Controller
       $total = count($lists);
       $title = 'Solicitudes de cédula profesional electrónica';
       return view('menus/lista_solicitudes',
-            compact('title','lists', 'total','listaErrores','acordeon','seleccion','fecha_d'));
+            compact('title','lists', 'total','listaErrores','acordeon','seleccion', 'f_inicio', 'f_fin'));
    }
    public function queryFecha($fecha)
    {
@@ -196,6 +211,10 @@ class SolicitudTituloeController extends Controller
       $query .= " DAY(fec_emision_tit) = ".$fechaP[2].")";
       return $query;
 
+   }
+   public function queryPeriodo($ini_fecha, $fin_fecha){
+     $query = " (fec_emision_tit BETWEEN '".$ini_fecha."%' AND '".$fin_fecha."%')";
+     return $query;
    }
    public function infoCedula($cuenta,$carrera)
    {
@@ -249,7 +268,7 @@ class SolicitudTituloeController extends Controller
          $x_list = $i + 1;
          $composite .= "<div class='fila'>";
          $composite .="<div class='accordion-a'>";
-         $composite .=  "<a class = 'a-row' data-toggle='collapse' data-parent='#accordion' href='#collapse".$x_list."'>";
+         $composite .=  "<a class = 'a-row element' data-toggle='collapse' data-parent='#accordion' href='#collapse".$x_list."' onClick='hCalcClick(".$x_list.")'>";
          $composite .=     "<div class='Row'>";
          $composite .=        "<div class='Cell id right'>";
          $composite .=           "<p>".$data[$i]->id."</p>";
@@ -422,6 +441,19 @@ class SolicitudTituloeController extends Controller
    public function verTitulos()
    {
       return $this->titulosA(2000);
+   }
+
+   public function verTitulosSinFirma()
+   {
+     $mysql        = "DATE_FORMAT(fec_emision_tit,'%Y-%m-%d') as emisionYmd,";
+     $mysql       .= "SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS total ";
+     $mysqlData    = DB::table('solicitudes_sep')
+                   ->select(DB::raw($mysql))
+                   ->where('fecha_lote_id', NULL)
+                   ->groupBy('fec_emision_tit')
+                   ->get();
+
+     return $mysqlData;
    }
 
 }

@@ -44,6 +44,7 @@
                      <th class="center" scope="col">Nivel</th>
                      <th class="center" scope="col">Cve Carrera</th>
                      <th class="center" scope="col">Nombre Carrera</th>
+                     <th class="center" scope="col">Fecha emisión título</th>
                      <th class="center" scope="col">Acción</th>
                   </thead>
                   <tbody>
@@ -59,6 +60,7 @@
                            <td>{!! $value['tit_nivel'] !!}</td>
                            <td>{!! $value['tit_plancarr'] !!}</td>
                            <td>{!! $value['carrp_nombre'] !!}</td>
+                           <td>{!! $value['tit_fec_emision_tit'] !!}</td>
                            <td>
                              @if($value['solicitud'] == false)
                              <a href = "{{ route('solicitar_SEP',[ 'numCta'=>$numCta, 'nombre'=> $identidad->dat_nombre, 'carrera'=>$value['tit_plancarr'], 'nivel'=>$value['tit_nivel']]) }}"class="btn btn-info">Solicitar</a>
